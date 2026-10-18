@@ -291,7 +291,7 @@ export default function ProductDetailPage({
                     <div className="flex items-center gap-2 overflow-x-auto no-scrollbar whitespace-nowrap">
                         <button
                             onClick={onBack}
-                            className="inline-flex items-center gap-1.5 font-bold text-[#161616] hover:text-[#C69722] transition"
+                            className="inline-flex items-center gap-1.5 font-bold text-[#161616] hover:text-[#C69722] transition min-h-[44px] tap-target-44"
                         >
                             <ChevronLeft className="w-4 h-4" />
                             <span>BACK TO COLLECTION</span>
@@ -1115,55 +1115,57 @@ export default function ProductDetailPage({
                             </h2>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
                             {relatedProducts.map(item => (
                                 <div
                                     key={item.id}
-                                    className="bg-white rounded-2xl p-4 border border-stone-200/90 shadow-xs hover:shadow-md transition flex flex-col justify-between group"
+                                    className="bg-white rounded-xl sm:rounded-2xl p-2 sm:p-4 border border-stone-200/90 shadow-xs hover:shadow-md transition flex flex-col justify-between group"
                                 >
                                     <div>
                                         <div
                                             onClick={() => onSelectProduct(item)}
-                                            className="relative rounded-xl overflow-hidden aspect-square mb-3 bg-[#FAF5E8] border border-stone-100 cursor-pointer"
+                                            className="relative rounded-lg sm:rounded-xl overflow-hidden aspect-square mb-2 sm:mb-3 bg-[#FAF5E8] border border-stone-100 cursor-pointer"
                                         >
                                             <img
                                                 src={item.img}
                                                 alt={item.title}
                                                 className="w-full h-full object-cover img-studio-contrast group-hover:scale-105 transition duration-300"
                                             />
-                                            <span className="absolute top-2.5 right-2.5 bg-[#F7C600] text-[#161616] text-[10px] font-extrabold px-2 py-0.5 rounded shadow-xs">
-                                                {item.off}
-                                            </span>
+                                            {item.off && (
+                                                <span className="absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 bg-[#F7C600] text-[#161616] text-[8.5px] sm:text-[10px] font-extrabold px-1.5 py-0.5 sm:px-2 sm:py-0.5 rounded shadow-xs">
+                                                    {item.off}
+                                                </span>
+                                            )}
                                         </div>
                                         <h3
                                             onClick={() => onSelectProduct(item)}
-                                            className="text-xs font-semibold text-[#161616] line-clamp-2 leading-snug cursor-pointer hover:text-[#C69722] transition"
+                                            className="text-[11px] sm:text-xs font-semibold text-[#161616] line-clamp-2 leading-snug cursor-pointer hover:text-[#C69722] transition min-h-[28px] sm:min-h-[32px]"
                                         >
                                             {item.title}
                                         </h3>
-                                        <div className="flex items-center gap-2 mt-2">
-                                            <span className="font-serif text-base font-bold text-[#161616]">
+                                        <div className="flex items-baseline gap-1.5 mt-1 sm:mt-2 flex-wrap">
+                                            <span className="font-serif text-sm sm:text-base font-bold text-[#161616]">
                                                 Rs. {typeof item.price === 'number' ? item.price.toLocaleString('en-IN') : item.price}
                                             </span>
                                             {item.oldPrice && (
-                                                <span className="text-[11px] text-stone-400 line-through">
+                                                <span className="text-[10px] sm:text-[11px] text-stone-400 line-through">
                                                     Rs. {item.oldPrice.toLocaleString('en-IN')}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 mt-4">
+                                    <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mt-2.5 sm:mt-4">
                                         <button
                                             onClick={() => onSelectProduct(item)}
-                                            className="py-2 rounded-lg border border-stone-300 text-stone-700 hover:border-black text-[10px] font-bold uppercase transition"
+                                            className="py-1.5 sm:py-2 rounded-lg border border-stone-300 text-stone-700 hover:border-black text-[9px] sm:text-[10px] font-bold uppercase transition"
                                         >
-                                            VIEW DETAILS
+                                            VIEW
                                         </button>
                                         <button
                                             onClick={() => onAddToCart(item)}
-                                            className="py-2 rounded-lg bg-[#161616] hover:bg-[#C69722] text-white text-[10px] font-bold uppercase transition"
+                                            className="py-1.5 sm:py-2 rounded-lg bg-[#161616] hover:bg-[#C69722] text-white text-[9px] sm:text-[10px] font-bold uppercase transition"
                                         >
-                                            ADD TO CART
+                                            ADD
                                         </button>
                                     </div>
                                 </div>

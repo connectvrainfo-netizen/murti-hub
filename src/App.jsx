@@ -30,7 +30,6 @@ export default function App() {
     const [gridCols, setGridCols] = useState(4);
     const [sortBy, setSortBy] = useState('featured');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [festiveLayout, setFestiveLayout] = useState('single'); // 'single' (mobile-first full feed) | 'grid' (2-column)
 
     // 2. Collection Filters
     const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
@@ -388,18 +387,41 @@ export default function App() {
 
                     {/* Right Utility Icons */}
                     <div className="flex items-center space-x-1 sm:space-x-2 text-[#1C1C1C] flex-shrink-0">
-                        {/* Replay Starting Animation Button */}
+                        {/* Mobile & Tablet Darshan Intro Replay Badge */}
                         <button
                             type="button"
                             onClick={() => setShowIntro(true)}
-                            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-full text-[11px] font-bold text-[#9D6809] bg-[#FAF2DE] hover:bg-[#F4E3BF] border border-[#E5CD96] transition-all hover:scale-105 shadow-xs"
+                            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 min-h-[38px] rounded-full text-[10.5px] sm:text-[11px] font-bold text-[#9D6809] bg-[#FAF2DE] hover:bg-[#F4E3BF] border border-[#E5CD96] transition-all active:scale-95 shadow-2xs"
                             title="Replay Sacred Intro Animation"
+                            aria-label="Replay Sacred Intro Animation"
                         >
                             <Sparkles className="w-3.5 h-3.5 text-[#C69722]" />
-                            <span>दर्शन Intro</span>
+                            <span className="hidden min-[390px]:inline">दर्शन Intro</span>
                         </button>
 
-                        {/* Wishlist Button - 44x44px Touch Target */}
+                        {/* Search Toggle Button */}
+                        <button
+                            type="button"
+                            onClick={() => setIsSearchOpen(!isSearchOpen)}
+                            className="w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition tap-target-44"
+                            aria-label={isSearchOpen ? "Close search bar" : "Open search bar"}
+                            title="Search Sacred Murtis"
+                        >
+                            <Search className="w-5 h-5 stroke-[1.8]" />
+                        </button>
+
+                        {/* Account Login Button (Desktop & Tablet) */}
+                        <button
+                            type="button"
+                            onClick={() => setIsKwikPassOpen(true)}
+                            className="hidden md:flex w-auto px-3 h-10 items-center justify-center gap-1.5 rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition text-xs font-semibold"
+                            aria-label="Account Login"
+                        >
+                            <User className="w-4.5 h-4.5 stroke-[1.8]" />
+                            <span className="text-[11px] font-semibold tracking-wider">LOGIN</span>
+                        </button>
+
+                        {/* Wishlist Button with Live Counter Badge */}
                         <button
                             type="button"
                             onClick={() => {
@@ -413,98 +435,48 @@ export default function App() {
                                     showToast(`Showing ${wishlist.length} saved idols in your Sacred Wishlist ❤️`);
                                 }
                             }}
-                            className="relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition"
+                            className="relative w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition tap-target-44"
                             aria-label={`Sacred Wishlist, ${wishlist.length} saved items`}
                             title="Sacred Wishlist"
                         >
                             <Heart className={`w-5 h-5 stroke-[1.8] ${wishlist.length > 0 ? 'text-red-500 fill-red-100' : ''}`} />
                             {wishlist.length > 0 && (
-                                <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                                <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
                                     {wishlist.length}
                                 </span>
                             )}
                         </button>
 
-                        {/* Account Login Button (Desktop & Tablet) */}
-                        <button
-                            type="button"
-                            onClick={() => setIsKwikPassOpen(true)}
-                            className="hidden sm:flex w-12 h-12 sm:w-auto sm:px-3 sm:h-11 items-center justify-center gap-1.5 rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition text-xs font-semibold"
-                            aria-label="Account Login"
-                        >
-                            <User className="w-5 h-5 stroke-[1.8]" />
-                            <span className="hidden sm:inline text-[11px] font-semibold tracking-wider">LOGIN</span>
-                        </button>
-
-                        {/* Desktop Search Toggle Button */}
-                        <button
-                            type="button"
-                            onClick={() => setIsSearchOpen(!isSearchOpen)}
-                            className="hidden lg:flex w-12 h-12 items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition"
-                            aria-label={isSearchOpen ? "Close search bar" : "Open search bar"}
-                        >
-                            <Search className="w-5 h-5 stroke-[1.8]" />
-                        </button>
-
-                        {/* Cart Button - 44x44px Touch Target */}
+                        {/* Cart Button with Live Counter Badge */}
                         <button
                             type="button"
                             onClick={() => setIsCartOpen(true)}
-                            className="relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition"
+                            className="relative w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition tap-target-44"
                             aria-label={`Shopping Cart, ${cartCount} items`}
+                            title="Shopping Cart"
                         >
                             <ShoppingBag className="w-5 h-5 stroke-[1.8]" />
                             {cartCount > 0 && (
-                                <span className="absolute top-1 right-1 bg-[#C69722] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                                <span className="absolute top-1 right-1 bg-[#C69722] text-white text-[9.5px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                                     {cartCount}
                                 </span>
                             )}
                         </button>
 
-                        {/* Mobile Hamburger Toggle - 44x44px Touch Target */}
+                        {/* Mobile Menu Hamburger Button */}
                         <button
                             type="button"
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="lg:hidden w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition"
-                            aria-label={isMobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-                            aria-expanded={isMobileMenuOpen}
+                            className="lg:hidden w-10 h-10 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition tap-target-44"
+                            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
                         >
-                            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                            {isMobileMenuOpen ? (
+                                <X className="w-5.5 h-5.5 stroke-[2]" />
+                            ) : (
+                                <Menu className="w-5.5 h-5.5 stroke-[1.8]" />
+                            )}
                         </button>
                     </div>
-                </div>
-
-                {/* Persistent Mobile App-Style Search Row */}
-                <div className="lg:hidden px-3.5 pb-2.5 pt-0.5">
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            if (searchQuery.trim()) {
-                                setCurrentPage('shop-all');
-                                window.scrollTo({ top: 0, behavior: 'smooth' });
-                            }
-                        }}
-                        className="relative flex items-center bg-white rounded-full border border-[#D8C7A5] shadow-xs px-3.5 py-2 focus-within:border-[#C69722] focus-within:ring-2 focus-within:ring-[#C69722]/20 transition-all"
-                    >
-                        <Search className="w-4 h-4 text-[#8E5B00] shrink-0 mr-2" />
-                        <input
-                            type="search"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search Ram Darbar, Shiva, Ganesha, sizes..."
-                            className="w-full text-xs bg-transparent focus:outline-none text-[#161616] placeholder-stone-400 font-medium"
-                        />
-                        {searchQuery && (
-                            <button
-                                type="button"
-                                onClick={() => setSearchQuery('')}
-                                className="w-5 h-5 rounded-full bg-stone-100 text-stone-500 hover:text-black flex items-center justify-center text-[10px] font-bold shrink-0 ml-1"
-                                aria-label="Clear search"
-                            >
-                                ✕
-                            </button>
-                        )}
-                    </form>
                 </div>
 
                 {/* Mobile Menu Drawer */}
@@ -720,49 +692,49 @@ export default function App() {
 
                     {/* ================= 4. HERO SECTION WITH CINEMATIC SHOWROOM & PRODUCT SHOWCASE ================= */}
                     <section id="hero-slider" className="relative w-full overflow-hidden select-none bg-[#FAF5E8] border-b border-[#E6D6B8] group">
-                        <div className="relative w-full min-h-[500px] sm:min-h-[460px] sm:aspect-[16/9] lg:aspect-[21/9] sm:max-h-[640px]">
+                        <div className="relative w-full min-h-[420px] min-[360px]:min-h-[440px] sm:min-h-[480px] sm:aspect-[16/9] lg:aspect-[21/9] sm:max-h-[640px]">
 
                             {/* HERO SLIDE 0: PRODUCT-FOCUSED SHOWCASE (REFERENCE LAYOUT ARRANGEMENT) */}
                             <div className={`hero-slide absolute inset-0 transition-opacity duration-700 bg-gradient-to-br from-[#FAF5E8] via-[#FFFDF9] to-[#F3EAD3] ${activeHeroSlide === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                                <div className="max-w-[1440px] mx-auto h-full px-4 min-[360px]:px-5 sm:px-12 lg:px-16 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2 sm:gap-10 py-3 min-[360px]:py-4 sm:py-10">
+                                <div className="max-w-[1440px] mx-auto h-full px-4 sm:px-12 lg:px-16 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 sm:gap-10 py-3 sm:py-10">
                                     
-                                    {/* Product Visual on Left / Top (as in reference layout) */}
-                                    <div className="w-full sm:w-1/2 flex items-center justify-center relative order-1 sm:order-1">
-                                        <div className="relative w-32 h-32 min-[360px]:w-38 min-[360px]:h-38 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
-                                            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#F7C600]/25 via-[#E8DEC8]/50 to-transparent blur-2xl transform scale-95"></div>
+                                    {/* Product Visual on Left / Top */}
+                                    <div className="w-full sm:w-1/2 flex items-center justify-center relative order-1 sm:order-1 pt-1 sm:pt-0">
+                                        <div className="relative w-40 h-40 min-[360px]:w-48 min-[360px]:h-48 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
+                                            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#F7C600]/30 via-[#E8DEC8]/50 to-transparent blur-2xl transform scale-100"></div>
                                             <img
                                                 src="/images/products/ram-darbar.png"
                                                 alt="Shri Ram Darbar - Pure White Makrana Marble"
-                                                className="relative max-h-full max-w-full object-contain filter drop-shadow-[0_12px_20px_rgba(0,0,0,0.16)] hover:scale-105 transition duration-500 cursor-pointer"
+                                                className="relative max-h-full max-w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:scale-105 transition duration-500 cursor-pointer"
                                                 onClick={() => {
                                                     const ramItem = catalog.find(i => i.id === 1);
                                                     if (ramItem) openProductPage(ramItem);
                                                 }}
                                             />
-                                            <span className="absolute bottom-0 sm:bottom-2 right-0 sm:right-4 bg-white/95 backdrop-blur-xs text-[#8E5B00] border border-[#E6D6B8] text-[9px] sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-2xs">
+                                            <span className="absolute -bottom-1 sm:bottom-2 right-1 sm:right-4 bg-white/95 backdrop-blur-xs text-[#8E5B00] border border-[#E6D6B8] text-[9.5px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-xs">
                                                 ✦ Hand-Carved Makrana Marble
                                             </span>
                                         </div>
                                     </div>
 
-                                    {/* Product Details, Price & CTA on Right / Bottom (as in reference layout) */}
-                                    <div className="w-full sm:w-1/2 text-left space-y-1.5 sm:space-y-3.5 order-2 sm:order-2">
-                                        <div className="inline-flex items-center gap-1.5 text-[8.5px] min-[360px]:text-[9.5px] sm:text-xs font-bold tracking-[0.16em] uppercase text-[#8E5B00] bg-[#FAF5E8] border border-[#E6D6B8] px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-2xs">
+                                    {/* Product Details, Price & CTA on Right / Bottom */}
+                                    <div className="w-full sm:w-1/2 text-center sm:text-left space-y-1.5 sm:space-y-3.5 order-2 sm:order-2 pb-6 sm:pb-0">
+                                        <div className="inline-flex items-center gap-1.5 text-[9px] min-[360px]:text-[10px] sm:text-xs font-bold tracking-[0.16em] uppercase text-[#8E5B00] bg-[#FAF2DE] border border-[#E6D6B8] px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-2xs">
                                             <Sparkles className="w-3 h-3 text-[#C69722]" />
                                             <span>SANCTIFIED SACRED COLLECTION 2026</span>
                                         </div>
 
-                                        <h1 className="font-serif text-xl min-[360px]:text-2xl sm:text-4xl lg:text-5xl font-bold text-[#161616] leading-tight">
+                                        <h1 className="font-serif text-2xl min-[360px]:text-3xl sm:text-4xl lg:text-5xl font-bold text-[#161616] leading-tight">
                                             Shri Ram Darbar<br />
-                                            <span className="italic text-[#8E5B00] font-normal text-sm min-[360px]:text-base sm:text-3xl lg:text-3xl">Pure Makrana White Marble</span>
+                                            <span className="italic text-[#8E5B00] font-normal text-base min-[360px]:text-lg sm:text-3xl lg:text-3xl">Pure Makrana White Marble</span>
                                         </h1>
 
-                                        <p className="hidden min-[400px]:block text-[11px] min-[360px]:text-[11.5px] sm:text-sm text-stone-600 leading-relaxed max-w-md line-clamp-2 sm:line-clamp-none">
+                                        <p className="hidden min-[400px]:block text-xs sm:text-sm text-stone-600 leading-relaxed max-w-md mx-auto sm:mx-0 line-clamp-2 sm:line-clamp-none">
                                             Lord Ram, Mata Sita, Laxman & Hanuman hand-chiseled with 24K gold foil embellishments. Consecrated for home mandir altars and car dashboard blessings.
                                         </p>
 
                                         {/* Price Callout (From ₹1,499) */}
-                                        <div className="flex items-baseline gap-2 pt-0.5">
+                                        <div className="flex items-baseline justify-center sm:justify-start gap-2 pt-0.5">
                                             <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">From</span>
                                             <span className="font-serif text-2xl sm:text-3xl font-black text-[#8E5B00]">₹1,499</span>
                                             <span className="text-xs text-stone-400 line-through">₹2,599</span>
@@ -772,25 +744,25 @@ export default function App() {
                                         </div>
 
                                         {/* Primary CTA (Shop Now) */}
-                                        <div className="flex items-center gap-2 pt-0.5 sm:pt-1">
+                                        <div className="flex items-center justify-center sm:justify-start gap-2.5 pt-1">
                                             <button
                                                 type="button"
                                                 onClick={() => {
                                                     const ramItem = catalog.find(i => i.id === 1);
                                                     if (ramItem) openProductPage(ramItem);
                                                 }}
-                                                className="flex-1 sm:flex-none min-h-[44px] sm:min-h-[48px] px-6 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-[#F7C600] hover:bg-[#E2B400] text-[#161616] text-xs font-black tracking-widest uppercase transition shadow-md hover:scale-102 active:scale-95 flex items-center justify-center gap-2"
+                                                className="flex-1 sm:flex-none min-h-[46px] sm:min-h-[48px] px-6 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-[#F7C600] hover:bg-[#E2B400] text-[#161616] text-xs font-black tracking-widest uppercase transition shadow-md hover:scale-102 active:scale-95 flex items-center justify-center gap-2"
                                             >
-                                                <span>SHOP NOW!</span>
+                                                <span>EXPLORE IDOL</span>
                                                 <ArrowRight className="w-4 h-4 text-[#161616]" />
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setActiveHeroSlide(1)}
-                                                className="min-h-[44px] sm:min-h-[48px] px-3.5 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 text-xs font-bold tracking-wider uppercase transition shadow-2xs flex items-center justify-center gap-1.5"
+                                                className="min-h-[46px] sm:min-h-[48px] px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 text-xs font-bold tracking-wider uppercase transition shadow-2xs flex items-center justify-center gap-1.5"
                                             >
                                                 <Eye className="w-4 h-4 text-[#8E5B00]" />
-                                                <span className="hidden min-[360px]:inline">Tour</span>
+                                                <span>Tour</span>
                                             </button>
                                         </div>
                                     </div>
@@ -820,27 +792,27 @@ export default function App() {
 
                                 <div className="hero-video-gradient absolute inset-0 pointer-events-none"></div>
 
-                                <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-12 lg:p-16 z-10 pointer-events-none pb-7 sm:pb-12">
-                                    <div className="max-w-2xl space-y-2.5 sm:space-y-4 mb-2 sm:mb-6 pointer-events-auto">
-                                        <div className="inline-flex items-center gap-1.5 text-[9.5px] min-[360px]:text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase text-[#F7C600] bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-[#F7C600]/30 w-fit">
+                                <div className="absolute inset-0 flex flex-col justify-end p-4 min-[360px]:p-5 sm:p-12 lg:p-16 z-10 pointer-events-none pb-6 sm:pb-12">
+                                    <div className="max-w-2xl space-y-2 sm:space-y-4 mb-2 sm:mb-6 pointer-events-auto">
+                                        <div className="inline-flex items-center gap-1.5 text-[9px] min-[360px]:text-[10px] sm:text-xs font-bold tracking-[0.2em] uppercase text-[#F7C600] bg-black/50 backdrop-blur-md px-2.5 py-0.5 sm:py-1 rounded-full border border-[#F7C600]/30 w-fit">
                                             <Sparkles className="w-3 h-3 text-[#F7C600]" />
                                             <span>SANCTIFIED MAKRANA MARBLE ART</span>
                                         </div>
 
-                                        <h2 className="font-serif text-[26px] min-[360px]:text-[30px] sm:text-5xl lg:text-6xl text-white font-medium leading-[1.1] drop-shadow-md">
+                                        <h2 className="font-serif text-[24px] min-[360px]:text-[28px] sm:text-5xl lg:text-6xl text-white font-medium leading-[1.1] drop-shadow-md">
                                             Where Faith<br />
                                             <span className="italic text-[#F7C600] font-normal">Finds Form.</span>
                                         </h2>
 
-                                        <p className="text-[11.5px] min-[360px]:text-xs sm:text-sm text-stone-200/95 leading-relaxed max-w-lg drop-shadow line-clamp-2 sm:line-clamp-none">
+                                        <p className="text-[11px] min-[360px]:text-xs sm:text-sm text-stone-200/95 leading-relaxed max-w-lg drop-shadow line-clamp-2 sm:line-clamp-none">
                                             Step inside अमोल मार्बल मूर्ती भंडार — India's home for hand-carved Makrana marble idols, car dashboard guardians, and handcrafted sacred temple collectibles.
                                         </p>
 
-                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 pt-1 sm:pt-2">
+                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-1 sm:pt-2">
                                             <button
                                                 type="button"
                                                 onClick={() => document.getElementById('most-loved-section')?.scrollIntoView({ behavior: 'smooth' })}
-                                                className="w-full sm:w-auto min-h-[48px] px-6 sm:px-7 py-3 rounded-xl bg-[#F7C600] hover:bg-[#E2B400] text-[#161616] text-xs font-black tracking-[0.14em] uppercase transition shadow-xl hover:scale-102 active:scale-95 tap-target-48 flex items-center justify-center gap-2"
+                                                className="w-full sm:w-auto min-h-[44px] sm:min-h-[48px] px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-[#F7C600] hover:bg-[#E2B400] text-[#161616] text-[11px] min-[360px]:text-xs font-black tracking-[0.14em] uppercase transition shadow-xl hover:scale-102 active:scale-95 flex items-center justify-center gap-2 tap-target-44"
                                             >
                                                 <ShoppingBag className="w-4 h-4 text-[#161616]" />
                                                 <span>EXPLORE MOST LOVED</span>
@@ -848,7 +820,7 @@ export default function App() {
                                             <button
                                                 type="button"
                                                 onClick={() => navigateTo('shop-all')}
-                                                className="w-full sm:w-auto min-h-[48px] px-5 sm:px-6 py-3 rounded-xl bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/40 hover:border-white text-white text-xs font-bold tracking-[0.14em] uppercase transition shadow-lg tap-target-48 flex items-center justify-center gap-2"
+                                                className="w-full sm:w-auto min-h-[44px] sm:min-h-[48px] px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-black/60 hover:bg-black/80 backdrop-blur-md border border-white/40 hover:border-white text-white text-[11px] min-[360px]:text-xs font-bold tracking-[0.14em] uppercase transition shadow-lg flex items-center justify-center gap-2 tap-target-44"
                                             >
                                                 <span>VIEW ENTIRE CATALOG</span>
                                                 <ArrowRight className="w-3.5 h-3.5 text-[#F7C600]" />
@@ -880,19 +852,19 @@ export default function App() {
                                 className={`hero-slide absolute inset-0 transition-opacity duration-700 bg-cover bg-center cursor-pointer ${activeHeroSlide === 2 ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
                                 style={{ backgroundImage: "url('/images/banners/hero-new-arrivals.png')" }}
                             >
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 flex flex-col justify-end p-5 sm:p-14 pb-7 sm:pb-12">
-                                    <div className="inline-flex items-center gap-1.5 text-[9.5px] min-[360px]:text-[10px] sm:text-xs font-bold tracking-widest uppercase text-[#F7C600] bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full border border-[#F7C600]/30 w-fit mb-2">
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/30 flex flex-col justify-end p-4 min-[360px]:p-5 sm:p-14 pb-6 sm:pb-12">
+                                    <div className="inline-flex items-center gap-1.5 text-[9px] min-[360px]:text-[10px] sm:text-xs font-bold tracking-widest uppercase text-[#F7C600] bg-black/50 backdrop-blur-md px-2.5 py-0.5 sm:py-1 rounded-full border border-[#F7C600]/30 w-fit mb-1.5">
                                         <Sparkles className="w-3 h-3 text-[#F7C600]" />
                                         <span>NEW ARRIVALS 2026</span>
                                     </div>
                                     <h2 className="font-serif text-2xl min-[360px]:text-3xl sm:text-5xl text-white font-medium">Shri Ram Darbar & Divine Idols</h2>
-                                    <p className="text-stone-300 text-[11.5px] min-[360px]:text-xs sm:text-sm mt-1.5 max-w-lg line-clamp-2 sm:line-clamp-none">
+                                    <p className="text-stone-300 text-[11px] min-[360px]:text-xs sm:text-sm mt-1 max-w-lg line-clamp-2 sm:line-clamp-none">
                                         Exquisitely sculpted pure Makrana white marble sanctified for temple altars and prestigious home spaces.
                                     </p>
-                                    <div className="mt-3 sm:mt-5">
+                                    <div className="mt-2.5 sm:mt-5">
                                         <button
                                             type="button"
-                                            className="w-full sm:w-auto min-h-[48px] px-6 py-3 rounded-xl bg-[#F7C600] text-[#161616] text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg"
+                                            className="w-full sm:w-auto min-h-[44px] sm:min-h-[48px] px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-[#F7C600] text-[#161616] text-[11px] min-[360px]:text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg tap-target-44"
                                         >
                                             <span>SHOP NEW ARRIVALS</span>
                                             <ArrowRight className="w-4 h-4 text-[#161616]" />
@@ -952,28 +924,28 @@ export default function App() {
                     {/* ================= 4B. 3 CATEGORY SPOTLIGHT CARDS (REFERENCE LAYOUT ARRANGEMENT) ================= */}
                     <section className="bg-white py-5 sm:py-6 border-b border-[#E6D6B8] reveal-section is-visible">
                         <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
-                            <div className="flex sm:grid sm:grid-cols-3 gap-3 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 px-1 sm:px-0 no-scrollbar snap-x snap-mandatory">
+                            <div className="flex sm:grid sm:grid-cols-3 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 px-1 sm:px-0 no-scrollbar snap-x snap-mandatory">
                                 {/* Card 1: Car Dashboard Idols */}
                                 <div
                                     onClick={() => { setActiveDeityFilter(null); setFilterPlacement('car-dash'); navigateTo('shop-all'); }}
-                                    className="w-[82vw] min-w-[270px] max-w-[330px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
+                                    className="w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
                                 >
-                                    <div className="space-y-1.5 flex-1">
-                                        <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">PROTECTION ON ROADS</span>
+                                    <div className="space-y-1.5 flex-1 min-w-0">
+                                        <span className="text-[9px] sm:text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">PROTECTION ON ROADS</span>
                                         <h3 className="font-serif text-base sm:text-xl font-bold text-[#161616] group-hover:text-[#8E5B00] transition">
                                             Car Dashboard
                                         </h3>
-                                        <p className="text-[11px] sm:text-[11.5px] text-stone-600 line-clamp-2">
-                                            9 cm compact Makrana idols with anti-skid base for journey protection.
+                                        <p className="text-[11px] sm:text-[11.5px] text-stone-600 line-clamp-2 leading-relaxed">
+                                            9 cm Makrana idols with complimentary anti-skid base.
                                         </p>
-                                        <div className="pt-0.5">
+                                        <div className="pt-1">
                                             <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#8E5B00]">
                                                 <span>Shop Now</span>
                                                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="w-20 h-20 min-[380px]:w-22 min-[380px]:h-22 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white p-1.5 flex-shrink-0 border border-stone-200/80 shadow-2xs flex items-center justify-center">
+                                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white p-1.5 flex-shrink-0 border border-stone-200/80 shadow-xs flex items-center justify-center">
                                         <img src="/images/products/bal-ganesha-flute.png" alt="Car Dashboard Idols" className="w-full h-full object-contain group-hover:scale-105 transition duration-300" />
                                     </div>
                                 </div>
@@ -981,24 +953,24 @@ export default function App() {
                                 {/* Card 2: Home Mandir Murtis */}
                                 <div
                                     onClick={() => { setActiveDeityFilter(null); setFilterPlacement('mandir'); navigateTo('shop-all'); }}
-                                    className="w-[82vw] min-w-[270px] max-w-[330px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
+                                    className="w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
                                 >
-                                    <div className="space-y-1.5 flex-1">
-                                        <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">SANCTIFIED ALTARS</span>
+                                    <div className="space-y-1.5 flex-1 min-w-0">
+                                        <span className="text-[9px] sm:text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">SANCTIFIED ALTARS</span>
                                         <h3 className="font-serif text-base sm:text-xl font-bold text-[#161616] group-hover:text-[#8E5B00] transition">
                                             Home Mandir
                                         </h3>
-                                        <p className="text-[11px] sm:text-[11.5px] text-stone-600 line-clamp-2">
-                                            15 cm to 24 cm consecrated idols carved according to Shilpa Shastra.
+                                        <p className="text-[11px] sm:text-[11.5px] text-stone-600 line-clamp-2 leading-relaxed">
+                                            15 cm to 24 cm consecrated altar murtis.
                                         </p>
-                                        <div className="pt-0.5">
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[#8E5B00]">
+                                        <div className="pt-1">
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#8E5B00]">
                                                 <span>Shop Now</span>
                                                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="w-20 h-20 min-[380px]:w-22 min-[380px]:h-22 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white p-1.5 flex-shrink-0 border border-stone-200/80 shadow-2xs flex items-center justify-center">
+                                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white p-1.5 flex-shrink-0 border border-stone-200/80 shadow-xs flex items-center justify-center">
                                         <img src="/images/products/ram-darbar.png" alt="Home Mandir Idols" className="w-full h-full object-contain group-hover:scale-105 transition duration-300" />
                                     </div>
                                 </div>
@@ -1006,24 +978,24 @@ export default function App() {
                                 {/* Card 3: Sacred Gifting */}
                                 <div
                                     onClick={() => navigateTo('gifting')}
-                                    className="w-[82vw] min-w-[270px] max-w-[330px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
+                                    className="w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
                                 >
-                                    <div className="space-y-1.5 flex-1">
-                                        <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">ROYAL PRESENTATION</span>
+                                    <div className="space-y-1.5 flex-1 min-w-0">
+                                        <span className="text-[9px] sm:text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">ROYAL PRESENTATION</span>
                                         <h3 className="font-serif text-base sm:text-xl font-bold text-[#161616] group-hover:text-[#8E5B00] transition">
                                             Sacred Gifting
                                         </h3>
-                                        <p className="text-[11px] sm:text-[11.5px] text-stone-600 line-clamp-2">
-                                            Crimson velvet gift packaging with Makrana stone certificate of authenticity.
+                                        <p className="text-[11px] sm:text-[11.5px] text-stone-600 line-clamp-2 leading-relaxed">
+                                            Crimson velvet gift packaging for occasions.
                                         </p>
-                                        <div className="pt-0.5">
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-[#8E5B00]">
+                                        <div className="pt-1">
+                                            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#8E5B00]">
                                                 <span>Shop Now</span>
                                                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="w-20 h-20 min-[380px]:w-22 min-[380px]:h-22 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white p-1.5 flex-shrink-0 border border-stone-200/80 shadow-2xs flex items-center justify-center">
+                                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white p-1.5 flex-shrink-0 border border-stone-200/80 shadow-xs flex items-center justify-center">
                                         <img src="/images/products/standing-shiva-trishul.png" alt="Sacred Gifting" className="w-full h-full object-contain group-hover:scale-105 transition duration-300" />
                                     </div>
                                 </div>
@@ -1032,47 +1004,47 @@ export default function App() {
                     </section>
 
                     {/* ================= 5. WHY AMOL MARBLE MURTI BHANDAR ================= */}
-                    <section className="bg-why-murtihub py-8 sm:py-14 border-y border-[#E2C88B] reveal-section is-visible">
+                    <section className="bg-why-murtihub py-5 sm:py-12 border-y border-[#E2C88B] reveal-section is-visible">
                         <div className="max-w-5xl mx-auto px-4 text-center">
-                            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-6 sm:mb-11">
-                                <span className="h-[1px] w-8 sm:w-32 bg-gradient-to-r from-transparent to-[#B88921]"></span>
+                            <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-9">
+                                <span className="h-[1px] w-6 sm:w-32 bg-gradient-to-r from-transparent to-[#B88921]"></span>
                                 <span className="text-[#B88921] text-xs">✦</span>
-                                <h2 className="font-serif text-lg sm:text-2xl md:text-[32px] font-semibold text-[#1E1912] px-1 sm:px-2">Why Amol Marble Murti Bhandar</h2>
+                                <h2 className="font-serif text-base sm:text-2xl md:text-[30px] font-semibold text-[#1E1912] px-1 sm:px-2">Why Amol Marble Murti Bhandar</h2>
                                 <span className="text-[#B88921] text-xs">✦</span>
-                                <span className="h-[1px] w-8 sm:w-32 bg-gradient-to-l from-transparent to-[#B88921]"></span>
+                                <span className="h-[1px] w-6 sm:w-32 bg-gradient-to-l from-transparent to-[#B88921]"></span>
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
-                                <div className="flex flex-col items-center group">
-                                    <div className="w-14 h-16 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-2.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
-                                        <Car className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.8]" />
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-6">
+                                <div className="flex flex-col items-center group p-1 sm:p-2">
+                                    <div className="w-10 h-11 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-1.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
+                                        <Car className="w-5 h-5 sm:w-7 sm:h-7 stroke-[1.8]" />
                                     </div>
-                                    <h3 className="font-serif text-base sm:text-lg md:text-[19px] font-semibold text-[#161616]">Car dashboard</h3>
-                                    <p className="text-[10px] sm:text-[11px] text-stone-600 mt-0.5">Engineered to sit secure on your dash</p>
+                                    <h3 className="font-serif text-xs sm:text-lg md:text-[19px] font-semibold text-[#161616]">Car dashboard</h3>
+                                    <p className="text-[9.5px] sm:text-[11px] text-stone-600 mt-0.5 leading-snug">Engineered to sit secure on your dash</p>
                                 </div>
 
-                                <div className="flex flex-col items-center group">
-                                    <div className="w-14 h-16 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-2.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
-                                        <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.8]" />
+                                <div className="flex flex-col items-center group p-1 sm:p-2">
+                                    <div className="w-10 h-11 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-1.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
+                                        <Sparkles className="w-5 h-5 sm:w-7 sm:h-7 stroke-[1.8]" />
                                     </div>
-                                    <h3 className="font-serif text-base sm:text-lg md:text-[19px] font-semibold text-[#161616]">Hand finish</h3>
-                                    <p className="text-[10px] sm:text-[11px] text-stone-600 mt-0.5">Intricate hand-painted detailing</p>
+                                    <h3 className="font-serif text-xs sm:text-lg md:text-[19px] font-semibold text-[#161616]">Hand finish</h3>
+                                    <p className="text-[9.5px] sm:text-[11px] text-stone-600 mt-0.5 leading-snug">Intricate hand-painted detailing</p>
                                 </div>
 
-                                <div className="flex flex-col items-center group">
-                                    <div className="w-14 h-16 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-2.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
-                                        <Gift className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.8]" />
+                                <div className="flex flex-col items-center group p-1 sm:p-2">
+                                    <div className="w-10 h-11 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-1.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
+                                        <Gift className="w-5 h-5 sm:w-7 sm:h-7 stroke-[1.8]" />
                                     </div>
-                                    <h3 className="font-serif text-base sm:text-lg md:text-[19px] font-semibold text-[#161616]">Perfect for gifting</h3>
-                                    <p className="text-[10px] sm:text-[11px] text-stone-600 mt-0.5">Comes in velvet gift packaging</p>
+                                    <h3 className="font-serif text-xs sm:text-lg md:text-[19px] font-semibold text-[#161616]">Perfect for gifting</h3>
+                                    <p className="text-[9.5px] sm:text-[11px] text-stone-600 mt-0.5 leading-snug">Comes in velvet gift packaging</p>
                                 </div>
 
-                                <div className="flex flex-col items-center group">
-                                    <div className="w-14 h-16 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-2.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
-                                        <ShieldCheck className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.8]" />
+                                <div className="flex flex-col items-center group p-1 sm:p-2">
+                                    <div className="w-10 h-11 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-1.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
+                                        <ShieldCheck className="w-5 h-5 sm:w-7 sm:h-7 stroke-[1.8]" />
                                     </div>
-                                    <h3 className="font-serif text-base sm:text-lg md:text-[19px] font-semibold text-[#161616]">Premium quality</h3>
-                                    <p className="text-[10px] sm:text-[11px] text-stone-600 mt-0.5">Pure Makrana marble & lasting finish</p>
+                                    <h3 className="font-serif text-xs sm:text-lg md:text-[19px] font-semibold text-[#161616]">Premium quality</h3>
+                                    <p className="text-[9.5px] sm:text-[11px] text-stone-600 mt-0.5 leading-snug">Pure Makrana marble & lasting finish</p>
                                 </div>
                             </div>
                         </div>
@@ -1127,22 +1099,22 @@ export default function App() {
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>
 
-                                <div id="most-loved-track" className="flex gap-3.5 sm:gap-5 overflow-x-auto no-scrollbar scroll-smooth pb-4 px-1 sm:px-2 snap-x snap-mandatory">
+                                <div id="most-loved-track" className="flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar scroll-smooth pb-3 sm:pb-4 px-1 sm:px-2 snap-x snap-mandatory">
                                     {catalog.slice(0, 6).map(p => (
-                                        <div key={p.id} className="w-[230px] min-[380px]:w-[250px] sm:w-[272px] flex-shrink-0 snap-start flex flex-col justify-between group bg-white p-3 rounded-2xl border border-stone-200/90 shadow-xs hover:shadow-md transition">
+                                        <div key={p.id} className="w-[230px] sm:w-[272px] flex-shrink-0 snap-start flex flex-col justify-between group bg-white p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-sm hover:shadow-md transition">
                                             <div>
                                                 <div 
                                                     onClick={() => openProductPage(p)}
-                                                    className="relative rounded-xl overflow-hidden aspect-[3/4] bg-[#FDFBF5] mb-3 border border-stone-100 cursor-pointer"
+                                                    className="relative rounded-xl overflow-hidden aspect-square sm:aspect-[3/4] bg-[#FDFBF5] mb-2.5 sm:mb-3 border border-stone-100 cursor-pointer"
                                                 >
                                                     <img src={p.img} alt={p.title} className="w-full h-full object-contain p-2 img-studio-contrast group-hover:scale-105 transition duration-300 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]" loading="lazy" />
-                                                    <span className="absolute top-2.5 left-2.5 bg-[#161616]/90 backdrop-blur-xs text-white text-[10px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-md">
+                                                    <span className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 bg-[#161616]/90 backdrop-blur-xs text-white text-[9px] sm:text-[10px] font-medium px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1 shadow-md">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-[#F7C600]"></span> Most Loved
                                                     </span>
                                                     <button
                                                         type="button"
                                                         onClick={(e) => toggleWishlist(p.id, e)}
-                                                        className={`absolute top-2.5 right-2.5 w-11 h-11 rounded-full flex items-center justify-center transition shadow-md z-10 tap-target-48 ${
+                                                        className={`absolute top-2 right-2 sm:top-2.5 sm:right-2.5 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition shadow-md z-10 tap-target-44 ${
                                                             wishlist.includes(p.id) ? 'bg-red-50 text-red-500' : 'bg-white/90 text-stone-600 hover:text-red-500 hover:scale-110'
                                                         }`}
                                                         aria-label={wishlist.includes(p.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
@@ -1150,41 +1122,41 @@ export default function App() {
                                                         <Heart className={`w-4 h-4 ${wishlist.includes(p.id) ? 'fill-current' : ''}`} />
                                                     </button>
                                                 </div>
-                                                <div className="flex items-center justify-between text-[10px] font-bold tracking-widest uppercase text-[#9E781E] mb-1.5">
-                                                    <span>{p.deity ? `${p.deity} Murti` : 'Sacred Idol'}</span>
-                                                    <span className="flex items-center gap-1 text-amber-700 bg-amber-50 px-2 py-0.5 rounded text-[10px] font-bold">
+                                                <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-bold tracking-widest uppercase text-[#9E781E] mb-1 sm:mb-1.5">
+                                                    <span className="truncate max-w-[120px] sm:max-w-none">{p.deity ? `${p.deity}` : 'Sacred Idol'}</span>
+                                                    <span className="flex items-center gap-1 text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[9.5px] sm:text-[10px] font-bold shrink-0">
                                                         <Star className="w-3 h-3 fill-amber-400 text-amber-500" /> 4.9
                                                     </span>
                                                 </div>
 
                                                 <h3 
                                                     onClick={() => openProductPage(p)}
-                                                    className="text-[13px] sm:text-sm font-semibold text-[#181411] line-clamp-2 leading-snug cursor-pointer group-hover:text-[#C69722] transition-colors min-h-[38px]"
+                                                    className="text-xs sm:text-sm font-semibold text-[#181411] line-clamp-2 leading-snug cursor-pointer group-hover:text-[#C69722] transition-colors min-h-[36px] sm:min-h-[40px]"
                                                 >
                                                     {p.title}
                                                 </h3>
 
-                                                <div className="flex items-baseline gap-2 mt-2.5 mb-3">
-                                                    <span className="font-serif text-xl sm:text-2xl font-bold text-[#161616]">₹{p.price.toLocaleString('en-IN')}</span>
+                                                <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1.5 sm:mt-2.5 mb-2 sm:mb-3 flex-wrap">
+                                                    <span className="font-serif text-base sm:text-2xl font-bold text-[#161616]">₹{p.price.toLocaleString('en-IN')}</span>
                                                     {p.oldPrice && (
                                                         <span className="text-xs text-stone-400 line-through">₹{p.oldPrice.toLocaleString('en-IN')}</span>
                                                     )}
                                                     {p.off && (
-                                                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold tracking-wide border border-emerald-200/50">
+                                                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[9px] sm:text-[10px] font-bold tracking-wide border border-emerald-200/50">
                                                             {p.off}
                                                         </span>
                                                     )}
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-2 mt-auto pt-3 border-t border-stone-100">
+                                            <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mt-auto pt-2.5 border-t border-stone-100">
                                                 <button
                                                     type="button"
                                                     onClick={() => addToCart(p)}
-                                                    className="min-h-[44px] py-2 px-2 rounded-xl border border-stone-800 text-[#161616] hover:bg-[#161616] hover:text-white text-[10.5px] font-bold tracking-wider uppercase transition-all duration-150 flex items-center justify-center gap-1.5 tap-target-48 active:scale-95"
+                                                    className="w-full min-h-[40px] sm:min-h-[42px] py-2 px-1 rounded-xl bg-[#161616] hover:bg-[#C69722] text-[#F7C600] hover:text-white text-[10px] sm:text-[11px] font-bold tracking-wider uppercase transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 shadow-2xs tap-target-44"
                                                 >
-                                                    <ShoppingCart className="w-3.5 h-3.5" />
-                                                    <span>ADD TO CART</span>
+                                                    <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
+                                                    <span className="truncate">ADD TO CART</span>
                                                 </button>
                                                 <button
                                                     type="button"
@@ -1192,9 +1164,10 @@ export default function App() {
                                                         addToCart(p);
                                                         setIsCheckoutOpen(true);
                                                     }}
-                                                    className="min-h-[44px] py-2 px-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[10.5px] font-black tracking-wider uppercase transition-all duration-150 shadow-xs flex items-center justify-center gap-1.5 tap-target-48 active:scale-95"
+                                                    className="w-full min-h-[40px] sm:min-h-[42px] py-2 px-1 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[10px] sm:text-[11px] font-black uppercase transition-all duration-150 shadow-2xs flex items-center justify-center active:scale-95 tap-target-44"
+                                                    title="Instant Buy"
                                                 >
-                                                    <span>BUY NOW</span>
+                                                    <span className="truncate">BUY NOW</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -1222,109 +1195,116 @@ export default function App() {
                     </section>
 
                     {/* ================= 7. FESTIVE EDIT: NAVRATRI COLLECTION (MOBILE-FIRST REDESIGN) ================= */}
-                    <section id="navratri-section" className="bg-jaali-ivory py-6 sm:py-16 border-y border-[#EAE0CA] reveal-section is-visible">
-                        <div className="max-w-[1440px] mx-auto px-3.5 sm:px-8">
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+                    <section id="navratri-section" className="bg-jaali-ivory py-4 sm:py-14 border-y border-[#EAE0CA] reveal-section is-visible">
+                        <div className="max-w-[1440px] mx-auto px-3 sm:px-8">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 items-stretch">
                                 
                                 {/* Left / Top Festive Announcement Card */}
-                                <div className="lg:col-span-3 xl:col-span-3 bg-gradient-to-br from-[#FFF9EE] via-[#FDF7E7] to-[#F5E8C7] rounded-2xl sm:rounded-[26px] p-4.5 sm:p-7 border border-[#E2CAA0] shadow-xs flex flex-col justify-between relative overflow-hidden">
+                                <div className="lg:col-span-3 xl:col-span-3 bg-gradient-to-br from-[#FFF9EE] via-[#FDF7E7] to-[#F5E8C7] rounded-xl sm:rounded-[26px] p-3 sm:p-6 lg:p-7 border border-[#E2CAA0] shadow-2xs flex flex-col justify-between relative overflow-hidden">
                                     <div className="relative z-10">
-                                        <div className="flex items-center justify-between mb-2.5 sm:mb-3.5">
-                                            <div className="flex items-center gap-1.5 text-[9.5px] sm:text-[10px] font-bold tracking-[0.22em] uppercase text-[#9E781E]">
+                                        <div className="flex items-center justify-between mb-1.5 sm:mb-3.5">
+                                            <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-bold tracking-[0.22em] uppercase text-[#9E781E]">
                                                 <span>✦</span> <span>FESTIVE EDIT</span>
                                             </div>
-                                            <span className="text-[10px] sm:text-[11px] font-bold text-[#8E5B00] bg-[#FAF2DE] px-2.5 py-0.5 rounded-full border border-[#DFC48D] shadow-2xs">
+                                            <span className="text-[9.5px] sm:text-[11px] font-bold text-[#8E5B00] bg-[#FAF2DE] px-2 py-0.5 rounded-full border border-[#DFC48D] shadow-2xs">
                                                 Navratri 2026 Special
                                             </span>
                                         </div>
 
-                                        <h2 className="font-serif text-2xl min-[380px]:text-3xl sm:text-4xl lg:text-[42px] font-normal text-[#161616] leading-[1.12]">
+                                        <h2 className="font-serif text-lg min-[360px]:text-xl sm:text-3xl lg:text-[40px] font-normal text-[#161616] leading-[1.15]">
                                             Navratri<br className="hidden sm:inline" /> Collection
                                         </h2>
 
-                                        <p className="text-xs text-stone-600 mt-2.5 sm:mt-4 leading-relaxed">
+                                        <p className="text-[11px] sm:text-xs text-stone-600 mt-1.5 sm:mt-3 leading-relaxed">
                                             A Meaningful Gift. A Blessing That Stays. Consecrated Sherawali Maa Durga, Lakshmi & Parvati in pristine white Makrana marble with 24K gold foil detailing.
                                         </p>
 
                                         {/* Sacred Quality Trust Points */}
-                                        <div className="mt-3.5 sm:mt-5 space-y-1.5 text-[11px] text-stone-700 font-medium">
-                                            <div className="flex items-center gap-2">
+                                        <div className="mt-2.5 sm:mt-4 flex flex-wrap gap-x-3 gap-y-1 sm:block sm:space-y-1.5 text-[10px] sm:text-[11px] text-stone-700 font-medium">
+                                            <div className="flex items-center gap-1.5">
                                                 <span className="text-[#C69722] text-xs">✓</span>
                                                 <span>Pran Pratishtha Ready</span>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1.5">
                                                 <span className="text-[#C69722] text-xs">✓</span>
                                                 <span>24K Pure Gold Detailing</span>
                                             </div>
-                                            <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-1.5">
                                                 <span className="text-[#C69722] text-xs">✓</span>
-                                                <span>Zero-Breakage Crating Guarantee</span>
+                                                <span>Zero-Breakage Guarantee</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Mobile & Desktop Action Row */}
-                                    <div className="mt-4 sm:mt-7 pt-3 border-t border-[#E8DEC8]/80 flex flex-wrap items-center justify-between gap-2.5 relative z-10">
+                                    <div className="mt-3 sm:mt-6 pt-2 sm:pt-3 border-t border-[#E8DEC8]/80 flex items-center justify-between gap-2 relative z-10">
                                         <button
                                             type="button"
                                             onClick={() => navigateTo('navratri')}
-                                            className="px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl bg-[#F7C600] hover:bg-[#E0B200] text-[#161616] font-bold text-xs tracking-wider uppercase transition shadow-sm active:scale-95 flex items-center gap-1.5 tap-target-48"
+                                            className="px-4 py-2 sm:px-6 sm:py-3 rounded-xl bg-[#F7C600] hover:bg-[#E0B200] text-[#161616] font-bold text-[11px] sm:text-xs tracking-wider uppercase transition shadow-sm active:scale-95 flex items-center gap-1.5 tap-target-44"
                                         >
                                             <span>SHOP GIFTS</span>
                                             <ArrowRight className="w-3.5 h-3.5" />
                                         </button>
 
-                                        {/* Mobile View Switcher (Showcase 1-Col vs Grid 2-Col) */}
-                                        <div className="sm:hidden flex items-center bg-[#FAF2DE] p-0.5 rounded-lg border border-[#DFC48D]">
+                                        {/* Mobile Swipe Navigation Controls */}
+                                        <div className="lg:hidden flex items-center gap-1">
                                             <button
                                                 type="button"
-                                                onClick={() => setFestiveLayout('single')}
-                                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition flex items-center gap-1 ${
-                                                    festiveLayout === 'single'
-                                                        ? 'bg-[#161616] text-[#F7C600] shadow-xs'
-                                                        : 'text-stone-700 hover:text-black'
-                                                }`}
-                                                aria-label="1-Column Mobile Showcase"
+                                                onClick={() => scrollTrack('festive-track', -250)}
+                                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FAF2DE] hover:bg-[#F3EAD3] border border-[#DFC48D] text-stone-800 flex items-center justify-center transition shadow-2xs active:scale-95 tap-target-44"
+                                                aria-label="Scroll left"
+                                                title="Scroll left"
                                             >
-                                                <span>1-Col</span>
+                                                <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => setFestiveLayout('grid')}
-                                                className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition flex items-center gap-1 ${
-                                                    festiveLayout === 'grid'
-                                                        ? 'bg-[#161616] text-[#F7C600] shadow-xs'
-                                                        : 'text-stone-700 hover:text-black'
-                                                }`}
-                                                aria-label="2-Column Mobile Grid"
+                                                onClick={() => scrollTrack('festive-track', 250)}
+                                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FAF2DE] hover:bg-[#F3EAD3] border border-[#DFC48D] text-stone-800 flex items-center justify-center transition shadow-2xs active:scale-95 tap-target-44"
+                                                aria-label="Scroll right"
+                                                title="Scroll right"
                                             >
-                                                <span>2-Col</span>
+                                                <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Right / Main Product Showcase Grid (All 4 Festive Idols) */}
-                                <div className="lg:col-span-9 xl:col-span-9 flex flex-col justify-between">
-                                    <div className={
-                                        festiveLayout === 'single'
-                                            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
-                                            : "grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-5"
-                                    }>
+                                {/* Right / Main Product Showcase Carousel (All 4 Festive Idols - Horizontal on Mobile/Tablet, 4-Col Grid on Desktop) */}
+                                <div className="lg:col-span-9 xl:col-span-9 flex flex-col justify-between relative">
+                                    {/* Tablet Floating Arrows */}
+                                    <button
+                                        type="button"
+                                        onClick={() => scrollTrack('festive-track', -280)}
+                                        className="hidden sm:flex lg:hidden absolute -left-3 top-[40%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-xl border border-[#DFC48D] items-center justify-center hover:scale-110 transition text-stone-800"
+                                        aria-label="Previous festive idols"
+                                    >
+                                        <ChevronLeft className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => scrollTrack('festive-track', 280)}
+                                        className="hidden sm:flex lg:hidden absolute -right-3 top-[40%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-xl border border-[#DFC48D] items-center justify-center hover:scale-110 transition text-stone-800"
+                                        aria-label="Next festive idols"
+                                    >
+                                        <ChevronRight className="w-5 h-5" />
+                                    </button>
+
+                                    <div
+                                        id="festive-track"
+                                        className="flex lg:grid lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 overflow-x-auto lg:overflow-visible no-scrollbar scroll-smooth pb-3 sm:pb-4 lg:pb-0 px-1 snap-x snap-mandatory"
+                                    >
                                         {catalog.slice(6, 10).map(p => (
                                             <div
                                                 key={p.id}
-                                                className={`bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/60 transition-all duration-300 flex flex-col justify-between group ${
-                                                    festiveLayout === 'single'
-                                                        ? 'p-3.5 sm:p-4 max-w-md mx-auto sm:max-w-none w-full'
-                                                        : 'p-2.5 sm:p-4'
-                                                }`}
+                                                className="w-[230px] sm:w-[260px] lg:w-auto flex-shrink-0 lg:flex-shrink snap-start bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/60 transition-all duration-300 flex flex-col justify-between group p-3 sm:p-4"
                                             >
                                                 <div>
                                                     {/* Full-Height Portrait Deity Image Container */}
                                                     <div 
                                                         onClick={() => openProductPage(p)}
-                                                        className="relative rounded-xl sm:rounded-2xl overflow-hidden aspect-[3/4] mb-3 bg-gradient-to-b from-[#FAF5E8] to-[#F3EAD3] border border-stone-100 cursor-pointer"
+                                                        className="relative rounded-xl sm:rounded-2xl overflow-hidden aspect-square sm:aspect-[3/4] mb-2.5 sm:mb-3 bg-gradient-to-b from-[#FAF5E8] to-[#F3EAD3] border border-stone-100 cursor-pointer"
                                                     >
                                                         <img
                                                             src={p.img}
@@ -1333,63 +1313,57 @@ export default function App() {
                                                             loading="lazy"
                                                         />
                                                         
-                                                        {/* Discount Pill with Golden Dot (matches user specification) */}
+                                                        {/* Discount Pill with Golden Dot */}
                                                         {p.off && (
-                                                            <span className="absolute top-2.5 left-2.5 bg-[#161616]/95 backdrop-blur-xs text-[#F7C600] text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full shadow-md flex items-center gap-1.5 z-10">
+                                                            <span className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 bg-[#161616]/95 backdrop-blur-xs text-[#F7C600] text-[9px] sm:text-[11px] font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-md flex items-center gap-1 sm:gap-1.5 z-10">
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-[#F7C600]"></span>
                                                                 {p.off.toUpperCase()}
                                                             </span>
                                                         )}
 
-                                                        {/* Circular Wishlist Button (matches user specification) */}
+                                                        {/* Circular Wishlist Button */}
                                                         <button
                                                             type="button"
                                                             onClick={(e) => toggleWishlist(p.id, e)}
-                                                            className={`absolute top-2.5 right-2.5 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all shadow-md z-10 tap-target-48 ${
+                                                            className={`absolute top-2 right-2 sm:top-2.5 sm:right-2.5 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all shadow-md z-10 tap-target-44 ${
                                                                 wishlist.includes(p.id)
                                                                     ? 'bg-rose-50 text-rose-500 scale-105'
                                                                     : 'bg-white/95 text-stone-700 hover:text-rose-500 hover:scale-110'
                                                             }`}
                                                             aria-label={wishlist.includes(p.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
                                                         >
-                                                            <Heart className={`w-4 h-4 ${wishlist.includes(p.id) ? 'fill-current text-rose-500' : ''}`} />
+                                                            <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${wishlist.includes(p.id) ? 'fill-current text-rose-500' : ''}`} />
                                                         </button>
                                                     </div>
 
                                                     {/* Category & Star Rating Row */}
-                                                    <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-bold tracking-widest uppercase text-[#9E781E] mb-1.5">
-                                                        <span>{p.deity ? `${p.deity.toUpperCase()} MURTI` : 'SACRED IDOL'}</span>
-                                                        <span className="flex items-center gap-1 text-[#8E5B00] bg-[#FAF2DE] border border-[#DFC48D]/70 px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-bold">
-                                                            <Star className="w-3 h-3 fill-amber-400 text-amber-500" /> 4.9
+                                                    <div className="flex items-center justify-between text-[9px] sm:text-[11px] font-bold tracking-widest uppercase text-[#9E781E] mb-1 sm:mb-1.5">
+                                                        <span className="truncate max-w-[110px] sm:max-w-none">{p.deity ? `${p.deity.toUpperCase()} MURTI` : 'SACRED IDOL'}</span>
+                                                        <span className="flex items-center gap-0.5 sm:gap-1 text-[#8E5B00] bg-[#FAF2DE] border border-[#DFC48D]/70 px-1.5 py-0.5 rounded text-[9px] sm:text-[11px] font-bold shrink-0">
+                                                            <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-500" /> 4.9
                                                         </span>
                                                     </div>
 
                                                     {/* Title */}
                                                     <h3 
                                                         onClick={() => openProductPage(p)}
-                                                        className={`font-semibold text-[#181411] line-clamp-2 leading-snug cursor-pointer group-hover:text-[#C69722] transition-colors ${
-                                                            festiveLayout === 'single'
-                                                                ? 'text-[13.5px] sm:text-sm min-h-[38px] sm:min-h-[42px]'
-                                                                : 'text-xs sm:text-sm min-h-[32px] sm:min-h-[42px]'
-                                                        }`}
+                                                        className="text-xs sm:text-sm font-semibold text-[#181411] line-clamp-2 leading-snug cursor-pointer group-hover:text-[#C69722] transition-colors min-h-[36px] sm:min-h-[40px]"
                                                     >
                                                         {p.title}
                                                     </h3>
 
                                                     {/* Price Row with Strikethrough & Savings Tag */}
-                                                    <div className="flex items-baseline gap-2 mt-2 sm:mt-2.5 mb-3 flex-wrap">
-                                                        <span className={`font-serif font-bold text-[#161616] ${
-                                                            festiveLayout === 'single' ? 'text-xl sm:text-2xl' : 'text-lg sm:text-2xl'
-                                                        }`}>
+                                                    <div className="flex items-baseline gap-1.5 sm:gap-2 mt-1.5 sm:mt-2.5 mb-2 sm:mb-3 flex-wrap">
+                                                        <span className="font-serif font-bold text-base sm:text-xl text-[#161616]">
                                                             ₹{p.price.toLocaleString('en-IN')}
                                                         </span>
                                                         {p.oldPrice && (
-                                                            <span className="text-xs text-stone-400 line-through">
+                                                            <span className="text-[10px] sm:text-xs text-stone-400 line-through">
                                                                 ₹{p.oldPrice.toLocaleString('en-IN')}
                                                             </span>
                                                         )}
                                                         {p.off && (
-                                                            <span className="px-2 py-0.5 rounded-full bg-[#E8F8F0] text-[#1B8053] text-[9.5px] sm:text-[10px] font-bold tracking-wide border border-[#BDE8D3]">
+                                                            <span className="px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-full bg-[#E8F8F0] text-[#1B8053] text-[8.5px] sm:text-[10px] font-bold tracking-wide border border-[#BDE8D3]">
                                                                 {p.off}
                                                             </span>
                                                         )}
@@ -1397,14 +1371,14 @@ export default function App() {
                                                 </div>
 
                                                 {/* Action Buttons: Add to Cart & Buy Now */}
-                                                <div className="grid grid-cols-2 gap-2 mt-auto pt-3 border-t border-stone-100">
+                                                <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mt-auto pt-2 sm:pt-2.5 border-t border-stone-100">
                                                     <button
                                                         type="button"
                                                         onClick={() => addToCart(p)}
-                                                        className="min-h-[44px] py-2 px-2 rounded-xl border border-stone-800 text-[#161616] hover:bg-[#161616] hover:text-white bg-white text-[10px] sm:text-[11px] font-bold tracking-wider uppercase transition-all duration-150 flex items-center justify-center gap-1.5 tap-target-48 active:scale-95"
+                                                        className="w-full min-h-[38px] sm:min-h-[42px] py-1.5 sm:py-2 px-1 rounded-xl bg-[#161616] hover:bg-[#C69722] text-[#F7C600] hover:text-white text-[10px] sm:text-[11px] font-bold tracking-wider uppercase transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 shadow-2xs tap-target-44"
                                                     >
                                                         <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
-                                                        <span className="truncate">{festiveLayout === 'single' ? 'ADD TO CART' : 'ADD'}</span>
+                                                        <span className="truncate">ADD TO CART</span>
                                                     </button>
                                                     <button
                                                         type="button"
@@ -1412,7 +1386,8 @@ export default function App() {
                                                             addToCart(p);
                                                             setIsCheckoutOpen(true);
                                                         }}
-                                                        className="min-h-[44px] py-2 px-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[10px] sm:text-[11px] font-black tracking-wider uppercase transition-all duration-150 shadow-xs flex items-center justify-center gap-1 tap-target-48 active:scale-95"
+                                                        className="w-full min-h-[38px] sm:min-h-[42px] py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[10px] sm:text-[11px] font-black uppercase transition-all duration-150 shadow-2xs flex items-center justify-center active:scale-95 tap-target-44"
+                                                        title="Instant Buy"
                                                     >
                                                         <span className="truncate">BUY NOW</span>
                                                     </button>
@@ -1462,9 +1437,9 @@ export default function App() {
                                 </div>
                             </div>
 
-                            <div id="dark-overlay-track" className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-2">
+                            <div id="dark-overlay-track" className="flex gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-2">
                                 {overlayCards.map(c => (
-                                    <div key={c.id} className="w-[200px] sm:w-[220px] flex-shrink-0 rounded-2xl overflow-hidden relative group shadow-lg flex flex-col justify-end h-[310px] bg-stone-900 border border-stone-800">
+                                    <div key={c.id} className="w-[180px] sm:w-[220px] flex-shrink-0 rounded-2xl overflow-hidden relative group shadow-lg flex flex-col justify-end h-[270px] sm:h-[310px] bg-stone-900 border border-stone-800">
                                         <div 
                                             onClick={() => openProductPage(c)}
                                             className="absolute inset-0 cursor-pointer"
@@ -1475,7 +1450,7 @@ export default function App() {
                                         <button
                                             type="button"
                                             onClick={(e) => toggleWishlist(c.id, e)}
-                                            className={`absolute top-2.5 right-2.5 w-11 h-11 rounded-full flex items-center justify-center transition shadow-md z-20 tap-target-48 ${
+                                            className={`absolute top-2 right-2 sm:top-2.5 sm:right-2.5 w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition shadow-md z-20 tap-target-44 ${
                                                 wishlist.includes(c.id) ? 'bg-red-50 text-red-500' : 'bg-black/60 text-white hover:text-red-400'
                                             }`}
                                             aria-label={wishlist.includes(c.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
@@ -1484,29 +1459,34 @@ export default function App() {
                                         </button>
                                         <div 
                                             onClick={() => openProductPage(c)}
-                                            className="relative z-10 p-3.5 text-white cursor-pointer"
+                                            className="relative z-10 p-3 sm:p-3.5 text-white cursor-pointer"
                                         >
-                                            <h4 className="text-[11px] font-semibold leading-snug line-clamp-2 hover:text-[#F7C600] transition">{c.title}</h4>
-                                            <div className="flex items-center gap-2 mt-1.5 text-xs">
+                                            <h4 className="text-xs sm:text-[11px] font-semibold leading-snug line-clamp-2 hover:text-[#F7C600] transition">{c.title}</h4>
+                                            <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-1.5 text-xs">
                                                 <span className="font-bold text-[#F7C600]">{c.price}</span>
                                                 <span className="text-stone-400 line-through text-[10px]">{c.old}</span>
                                             </div>
                                         </div>
-                                        <div className="relative z-10 flex items-center bg-[#181818] border-t border-white/10">
+                                        <div className="relative z-10 grid grid-cols-2 divide-x divide-white/10 bg-[#181818] border-t border-white/10">
                                             <button
                                                 type="button"
                                                 onClick={() => addToCart(c)}
-                                                className="flex-1 text-white hover:text-[#F7C600] text-xs font-semibold min-h-[44px] py-2.5 transition tap-target-48 active:scale-95 flex items-center justify-center"
+                                                className="w-full text-white hover:text-[#F7C600] text-[10px] sm:text-xs font-semibold min-h-[38px] sm:min-h-[42px] py-2 px-1 transition tap-target-44 active:scale-95 flex items-center justify-center gap-1"
                                             >
-                                                Add To Cart
+                                                <ShoppingCart className="w-3 h-3 shrink-0" />
+                                                <span className="truncate">Add to Cart</span>
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => addToCart(c, true)}
-                                                className="min-w-[44px] min-h-[44px] px-3 py-2.5 text-white/80 hover:text-white border-l border-white/10 flex items-center justify-center tap-target-48 active:scale-95"
-                                                aria-label={`Buy ${c.title} now`}
+                                                onClick={() => {
+                                                    addToCart(c);
+                                                    setIsCheckoutOpen(true);
+                                                }}
+                                                className="w-full text-[#F7C600] hover:text-white text-[10px] sm:text-xs font-semibold min-h-[38px] sm:min-h-[42px] py-2 px-1 transition tap-target-44 active:scale-95 flex items-center justify-center gap-1"
+                                                title="Instant Buy"
                                             >
-                                                <ChevronRight className="w-4 h-4" />
+                                                <span className="truncate">Buy Now</span>
+                                                <ArrowRight className="w-3 h-3 shrink-0" />
                                             </button>
                                         </div>
                                     </div>
@@ -1765,15 +1745,15 @@ export default function App() {
 
                             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
                                 {catalog.slice(10, 14).map(p => (
-                                    <div key={p.id} className="bg-white rounded-2xl p-2.5 sm:p-4 border border-stone-200/80 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300 flex flex-col justify-between group">
+                                    <div key={p.id} className="bg-white rounded-xl sm:rounded-2xl p-2 sm:p-4 border border-stone-200/80 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300 flex flex-col justify-between group">
                                         <div>
                                             <div 
                                                 onClick={() => openProductPage(p)}
-                                                className="relative rounded-xl overflow-hidden aspect-[3/4] mb-2.5 sm:mb-3.5 bg-gradient-to-b from-[#FAF5E8] to-[#F3EAD3] border border-stone-100 cursor-pointer"
+                                                className="relative rounded-lg sm:rounded-xl overflow-hidden aspect-square sm:aspect-[3/4] mb-2 sm:mb-3.5 bg-gradient-to-b from-[#FAF5E8] to-[#F3EAD3] border border-stone-100 cursor-pointer"
                                             >
-                                                <img src={p.img} alt={p.title} className="w-full h-full object-contain p-2 img-studio-contrast group-hover:scale-105 transition-transform duration-500 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]" loading="lazy" />
+                                                <img src={p.img} alt={p.title} className="w-full h-full object-contain p-1.5 sm:p-2 img-studio-contrast group-hover:scale-105 transition-transform duration-500 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]" loading="lazy" />
                                                 {p.off && (
-                                                    <span className="absolute top-2 left-2 bg-[#161616]/90 backdrop-blur-xs text-[#F7C600] text-[9px] sm:text-[10px] font-extrabold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-md flex items-center gap-1">
+                                                    <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 bg-[#161616]/90 backdrop-blur-xs text-[#F7C600] text-[8px] sm:text-[10px] font-extrabold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-md flex items-center gap-1">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-[#F7C600]"></span>
                                                         {p.off.toUpperCase()}
                                                     </span>
@@ -1781,7 +1761,7 @@ export default function App() {
                                                 <button
                                                     type="button"
                                                     onClick={(e) => toggleWishlist(p.id, e)}
-                                                    className={`absolute top-2 right-2 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all shadow-md z-10 tap-target-48 ${
+                                                    className={`absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all shadow-md z-10 tap-target-48 ${
                                                         wishlist.includes(p.id) ? 'bg-rose-50 text-rose-500 scale-105' : 'bg-white/95 text-stone-700 hover:text-rose-500 hover:scale-110'
                                                     }`}
                                                     aria-label={wishlist.includes(p.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
@@ -1790,27 +1770,27 @@ export default function App() {
                                                 </button>
                                             </div>
 
-                                            <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-bold tracking-widest uppercase text-[#9E781E] mb-1 sm:mb-1.5">
-                                                <span>{p.deity ? `${p.deity} Murti` : 'Sacred Idol'}</span>
-                                                <span className="flex items-center gap-1 text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[9px] sm:text-[10px] font-bold">
-                                                    <Star className="w-3 h-3 fill-amber-400 text-amber-500" /> 4.9
+                                            <div className="flex items-center justify-between text-[8.5px] sm:text-[10px] font-bold tracking-widest uppercase text-[#9E781E] mb-1 sm:mb-1.5">
+                                                <span className="truncate max-w-[80px] sm:max-w-none">{p.deity ? `${p.deity} Murti` : 'Sacred Idol'}</span>
+                                                <span className="flex items-center gap-0.5 sm:gap-1 text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[8.5px] sm:text-[10px] font-bold">
+                                                    <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-500" /> 4.9
                                                 </span>
                                             </div>
 
                                             <h3 
                                                 onClick={() => openProductPage(p)}
-                                                className="text-[12px] sm:text-sm font-semibold text-[#181411] line-clamp-2 leading-snug cursor-pointer group-hover:text-[#C69722] transition-colors min-h-[32px] sm:min-h-[38px]"
+                                                className="text-xs sm:text-sm font-semibold text-[#181411] line-clamp-2 leading-snug cursor-pointer group-hover:text-[#C69722] transition-colors min-h-[36px] sm:min-h-[40px]"
                                             >
                                                 {p.title}
                                             </h3>
 
-                                            <div className="flex items-baseline gap-1.5 sm:gap-2 mt-2 sm:mt-2.5 mb-2 sm:mb-3">
-                                                <span className="font-serif text-base sm:text-2xl font-bold text-[#161616]">₹{p.price.toLocaleString('en-IN')}</span>
+                                            <div className="flex items-baseline gap-1 sm:gap-2 mt-1.5 sm:mt-2.5 mb-2 sm:mb-3 flex-wrap">
+                                                <span className="font-serif text-sm sm:text-2xl font-bold text-[#161616]">₹{p.price.toLocaleString('en-IN')}</span>
                                                 {p.oldPrice && (
-                                                    <span className="text-[11px] sm:text-xs text-stone-400 line-through">₹{p.oldPrice.toLocaleString('en-IN')}</span>
+                                                    <span className="text-[10px] sm:text-xs text-stone-400 line-through">₹{p.oldPrice.toLocaleString('en-IN')}</span>
                                                 )}
                                                 {p.off && (
-                                                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[9px] sm:text-[10px] font-bold tracking-wide border border-emerald-200/50">
+                                                    <span className="px-1.5 py-0.2 sm:px-1.5 sm:py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[8.5px] sm:text-[10px] font-bold tracking-wide border border-emerald-200/50">
                                                         {p.off}
                                                     </span>
                                                 )}
@@ -1821,10 +1801,10 @@ export default function App() {
                                             <button
                                                 type="button"
                                                 onClick={() => addToCart(p)}
-                                                className="min-h-[38px] sm:min-h-[44px] py-1 px-1.5 sm:px-2 rounded-xl border border-stone-800 text-[#161616] hover:bg-[#161616] hover:text-white text-[9.5px] sm:text-[10.5px] font-bold tracking-wider uppercase transition-all duration-150 flex items-center justify-center gap-1 tap-target-48 active:scale-95"
+                                                className="w-full min-h-[38px] sm:min-h-[44px] py-1.5 sm:py-2 px-1 rounded-xl bg-[#161616] hover:bg-[#C69722] text-[#F7C600] hover:text-white text-[10px] sm:text-[11px] font-bold tracking-wider uppercase transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 shadow-2xs tap-target-44"
                                             >
-                                                <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                                                <span>ADD</span>
+                                                <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
+                                                <span className="truncate">ADD</span>
                                             </button>
                                             <button
                                                 type="button"
@@ -1832,9 +1812,9 @@ export default function App() {
                                                     addToCart(p);
                                                     setIsCheckoutOpen(true);
                                                 }}
-                                                className="min-h-[38px] sm:min-h-[44px] py-1 px-1.5 sm:px-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[9.5px] sm:text-[10.5px] font-black tracking-wider uppercase transition-all duration-150 shadow-xs flex items-center justify-center gap-1 tap-target-48 active:scale-95"
+                                                className="w-full min-h-[38px] sm:min-h-[44px] py-1.5 sm:py-2 px-1 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[10px] sm:text-[11px] font-black uppercase transition-all duration-150 shadow-xs flex items-center justify-center active:scale-95 tap-target-44"
                                             >
-                                                <span>BUY NOW</span>
+                                                <span className="truncate">BUY</span>
                                             </button>
                                         </div>
                                     </div>
@@ -1876,28 +1856,28 @@ export default function App() {
                                 </button>
                             </div>
 
-                            <div className="flex sm:grid sm:grid-cols-3 gap-4 sm:gap-7 overflow-x-auto sm:overflow-visible no-scrollbar snap-x snap-mandatory pb-2 sm:pb-0">
+                            <div className="flex sm:grid sm:grid-cols-3 gap-3 sm:gap-7 overflow-x-auto sm:overflow-visible no-scrollbar snap-x snap-mandatory pb-2 sm:pb-0">
                                 {blogPosts
                                     .filter(b => activeBlogCategory === 'all' || b.category === activeBlogCategory)
                                     .map(blog => (
                                         <article
                                             key={blog.id}
                                             onClick={() => setSelectedArticle(blog)}
-                                            className="group cursor-pointer w-[75vw] min-w-[260px] max-w-[320px] sm:w-auto sm:max-w-none flex-shrink-0 snap-start"
+                                            className="group cursor-pointer w-[68vw] min-w-[210px] max-w-[260px] sm:w-auto sm:max-w-none flex-shrink-0 snap-start"
                                         >
-                                            <div className="relative rounded-2xl overflow-hidden aspect-[4/3] sm:aspect-square mb-3 sm:mb-4 bg-stone-900">
+                                            <div className="relative rounded-xl sm:rounded-2xl overflow-hidden aspect-[4/3] sm:aspect-square mb-2 sm:mb-4 bg-stone-900">
                                                 <img src={blog.img} alt={blog.title} className="w-full h-full object-cover img-studio-contrast group-hover:scale-105 transition duration-300" />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent flex items-end p-4 sm:p-5">
-                                                    <p className="font-serif text-white text-lg sm:text-2xl font-bold leading-tight whitespace-pre-line">{blog.heading}</p>
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent flex items-end p-3 sm:p-5">
+                                                    <p className="font-serif text-white text-sm sm:text-2xl font-bold leading-tight whitespace-pre-line">{blog.heading}</p>
                                                 </div>
-                                                <span className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 bg-[#161616]/90 text-white text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 sm:px-2.5 sm:py-1 rounded">
+                                                <span className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-[#161616]/90 text-white text-[8px] sm:text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded">
                                                     {blog.tag}
                                                 </span>
                                             </div>
-                                            <h3 className="font-serif text-base sm:text-xl font-semibold text-[#161616] group-hover:text-[#C69722] transition leading-snug line-clamp-2">
+                                            <h3 className="font-serif text-sm sm:text-xl font-semibold text-[#161616] group-hover:text-[#C69722] transition leading-snug line-clamp-2">
                                                 {blog.title}
                                             </h3>
-                                            <p className="text-[11px] sm:text-xs text-stone-500 mt-1.5 sm:mt-2 line-clamp-2">
+                                            <p className="text-[10px] sm:text-xs text-stone-500 mt-1 sm:mt-2 line-clamp-2">
                                                 {blog.desc}
                                             </p>
                                         </article>
@@ -2091,18 +2071,18 @@ export default function App() {
             {/* ========================================================================= */}
             {currentPage !== 'home' && currentPage !== 'product' && (
                 <div className="min-h-screen bg-white">
-                    <div className="bg-jaali-gold py-12 px-4 text-center border-b border-[#E6D6B8]">
-                        <div className="max-w-3xl mx-auto space-y-3">
-                            <h1 className="font-serif text-4xl sm:text-5xl text-[#161616]">
+                    <div className="bg-jaali-gold py-5 sm:py-10 px-4 text-center border-b border-[#E6D6B8]">
+                        <div className="max-w-3xl mx-auto space-y-1.5 sm:space-y-3">
+                            <h1 className="font-serif text-2xl sm:text-4xl md:text-5xl text-[#161616]">
                                 {activeDeityFilter ? `${activeDeityFilter} Collection` : (pageMeta[currentPage]?.title || 'Products')}
                             </h1>
                             {!activeDeityFilter && pageMeta[currentPage]?.subtitle && (
-                                <p className="font-serif text-lg sm:text-xl font-semibold text-stone-800">
+                                <p className="font-serif text-xs sm:text-lg md:text-xl font-semibold text-stone-800">
                                     {pageMeta[currentPage].subtitle}
                                 </p>
                             )}
                             {!activeDeityFilter && pageMeta[currentPage]?.desc && (
-                                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-2xl mx-auto">
+                                <p className="hidden sm:block text-xs sm:text-sm text-stone-600 leading-relaxed max-w-2xl mx-auto">
                                     {pageMeta[currentPage].desc}
                                 </p>
                             )}
@@ -2239,23 +2219,23 @@ export default function App() {
                         ) : (
                             <div className={`grid grid-cols-2 sm:grid-cols-2 ${gridCols === 2 ? 'lg:grid-cols-2' : gridCols === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-2.5 sm:gap-6`}>
                                 {collectionItems.map(p => (
-                                    <div key={p.id} className="group flex flex-col justify-between bg-white p-2.5 sm:p-4 rounded-xl sm:rounded-2xl border border-stone-200/90 shadow-2xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300">
+                                    <div key={p.id} className="group flex flex-col justify-between bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-stone-200/90 shadow-2xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300">
                                         <div>
                                             <div 
                                                 onClick={() => openProductPage(p)}
-                                                className="relative rounded-lg sm:rounded-xl overflow-hidden aspect-[3/4] bg-gradient-to-b from-[#FAF5E8] to-[#F3EAD3] mb-2 sm:mb-3.5 border border-stone-100 cursor-pointer"
+                                                className="relative rounded-lg sm:rounded-xl overflow-hidden aspect-square sm:aspect-[3/4] bg-gradient-to-b from-[#FAF5E8] to-[#F3EAD3] mb-1.5 sm:mb-3.5 border border-stone-100 cursor-pointer"
                                             >
-                                                <img src={p.img} alt={p.title} className="w-full h-full object-contain p-2 img-studio-contrast group-hover:scale-105 transition-transform duration-500 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]" loading="lazy" />
+                                                <img src={p.img} alt={p.title} className="w-full h-full object-contain p-1.5 sm:p-2 img-studio-contrast group-hover:scale-105 transition-transform duration-500 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]" loading="lazy" />
                                                 {p.off && (
-                                                    <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 bg-[#161616]/90 backdrop-blur-xs text-[#F7C600] text-[9px] sm:text-[10px] font-extrabold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-md flex items-center gap-1">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-[#F7C600]"></span>
+                                                    <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 bg-[#161616]/90 backdrop-blur-xs text-[#F7C600] text-[8px] sm:text-[10px] font-extrabold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-md flex items-center gap-1">
+                                                        <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-[#F7C600]"></span>
                                                         {p.off.toUpperCase()}
                                                     </span>
                                                 )}
                                                 <button
                                                     type="button"
                                                     onClick={(e) => toggleWishlist(p.id, e)}
-                                                    className={`absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all shadow-md z-10 ${
+                                                    className={`absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all shadow-md z-10 ${
                                                         wishlist.includes(p.id) ? 'bg-rose-50 text-rose-500 scale-105' : 'bg-white/95 text-stone-700 hover:text-rose-500 hover:scale-110'
                                                     }`}
                                                     aria-label={wishlist.includes(p.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
@@ -2264,27 +2244,27 @@ export default function App() {
                                                 </button>
                                             </div>
 
-                                            <div className="flex items-center justify-between text-[9px] sm:text-[10px] font-bold tracking-wider uppercase text-[#9E781E] mb-1">
-                                                <span className="truncate max-w-[85px] sm:max-w-none">{p.deity ? `${p.deity}` : 'Idol'}</span>
-                                                <span className="flex items-center gap-0.5 text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[9.5px] font-bold shrink-0">
+                                            <div className="flex items-center justify-between text-[8px] sm:text-[10px] font-bold tracking-wider uppercase text-[#9E781E] mb-1">
+                                                <span className="truncate max-w-[80px] sm:max-w-none">{p.deity ? `${p.deity}` : 'Idol'}</span>
+                                                <span className="flex items-center gap-0.5 text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[8.5px] sm:text-[9.5px] font-bold shrink-0">
                                                     <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-500" /> 4.9
                                                 </span>
                                             </div>
 
                                             <h3 
                                                 onClick={() => openProductPage(p)}
-                                                className="text-xs sm:text-sm font-semibold text-[#181411] line-clamp-2 leading-tight cursor-pointer group-hover:text-[#C69722] transition-colors min-h-[32px] sm:min-h-[38px]"
+                                                className="text-[11.5px] sm:text-sm font-semibold text-[#181411] line-clamp-2 leading-tight cursor-pointer group-hover:text-[#C69722] transition-colors min-h-[28px] sm:min-h-[38px]"
                                             >
                                                 {p.title}
                                             </h3>
 
-                                            <div className="flex items-baseline gap-1.5 mt-1.5 sm:mt-2.5 mb-2 sm:mb-3 flex-wrap">
-                                                <span className="font-serif text-base sm:text-2xl font-bold text-[#161616]">₹{p.price.toLocaleString('en-IN')}</span>
+                                            <div className="flex items-baseline gap-1 sm:gap-1.5 mt-1 sm:mt-2.5 mb-1.5 sm:mb-3 flex-wrap">
+                                                <span className="font-serif text-sm sm:text-2xl font-bold text-[#161616]">₹{p.price.toLocaleString('en-IN')}</span>
                                                 {p.oldPrice && (
-                                                    <span className="text-[10.5px] sm:text-xs text-stone-400 line-through">₹{p.oldPrice.toLocaleString('en-IN')}</span>
+                                                    <span className="text-[10px] sm:text-xs text-stone-400 line-through">₹{p.oldPrice.toLocaleString('en-IN')}</span>
                                                 )}
                                                 {p.off && (
-                                                    <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[9px] sm:text-[10px] font-bold border border-emerald-200/50">
+                                                    <span className="px-1.5 py-0.2 sm:px-1.5 sm:py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[8px] sm:text-[10px] font-bold border border-emerald-200/50">
                                                         {p.off}
                                                     </span>
                                                 )}
@@ -2295,9 +2275,9 @@ export default function App() {
                                             <button
                                                 type="button"
                                                 onClick={() => addToCart(p)}
-                                                className="min-h-[38px] sm:min-h-[44px] py-1.5 px-1 rounded-lg sm:rounded-xl border border-stone-800 text-[#161616] hover:bg-[#161616] hover:text-white text-[9.5px] sm:text-[10.5px] font-bold uppercase transition-all duration-150 flex items-center justify-center gap-1 active:scale-95"
+                                                className="w-full min-h-[36px] sm:min-h-[44px] py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl bg-[#161616] hover:bg-[#C69722] text-[#F7C600] hover:text-white text-[9.5px] sm:text-[11px] font-bold uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 shadow-2xs"
                                             >
-                                                <ShoppingCart className="w-3 h-3 shrink-0" />
+                                                <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
                                                 <span className="truncate">ADD</span>
                                             </button>
                                             <button
@@ -2306,10 +2286,10 @@ export default function App() {
                                                     addToCart(p);
                                                     setIsCheckoutOpen(true);
                                                 }}
-                                                className="min-h-[38px] sm:min-h-[44px] py-1.5 px-1 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[9.5px] sm:text-[10.5px] font-black uppercase transition-all duration-150 shadow-xs flex items-center justify-center gap-1 active:scale-95"
+                                                className="w-full min-h-[36px] sm:min-h-[44px] py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[9.5px] sm:text-[11px] font-black uppercase transition-all duration-150 shadow-2xs flex items-center justify-center active:scale-95"
+                                                title="Instant Buy"
                                             >
                                                 <span className="truncate">BUY</span>
-                                                <ArrowRight className="w-3 h-3 shrink-0" />
                                             </button>
                                         </div>
                                     </div>
@@ -2478,12 +2458,18 @@ export default function App() {
                 <div className="fixed inset-0 z-50">
                     <div onClick={() => setIsCartOpen(false)} className="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
                     <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col justify-between">
-                        <div className="p-5 border-b border-stone-200 flex items-center justify-between bg-[#FAF5E8]">
+                        <div className="p-4 sm:p-5 border-b border-stone-200 flex items-center justify-between bg-[#FAF5E8]">
                             <div className="flex items-center gap-2">
                                 <ShoppingBag className="w-5 h-5 text-[#C69722]" />
-                                <h3 className="font-serif text-xl text-[#161616] font-semibold">Your Sacred Cart ({cartCount})</h3>
+                                <h3 className="font-serif text-lg sm:text-xl text-[#161616] font-semibold">Your Sacred Cart ({cartCount})</h3>
                             </div>
-                            <button onClick={() => setIsCartOpen(false)} className="text-stone-400 hover:text-black text-lg p-1">✕</button>
+                            <button
+                                onClick={() => setIsCartOpen(false)}
+                                className="w-11 h-11 flex items-center justify-center rounded-full text-stone-500 hover:text-black hover:bg-stone-200/60 active:scale-95 text-lg transition tap-target-44"
+                                aria-label="Close cart drawer"
+                            >
+                                ✕
+                            </button>
                         </div>
 
                         {/* Free Shipping Progress Indicator */}
@@ -2618,7 +2604,7 @@ export default function App() {
                          </div>
 
                          {cart.length > 0 && (
-                             <div className="p-5 border-t border-stone-200 bg-[#FAF5E8] space-y-2.5 pb-safe">
+                             <div className="p-4 sm:p-5 border-t border-stone-200 bg-[#FAF5E8] space-y-2.5 safe-bottom-pad">
                                  <div className="flex items-center gap-1.5 text-xs text-green-800 font-semibold">
                                      <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
                                      <span>COD Available • Free Pan-India Insured Delivery</span>
@@ -2764,133 +2750,6 @@ export default function App() {
                  }}
                  itemsCount={collectionItems.length}
              />
-
-             {/* ================= 26. MOBILE THUMB-ZONE BOTTOM NAVIGATION BAR ================= */}
-             {currentPage !== 'product' && (
-                 <nav
-                     aria-label="Mobile Bottom Navigation"
-                     style={{ backgroundColor: '#FAF5E8' }}
-                     className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#FAF5E8] border-t-2 border-[#D8C59D] safe-bottom-nav shadow-[0_-8px_32px_rgba(0,0,0,0.18)] flex items-center justify-around px-1"
-                 >
-                     {/* 1. Home */}
-                     <button
-                         type="button"
-                         onClick={() => navigateTo('home')}
-                         className={`relative flex-1 min-h-[56px] py-1.5 flex flex-col items-center justify-center gap-1 text-[10.5px] tracking-wider uppercase transition-all duration-150 active:scale-95 ${
-                             currentPage === 'home'
-                                 ? 'text-[#8E5B00] font-black'
-                                 : 'text-[#1C1813] font-bold hover:text-black'
-                         }`}
-                         aria-label="Home page"
-                     >
-                         {currentPage === 'home' && (
-                             <span className="absolute top-0 w-8 h-1 bg-[#B3810E] rounded-full shadow-[0_1px_3px_rgba(179,129,14,0.4)]"></span>
-                         )}
-                         <LayoutGrid className="w-5.5 h-5.5 stroke-[2.2]" />
-                         <span>Home</span>
-                     </button>
-
-                     {/* 2. Shop */}
-                     <button
-                         type="button"
-                         onClick={() => navigateTo('shop-all')}
-                         className={`relative flex-1 min-h-[56px] py-1.5 flex flex-col items-center justify-center gap-1 text-[10.5px] tracking-wider uppercase transition-all duration-150 active:scale-95 ${
-                             currentPage === 'shop-all' && !isWishlistFilterActive
-                                 ? 'text-[#8E5B00] font-black'
-                                 : 'text-[#1C1813] font-bold hover:text-black'
-                         }`}
-                         aria-label="Shop All Idols"
-                     >
-                         {currentPage === 'shop-all' && !isWishlistFilterActive && (
-                             <span className="absolute top-0 w-8 h-1 bg-[#B3810E] rounded-full shadow-[0_1px_3px_rgba(179,129,14,0.4)]"></span>
-                         )}
-                         <ShoppingBag className="w-5.5 h-5.5 stroke-[2.2]" />
-                         <span>Shop</span>
-                     </button>
-
-                     {/* 3. Wishlist */}
-                     <button
-                         type="button"
-                         onClick={() => {
-                             setIsMobileMenuOpen(false);
-                             if (wishlist.length === 0) {
-                                 showToast('Your Sacred Wishlist is empty. Tap ❤️ on idols to save.');
-                             } else {
-                                 setIsWishlistFilterActive(true);
-                                 setCurrentPage('shop-all');
-                                 setActiveDeityFilter(null);
-                                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                             }
-                         }}
-                         className={`relative flex-1 min-h-[56px] py-1.5 flex flex-col items-center justify-center gap-1 text-[10.5px] tracking-wider uppercase transition-all duration-150 active:scale-95 ${
-                             isWishlistFilterActive
-                                 ? 'text-rose-700 font-black'
-                                 : 'text-[#1C1813] font-bold hover:text-black'
-                         }`}
-                         aria-label={`Sacred Wishlist, ${wishlist.length} saved`}
-                     >
-                         {isWishlistFilterActive && (
-                             <span className="absolute top-0 w-8 h-1 bg-rose-600 rounded-full shadow-[0_1px_3px_rgba(225,29,72,0.4)]"></span>
-                         )}
-                         <div className="relative">
-                             <Heart
-                                 className={`w-5.5 h-5.5 stroke-[2.2] transition-colors ${
-                                     wishlist.length > 0 ? 'text-rose-600 fill-rose-500' : 'text-[#1C1813]'
-                                 }`}
-                             />
-                             {wishlist.length > 0 && (
-                                 <span className="absolute -top-1.5 -right-2.5 bg-rose-600 text-white text-[9.5px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center ring-2 ring-[#FAF5E8] shadow-sm">
-                                     {wishlist.length}
-                                 </span>
-                             )}
-                         </div>
-                         <span>Wishlist</span>
-                     </button>
-
-                     {/* 4. Cart */}
-                     <button
-                         type="button"
-                         onClick={() => {
-                             setIsMobileMenuOpen(false);
-                             setIsCartOpen(true);
-                         }}
-                         className="relative flex-1 min-h-[56px] py-1.5 flex flex-col items-center justify-center gap-1 text-[10.5px] font-bold tracking-wider uppercase text-[#1C1813] hover:text-black transition-all duration-150 active:scale-95"
-                         aria-label={`Open Cart, ${cartCount} items`}
-                     >
-                         <div className="relative">
-                             <ShoppingCart className="w-5.5 h-5.5 stroke-[2.2] text-[#1C1813]" />
-                             {cartCount > 0 && (
-                                 <span className="absolute -top-1.5 -right-2.5 bg-[#8E5B00] text-white text-[9.5px] font-black min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center ring-2 ring-[#FAF5E8] shadow-sm">
-                                     {cartCount}
-                                 </span>
-                             )}
-                         </div>
-                         <span>Cart</span>
-                     </button>
-
-                     {/* 5. Menu */}
-                     <button
-                         type="button"
-                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                         className={`relative flex-1 min-h-[56px] py-1.5 flex flex-col items-center justify-center gap-1 text-[10.5px] tracking-wider uppercase transition-all duration-150 active:scale-95 ${
-                             isMobileMenuOpen
-                                 ? 'text-[#8E5B00] font-black'
-                                 : 'text-[#1C1813] font-bold hover:text-black'
-                         }`}
-                         aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-                     >
-                         {isMobileMenuOpen && (
-                             <span className="absolute top-0 w-8 h-1 bg-[#B3810E] rounded-full shadow-[0_1px_3px_rgba(179,129,14,0.4)]"></span>
-                         )}
-                         {isMobileMenuOpen ? (
-                             <X className="w-5.5 h-5.5 stroke-[2.4]" />
-                         ) : (
-                             <Menu className="w-5.5 h-5.5 stroke-[2.2]" />
-                         )}
-                         <span>Menu</span>
-                     </button>
-                 </nav>
-             )}
 
              {/* Custom Toast Notification */}
              {isToastVisible && (

@@ -40,7 +40,7 @@ export default function ProductDetailModal({
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white/90 hover:bg-black hover:text-white shadow-md flex items-center justify-center text-stone-600 transition"
+                    className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-11 h-11 rounded-full bg-white/95 hover:bg-black hover:text-white shadow-md flex items-center justify-center text-stone-700 transition tap-target-48 active:scale-95"
                     aria-label="Close product view"
                 >
                     <X className="w-5 h-5" />
@@ -48,7 +48,7 @@ export default function ProductDetailModal({
 
                 <div className="grid md:grid-cols-12 max-h-[85vh] overflow-y-auto">
                     {/* Left: Image Gallery */}
-                    <div className="md:col-span-5 bg-[#FAF5E8] p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-[#E8DEC8]">
+                    <div className="md:col-span-5 bg-[#FAF5E8] p-4 sm:p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-[#E8DEC8]">
                         <div className="relative rounded-2xl overflow-hidden aspect-square bg-white shadow-sm border border-[#E6D6B8]/80 group">
                             <img
                                 src={product.img}
@@ -60,7 +60,7 @@ export default function ProductDetailModal({
                             </span>
                             <button
                                 onClick={(e) => onToggleWishlist(product.id, e)}
-                                className={`absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 shadow flex items-center justify-center transition ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-stone-500 hover:text-red-500'}`}
+                                className={`absolute top-3 right-3 w-10 h-10 rounded-full bg-white/90 shadow flex items-center justify-center transition tap-target-48 active:scale-95 ${isWishlisted ? 'text-red-500 fill-red-500' : 'text-stone-500 hover:text-red-500'}`}
                                 title={isWishlisted ? 'Remove from Wishlist' : 'Add to Wishlist'}
                             >
                                 <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-current' : ''}`} />
@@ -68,7 +68,7 @@ export default function ProductDetailModal({
                         </div>
 
                         {/* Guarantee Badges */}
-                        <div className="mt-6 pt-5 border-t border-[#E6D6B8]/60 space-y-2.5 text-[11px] text-stone-700 font-medium">
+                        <div className="mt-4 sm:mt-6 pt-4 sm:pt-5 border-t border-[#E6D6B8]/60 space-y-2 text-[11px] text-stone-700 font-medium">
                             <div className="flex items-center gap-2">
                                 <Gem className="w-4 h-4 text-[#C69722] flex-shrink-0" />
                                 <span>100% Authentic Hand-Carved Makrana Marble</span>
@@ -85,7 +85,7 @@ export default function ProductDetailModal({
                     </div>
 
                     {/* Right: Product Details & Purchase Form */}
-                    <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-5">
+                    <div className="md:col-span-7 p-4 sm:p-8 flex flex-col justify-between space-y-4 sm:space-y-5">
                         <div className="space-y-3">
                             <div className="flex items-center gap-2 text-xs">
                                 <div className="flex text-[#C69722]">
@@ -132,7 +132,7 @@ export default function ProductDetailModal({
                                             key={sz}
                                             type="button"
                                             onClick={() => setSelectedSize(sz)}
-                                            className={`p-2.5 text-left rounded-xl border text-xs font-medium transition ${selectedSize.startsWith(sz.split(' ')[0]) ? 'border-[#C69722] bg-[#FAF5E8] text-[#161616] font-bold shadow-xs' : 'border-stone-200 text-stone-600 hover:border-stone-400'}`}
+                                            className={`min-h-[44px] p-2.5 text-left rounded-xl border text-xs font-medium transition tap-target-48 active:scale-98 ${selectedSize.startsWith(sz.split(' ')[0]) ? 'border-[#C69722] bg-[#FAF5E8] text-[#161616] font-bold shadow-xs' : 'border-stone-200 text-stone-600 hover:border-stone-400'}`}
                                         >
                                             {sz}
                                         </button>
@@ -155,7 +155,7 @@ export default function ProductDetailModal({
                                             key={finish}
                                             type="button"
                                             onClick={() => setSelectedFinish(finish)}
-                                            className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition ${selectedFinish === finish ? 'border-[#C69722] bg-[#161616] text-[#F7C600] font-bold' : 'border-stone-200 text-stone-600 hover:border-stone-400'}`}
+                                            className={`min-h-[40px] px-3.5 py-2 rounded-xl border text-xs font-medium transition tap-target-48 active:scale-98 ${selectedFinish === finish ? 'border-[#C69722] bg-[#161616] text-[#F7C600] font-bold' : 'border-stone-200 text-stone-600 hover:border-stone-400'}`}
                                         >
                                             {finish}
                                         </button>
@@ -166,17 +166,19 @@ export default function ProductDetailModal({
                             {/* Quantity Selector */}
                             <div className="flex items-center gap-3 pt-2">
                                 <span className="text-xs font-bold text-[#161616] tracking-wider uppercase">Quantity:</span>
-                                <div className="flex items-center border border-stone-300 rounded-lg overflow-hidden bg-stone-50">
+                                <div className="flex items-center border border-stone-300 rounded-xl overflow-hidden bg-stone-50">
                                     <button
                                         onClick={() => setQty(Math.max(1, qty - 1))}
-                                        className="w-8 h-8 flex items-center justify-center hover:bg-stone-200 text-stone-700 font-bold"
+                                        className="w-10 h-10 flex items-center justify-center hover:bg-stone-200 text-stone-700 font-bold tap-target-44 active:scale-95"
+                                        aria-label="Decrease quantity"
                                     >
                                         -
                                     </button>
                                     <span className="w-10 text-center text-xs font-bold text-[#161616]">{qty}</span>
                                     <button
                                         onClick={() => setQty(qty + 1)}
-                                        className="w-8 h-8 flex items-center justify-center hover:bg-stone-200 text-stone-700 font-bold"
+                                        className="w-10 h-10 flex items-center justify-center hover:bg-stone-200 text-stone-700 font-bold tap-target-44 active:scale-95"
+                                        aria-label="Increase quantity"
                                     >
                                         +
                                     </button>
@@ -186,16 +188,16 @@ export default function ProductDetailModal({
 
                         {/* Action Buttons */}
                         <div className="space-y-2.5 pt-3 border-t border-stone-200">
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                                 <button
                                     onClick={() => handleAdd(false)}
-                                    className="w-full py-3 rounded-xl bg-[#161616] hover:bg-black text-white text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition shadow-md"
+                                    className="w-full min-h-[46px] py-3 rounded-xl bg-[#161616] hover:bg-black text-white text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition shadow-md active:scale-95 tap-target-48"
                                 >
                                     <ShoppingBag className="w-4 h-4" /> ADD TO CART
                                 </button>
                                 <button
                                     onClick={() => handleAdd(true)}
-                                    className="w-full py-3 rounded-xl bg-[#F7C600] hover:bg-[#E2B400] text-[#161616] text-xs font-bold tracking-wider uppercase transition shadow-md hover:scale-[1.02]"
+                                    className="w-full min-h-[46px] py-3 rounded-xl bg-[#F7C600] hover:bg-[#E2B400] text-[#161616] text-xs font-black tracking-wider uppercase transition shadow-md active:scale-95 tap-target-48"
                                 >
                                     BUY NOW ➔
                                 </button>
