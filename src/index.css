@@ -341,16 +341,49 @@ video {
     filter: contrast(1.1) saturate(1.1);
 }
 
-/* Smooth Section Scroll Reveal */
+/* GSAP Optimized Section Reveal */
 .reveal-section {
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.65s ease-out, transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
 }
 
-.reveal-section.is-visible {
-    opacity: 1;
-    transform: translateY(0);
+/* ================= Lenis 60fps Smooth Momentum Scroll ================= */
+html.lenis, html.lenis body {
+    height: auto;
+}
+
+.lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+    overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+    pointer-events: none;
+}
+
+/* Custom Sacred Gold Scrollbar for Desktop Browsers */
+@media (min-width: 1024px) {
+    ::-webkit-scrollbar {
+        width: 9px;
+        height: 9px;
+    }
+    ::-webkit-scrollbar-track {
+        background: #FAF5E8;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #DFC48D;
+        border-radius: 6px;
+        border: 2px solid #FAF5E8;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: #C69722;
+    }
 }
 
 /* Nav Link Animated Underline & Focus Reset */
@@ -556,6 +589,21 @@ video::-webkit-media-controls-overlay-play-button {
 
 .animate-halo-aura {
     animation: haloAura 3.5s ease-in-out infinite;
+}
+
+/* Continuous Horizontal Marquee Scroller Tracks */
+.continuous-marquee-track {
+    scroll-behavior: auto !important;
+    scroll-snap-type: none !important;
+    -webkit-overflow-scrolling: touch;
+    will-change: scroll-position;
+}
+
+/* Header Sticky Scrolled State (Activated via GSAP ScrollTrigger) */
+header.header-scrolled {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important;
+    border-color: rgba(212, 175, 55, 0.5) !important;
+    background-color: rgba(250, 245, 232, 0.98) !important;
 }
 
 

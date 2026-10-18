@@ -17,6 +17,10 @@ import ArticleModal from './components/ArticleModal';
 import InfoModal from './components/InfoModal';
 import FilterDrawer from './components/FilterDrawer';
 import IntroAnimation from './components/IntroAnimation';
+import ScrollProgress from './components/ScrollProgress';
+import { useLenisSmoothScroll } from './hooks/useLenisSmoothScroll';
+import { useGsapScrollAnimations } from './hooks/useGsapScrollAnimations';
+import { useContinuousScroll } from './hooks/useContinuousScroll';
 
 export default function App() {
     // 0. Starting Animation State
@@ -65,7 +69,16 @@ export default function App() {
     const videoRef = useRef(null);
     const [isVideoPlaying, setIsVideoPlaying] = useState(true);
     const [isVideoMuted, setIsVideoMuted] = useState(true);
-    const [activeHeroSlide, setActiveHeroSlide] = useState(0);
+    const [activeHeroSlide, setActiveHeroSlide] = useState(1); // Default to Showroom Walkthrough Video slide
+
+    // Auto-play hero showroom video when active
+    useEffect(() => {
+        if (activeHeroSlide === 1 && videoRef.current && isVideoPlaying) {
+            videoRef.current.play().catch(() => {
+                // Autoplay policy fallback
+            });
+        }
+    }, [activeHeroSlide, isVideoPlaying, showIntro]);
 
     const toggleHeroVideoPlay = () => {
         if (!videoRef.current) return;
@@ -195,14 +208,64 @@ export default function App() {
         setNewsletterEmail('');
     };
 
+    // Check if any modal is active (pauses smooth momentum background scroll)
+    const isAnyModalOpen = Boolean(
+        isCheckoutOpen ||
+        isTrackingModalOpen ||
+        isBulkQuoteOpen ||
+        selectedArticle ||
+        infoModalKey ||
+        isFilterDrawerOpen ||
+        isCartOpen ||
+        isMobileMenuOpen
+    );
+
+    // 60fps Lenis Smooth Momentum Scroll & GSAP ScrollTrigger Integration
+    const { scrollTo } = useLenisSmoothScroll({
+        isModalOpen: isAnyModalOpen,
+        currentPage
+    });
+
+    // High Performance GSAP Scroll Animations Hook
+    useGsapScrollAnimations({
+        currentPage,
+        showIntro
+    });
+
+    // Continuous Horizontal Marquee Scrollers (Active on Homepage)
+    useContinuousScroll({
+        trackId: 'most-loved-track',
+        speed: 0.7,
+        pauseOnHover: true,
+        totalCopies: 3,
+        enabled: currentPage === 'home' && !showIntro
+    });
+
+    useContinuousScroll({
+        trackId: 'festive-track',
+        speed: 0.75,
+        pauseOnHover: true,
+        totalCopies: 3,
+        enabled: currentPage === 'home' && !showIntro
+    });
+
+    useContinuousScroll({
+        trackId: 'dark-overlay-track',
+        speed: 0.75,
+        pauseOnHover: true,
+        totalCopies: 3,
+        enabled: currentPage === 'home' && !showIntro
+    });
+
     // Navigation Handler
     const navigateTo = (pageKey, deity = null) => {
         setCurrentPage(pageKey);
         setActiveDeityFilter(deity);
         setIsWishlistFilterActive(false);
         if (pageKey !== 'product') setSelectedProduct(null);
+        if (pageKey === 'home') setActiveHeroSlide(1);
         setIsMobileMenuOpen(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollTo(0);
     };
 
     // Dedicated Product Page Opener
@@ -213,13 +276,13 @@ export default function App() {
         setIsSearchOpen(false);
         setIsCartOpen(false);
         setIsMobileMenuOpen(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollTo(0);
     };
 
     const handleBackFromProduct = () => {
         setSelectedProduct(null);
         setCurrentPage('shop-all');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        scrollTo(0);
     };
 
     // Collection Items Computation with multi-filters
@@ -271,10 +334,13 @@ export default function App() {
 
     const collectionItems = getFilteredCollectionItems();
 
-    // Horizontal Scroll Helper
+    // Horizontal Scroll Helper with Continuous Marquee Pause
     const scrollTrack = (id, delta) => {
         const el = document.getElementById(id);
-        if (el) el.scrollBy({ left: delta, behavior: 'smooth' });
+        if (el) {
+            window.dispatchEvent(new CustomEvent('pauseContinuousScroll', { detail: { id } }));
+            el.scrollBy({ left: delta, behavior: 'smooth' });
+        }
     };
 
     return (
@@ -284,6 +350,9 @@ export default function App() {
             {showIntro && (
                 <IntroAnimation onComplete={() => setShowIntro(false)} />
             )}
+
+            {/* ================= SACRED GOLDEN SCROLL PROGRESS & BACK TO TOP ================= */}
+            <ScrollProgress onScrollTop={() => scrollTo(0)} />
 
             {/* ================= 2. STICKY NAVIGATION HEADER ================= */}
             <header className="sticky top-0 z-40 bg-[#FAF5E8]/95 backdrop-blur-md border-b border-[#E8DEC8] transition-shadow duration-300">
@@ -664,7 +733,7 @@ export default function App() {
             {currentPage === 'home' && (
                 <div>
                     {/* ================= 3. DEITY CATEGORY BAR ================= */}
-                    <section className="bg-[#FAF5E8]/60 py-4 sm:py-5 lg:py-6 border-b border-[#E8DEC8]">
+                    <section id="deity-category-bar" className="bg-[#FAF5E8]/60 py-4 sm:py-5 lg:py-6 border-b border-[#E8DEC8]">
                         <div className="w-full px-4 sm:px-8 lg:px-10 xl:px-12 2xl:px-16">
                             <div className="flex items-start justify-start lg:justify-between w-full overflow-x-auto no-scrollbar scroll-smooth py-1">
                                 {deityCategories.map(item => {
@@ -922,13 +991,13 @@ export default function App() {
                     </section>
 
                     {/* ================= 4B. 3 CATEGORY SPOTLIGHT CARDS (REFERENCE LAYOUT ARRANGEMENT) ================= */}
-                    <section className="bg-white py-5 sm:py-6 border-b border-[#E6D6B8] reveal-section is-visible">
+                    <section id="spotlight-section" className="bg-white py-5 sm:py-6 border-b border-[#E6D6B8] reveal-section is-visible">
                         <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
                             <div className="flex sm:grid sm:grid-cols-3 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 px-1 sm:px-0 no-scrollbar snap-x snap-mandatory">
                                 {/* Card 1: Car Dashboard Idols */}
                                 <div
                                     onClick={() => { setActiveDeityFilter(null); setFilterPlacement('car-dash'); navigateTo('shop-all'); }}
-                                    className="w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
+                                    className="spotlight-card w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
                                 >
                                     <div className="space-y-1.5 flex-1 min-w-0">
                                         <span className="text-[9px] sm:text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">PROTECTION ON ROADS</span>
@@ -953,7 +1022,7 @@ export default function App() {
                                 {/* Card 2: Home Mandir Murtis */}
                                 <div
                                     onClick={() => { setActiveDeityFilter(null); setFilterPlacement('mandir'); navigateTo('shop-all'); }}
-                                    className="w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
+                                    className="spotlight-card w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
                                 >
                                     <div className="space-y-1.5 flex-1 min-w-0">
                                         <span className="text-[9px] sm:text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">SANCTIFIED ALTARS</span>
@@ -978,7 +1047,7 @@ export default function App() {
                                 {/* Card 3: Sacred Gifting */}
                                 <div
                                     onClick={() => navigateTo('gifting')}
-                                    className="w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
+                                    className="spotlight-card w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
                                 >
                                     <div className="space-y-1.5 flex-1 min-w-0">
                                         <span className="text-[9px] sm:text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">ROYAL PRESENTATION</span>
@@ -1004,18 +1073,18 @@ export default function App() {
                     </section>
 
                     {/* ================= 5. WHY AMOL MARBLE MURTI BHANDAR ================= */}
-                    <section className="bg-why-murtihub py-5 sm:py-12 border-y border-[#E2C88B] reveal-section is-visible">
+                    <section id="why-section" className="bg-why-murtihub py-5 sm:py-12 border-y border-[#E2C88B] reveal-section is-visible">
                         <div className="max-w-5xl mx-auto px-4 text-center">
                             <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-9">
-                                <span className="h-[1px] w-6 sm:w-32 bg-gradient-to-r from-transparent to-[#B88921]"></span>
+                                <span className="why-divider-line h-[1px] w-6 sm:w-32 bg-gradient-to-r from-transparent to-[#B88921]"></span>
                                 <span className="text-[#B88921] text-xs">✦</span>
                                 <h2 className="font-serif text-base sm:text-2xl md:text-[30px] font-semibold text-[#1E1912] px-1 sm:px-2">Why Amol Marble Murti Bhandar</h2>
                                 <span className="text-[#B88921] text-xs">✦</span>
-                                <span className="h-[1px] w-6 sm:w-32 bg-gradient-to-l from-transparent to-[#B88921]"></span>
+                                <span className="why-divider-line h-[1px] w-6 sm:w-32 bg-gradient-to-l from-transparent to-[#B88921]"></span>
                             </div>
 
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-6">
-                                <div className="flex flex-col items-center group p-1 sm:p-2">
+                                <div className="why-pillar-card flex flex-col items-center group p-1 sm:p-2">
                                     <div className="w-10 h-11 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-1.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
                                         <Car className="w-5 h-5 sm:w-7 sm:h-7 stroke-[1.8]" />
                                     </div>
@@ -1023,7 +1092,7 @@ export default function App() {
                                     <p className="text-[9.5px] sm:text-[11px] text-stone-600 mt-0.5 leading-snug">Engineered to sit secure on your dash</p>
                                 </div>
 
-                                <div className="flex flex-col items-center group p-1 sm:p-2">
+                                <div className="why-pillar-card flex flex-col items-center group p-1 sm:p-2">
                                     <div className="w-10 h-11 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-1.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
                                         <Sparkles className="w-5 h-5 sm:w-7 sm:h-7 stroke-[1.8]" />
                                     </div>
@@ -1031,7 +1100,7 @@ export default function App() {
                                     <p className="text-[9.5px] sm:text-[11px] text-stone-600 mt-0.5 leading-snug">Intricate hand-painted detailing</p>
                                 </div>
 
-                                <div className="flex flex-col items-center group p-1 sm:p-2">
+                                <div className="why-pillar-card flex flex-col items-center group p-1 sm:p-2">
                                     <div className="w-10 h-11 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-1.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
                                         <Gift className="w-5 h-5 sm:w-7 sm:h-7 stroke-[1.8]" />
                                     </div>
@@ -1039,7 +1108,7 @@ export default function App() {
                                     <p className="text-[9.5px] sm:text-[11px] text-stone-600 mt-0.5 leading-snug">Comes in velvet gift packaging</p>
                                 </div>
 
-                                <div className="flex flex-col items-center group p-1 sm:p-2">
+                                <div className="why-pillar-card flex flex-col items-center group p-1 sm:p-2">
                                     <div className="w-10 h-11 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-1.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
                                         <ShieldCheck className="w-5 h-5 sm:w-7 sm:h-7 stroke-[1.8]" />
                                     </div>
@@ -1053,7 +1122,7 @@ export default function App() {
                     {/* ================= 6. MOST LOVED IDOLS CAROUSEL ================= */}
                     <section id="most-loved-section" className="bg-jaali-gold py-7 sm:py-14 relative reveal-section is-visible">
                         <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
-                            <div className="flex items-center justify-center gap-2.5 mb-5 sm:mb-6">
+                            <div className="section-header-reveal flex items-center justify-center gap-2.5 mb-5 sm:mb-6">
                                 <span className="h-[1px] w-16 sm:w-36 bg-gradient-to-r from-transparent to-[#C69722]"></span>
                                 <span className="text-[#C69722] text-xs">•</span>
                                 <h2 className="font-serif text-2xl sm:text-[40px] font-semibold text-[#161616] px-2">
@@ -1099,9 +1168,9 @@ export default function App() {
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>
 
-                                <div id="most-loved-track" className="flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar scroll-smooth pb-3 sm:pb-4 px-1 sm:px-2 snap-x snap-mandatory">
-                                    {catalog.slice(0, 6).map(p => (
-                                        <div key={p.id} className="w-[230px] sm:w-[272px] flex-shrink-0 snap-start flex flex-col justify-between group bg-white p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-sm hover:shadow-md transition">
+                                <div id="most-loved-track" className="continuous-marquee-track flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar pb-3 sm:pb-4 px-1 sm:px-2">
+                                    {[...catalog.slice(0, 6), ...catalog.slice(0, 6), ...catalog.slice(0, 6)].map((p, idx) => (
+                                        <div key={`${p.id}-${idx}`} className="w-[230px] sm:w-[272px] flex-shrink-0 flex flex-col justify-between group bg-white p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-sm hover:shadow-md transition">
                                             <div>
                                                 <div 
                                                     onClick={() => openProductPage(p)}
@@ -1197,7 +1266,7 @@ export default function App() {
                     {/* ================= 7. FESTIVE EDIT: NAVRATRI COLLECTION (MOBILE-FIRST REDESIGN) ================= */}
                     <section id="navratri-section" className="bg-jaali-ivory py-4 sm:py-14 border-y border-[#EAE0CA] reveal-section is-visible">
                         <div className="max-w-[1440px] mx-auto px-3 sm:px-8">
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 items-stretch">
+                            <div className="section-header-reveal grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-6 items-stretch">
                                 
                                 {/* Left / Top Festive Announcement Card */}
                                 <div className="lg:col-span-3 xl:col-span-3 bg-gradient-to-br from-[#FFF9EE] via-[#FDF7E7] to-[#F5E8C7] rounded-xl sm:rounded-[26px] p-3 sm:p-6 lg:p-7 border border-[#E2CAA0] shadow-2xs flex flex-col justify-between relative overflow-hidden">
@@ -1273,11 +1342,11 @@ export default function App() {
 
                                 {/* Right / Main Product Showcase Carousel (All 4 Festive Idols - Horizontal on Mobile/Tablet, 4-Col Grid on Desktop) */}
                                 <div className="lg:col-span-9 xl:col-span-9 flex flex-col justify-between relative">
-                                    {/* Tablet Floating Arrows */}
+                                    {/* Floating Navigation Arrows */}
                                     <button
                                         type="button"
                                         onClick={() => scrollTrack('festive-track', -280)}
-                                        className="hidden sm:flex lg:hidden absolute -left-3 top-[40%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-xl border border-[#DFC48D] items-center justify-center hover:scale-110 transition text-stone-800"
+                                        className="hidden sm:flex absolute -left-3 top-[40%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-xl border border-[#DFC48D] items-center justify-center hover:scale-110 transition text-stone-800"
                                         aria-label="Previous festive idols"
                                     >
                                         <ChevronLeft className="w-5 h-5" />
@@ -1285,7 +1354,7 @@ export default function App() {
                                     <button
                                         type="button"
                                         onClick={() => scrollTrack('festive-track', 280)}
-                                        className="hidden sm:flex lg:hidden absolute -right-3 top-[40%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-xl border border-[#DFC48D] items-center justify-center hover:scale-110 transition text-stone-800"
+                                        className="hidden sm:flex absolute -right-3 top-[40%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-xl border border-[#DFC48D] items-center justify-center hover:scale-110 transition text-stone-800"
                                         aria-label="Next festive idols"
                                     >
                                         <ChevronRight className="w-5 h-5" />
@@ -1293,12 +1362,12 @@ export default function App() {
 
                                     <div
                                         id="festive-track"
-                                        className="flex lg:grid lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 overflow-x-auto lg:overflow-visible no-scrollbar scroll-smooth pb-3 sm:pb-4 lg:pb-0 px-1 snap-x snap-mandatory"
+                                        className="continuous-marquee-track flex gap-3 sm:gap-4 lg:gap-5 overflow-x-auto no-scrollbar pb-3 sm:pb-4 px-1"
                                     >
-                                        {catalog.slice(6, 10).map(p => (
+                                        {[...catalog.slice(6, 10), ...catalog.slice(6, 10), ...catalog.slice(6, 10)].map((p, idx) => (
                                             <div
-                                                key={p.id}
-                                                className="w-[230px] sm:w-[260px] lg:w-auto flex-shrink-0 lg:flex-shrink snap-start bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/60 transition-all duration-300 flex flex-col justify-between group p-3 sm:p-4"
+                                                key={`${p.id}-${idx}`}
+                                                className="w-[230px] sm:w-[260px] lg:w-[270px] flex-shrink-0 bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/60 transition-all duration-300 flex flex-col justify-between group p-3 sm:p-4"
                                             >
                                                 <div>
                                                     {/* Full-Height Portrait Deity Image Container */}
@@ -1414,7 +1483,7 @@ export default function App() {
                     </section>
 
                     {/* ================= 8. FULL-BLEED DARK OVERLAY CAROUSEL ================= */}
-                    <section className="bg-[#121212] py-12 reveal-section is-visible">
+                    <section id="dark-overlay-section" className="bg-[#121212] py-12 reveal-section is-visible">
                         <div className="max-w-[1440px] mx-auto px-4 sm:px-8 relative">
                             <div className="flex items-center justify-between mb-6 px-1">
                                 <div>
@@ -1437,9 +1506,9 @@ export default function App() {
                                 </div>
                             </div>
 
-                            <div id="dark-overlay-track" className="flex gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar scroll-smooth pb-2">
-                                {overlayCards.map(c => (
-                                    <div key={c.id} className="w-[180px] sm:w-[220px] flex-shrink-0 rounded-2xl overflow-hidden relative group shadow-lg flex flex-col justify-end h-[270px] sm:h-[310px] bg-stone-900 border border-stone-800">
+                            <div id="dark-overlay-track" className="continuous-marquee-track flex gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar pb-2">
+                                {[...overlayCards, ...overlayCards, ...overlayCards].map((c, idx) => (
+                                    <div key={`${c.id}-${idx}`} className="w-[180px] sm:w-[220px] flex-shrink-0 rounded-2xl overflow-hidden relative group shadow-lg flex flex-col justify-end h-[270px] sm:h-[310px] bg-stone-900 border border-stone-800">
                                         <div 
                                             onClick={() => openProductPage(c)}
                                             className="absolute inset-0 cursor-pointer"
@@ -1496,18 +1565,18 @@ export default function App() {
                     </section>
 
                     {/* ================= 9. ART THAT BRINGS DIVINITY HOME ================= */}
-                    <section className="bg-jaali-ivory py-8 sm:py-16 reveal-section is-visible">
+                    <section id="divinity-section" className="bg-jaali-ivory py-8 sm:py-16 reveal-section is-visible">
                         <div className="max-w-[1280px] mx-auto px-4 sm:px-8 grid lg:grid-cols-12 gap-6 sm:gap-10 items-center">
                             <div className="lg:col-span-6 grid grid-cols-2 gap-2.5 sm:gap-4">
-                                <div className="rounded-2xl sm:rounded-[24px] overflow-hidden h-[220px] min-[400px]:h-[260px] sm:h-[460px] shadow-lg bg-stone-900 group">
+                                <div className="editorial-img-card rounded-2xl sm:rounded-[24px] overflow-hidden h-[220px] min-[400px]:h-[260px] sm:h-[460px] shadow-lg bg-stone-900 group">
                                     <img src="/images/editorial/durga-feature.png" alt="Hand-Painted Durga" className="w-full h-full object-cover img-studio-contrast" />
                                 </div>
-                                <div className="rounded-2xl sm:rounded-[24px] overflow-hidden h-[220px] min-[400px]:h-[260px] sm:h-[460px] shadow-lg bg-stone-900 group">
+                                <div className="editorial-img-card rounded-2xl sm:rounded-[24px] overflow-hidden h-[220px] min-[400px]:h-[260px] sm:h-[460px] shadow-lg bg-stone-900 group">
                                     <img src="/images/editorial/hanuman-feature.png" alt="Veer Hanuman Sanjeevani" className="w-full h-full object-cover img-studio-contrast" />
                                 </div>
                             </div>
 
-                            <div className="lg:col-span-6 space-y-3 sm:space-y-5">
+                            <div className="divinity-text-content lg:col-span-6 space-y-3 sm:space-y-5">
                                 <div className="flex items-center gap-2 text-[10px] tracking-[0.22em] uppercase text-[#9E781E] font-semibold">
                                     <span>───•</span> <span>ART THAT BRINGS DIVINITY HOME</span>
                                 </div>
@@ -1540,15 +1609,21 @@ export default function App() {
 
                                 <div className="grid grid-cols-3 gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-stone-200/90 max-w-md">
                                     <div>
-                                        <p className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#B88921] font-semibold">50+</p>
+                                        <p className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#B88921] font-semibold">
+                                            <span className="stat-counter-number" data-target="50" data-suffix="+">50+</span>
+                                        </p>
                                         <p className="text-[9px] sm:text-[10px] tracking-[0.15em] uppercase text-stone-500 mt-0.5 sm:mt-1">DESIGNS</p>
                                     </div>
                                     <div>
-                                        <p className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#B88921] font-semibold">100%</p>
+                                        <p className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#B88921] font-semibold">
+                                            <span className="stat-counter-number" data-target="100" data-suffix="%">100%</span>
+                                        </p>
                                         <p className="text-[9px] sm:text-[10px] tracking-[0.15em] uppercase text-stone-500 mt-0.5 sm:mt-1">MADE BY HAND</p>
                                     </div>
                                     <div>
-                                        <p className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#B88921] font-semibold">2L+</p>
+                                        <p className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#B88921] font-semibold">
+                                            <span className="stat-counter-number" data-target="2" data-suffix="L+">2L+</span>
+                                        </p>
                                         <p className="text-[9px] sm:text-[10px] tracking-[0.15em] uppercase text-stone-500 mt-0.5 sm:mt-1">HOMES SERVED</p>
                                     </div>
                                 </div>
@@ -1557,9 +1632,9 @@ export default function App() {
                     </section>
 
                     {/* ================= 10. OUR PROCESS — BENTO GRID ================= */}
-                    <section className="bg-jaali-gold py-8 sm:py-16 border-y border-[#E6D6B8] reveal-section is-visible">
+                    <section id="bento-process-section" className="bg-jaali-gold py-8 sm:py-16 border-y border-[#E6D6B8] reveal-section is-visible">
                         <div className="max-w-[1240px] mx-auto px-4 sm:px-8">
-                            <div className="text-center mb-7 sm:mb-12">
+                            <div className="text-center mb-7 sm:mb-12 section-header-reveal">
                                 <div className="flex items-center justify-center gap-2 text-[10px] tracking-[0.24em] uppercase text-[#9E781E] font-semibold mb-2">
                                     <span>───✦</span> <span>• OUR SACRED PROCESS •</span> <span>✦───</span>
                                 </div>
@@ -1567,7 +1642,7 @@ export default function App() {
                             </div>
 
                             <div className="grid md:grid-cols-2 gap-3.5 sm:gap-6 mb-3.5 sm:mb-6">
-                                <div className="bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs grid grid-cols-12 gap-3.5 sm:gap-5 items-center">
+                                <div className="bento-process-card bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs grid grid-cols-12 gap-3.5 sm:gap-5 items-center">
                                     <div className="col-span-7 space-y-2 sm:space-y-3">
                                         <div className="flex items-center gap-2.5 sm:gap-3.5 border-b border-stone-200 pb-2.5 sm:pb-3">
                                             <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">01</span>
@@ -1585,7 +1660,7 @@ export default function App() {
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs grid grid-cols-12 gap-3.5 sm:gap-5 items-center">
+                                <div className="bento-process-card bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs grid grid-cols-12 gap-3.5 sm:gap-5 items-center">
                                     <div className="col-span-7 space-y-2 sm:space-y-3">
                                         <div className="flex items-center gap-2.5 sm:gap-3.5 border-b border-stone-200 pb-2.5 sm:pb-3">
                                             <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">02</span>
@@ -1605,7 +1680,7 @@ export default function App() {
                             </div>
 
                             <div className="grid grid-cols-2 md:grid-cols-12 gap-3.5 sm:gap-6 mb-3.5 sm:mb-6">
-                                <div className="col-span-2 md:col-span-4 bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs flex flex-col justify-center space-y-2 sm:space-y-3">
+                                <div className="bento-process-card col-span-2 md:col-span-4 bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs flex flex-col justify-center space-y-2 sm:space-y-3">
                                     <div className="flex items-center gap-2.5 sm:gap-3.5 border-b border-stone-200 pb-2.5 sm:pb-3">
                                         <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">03</span>
                                         <div className="border-l border-stone-200 pl-2.5 sm:pl-3.5">
@@ -1618,11 +1693,11 @@ export default function App() {
                                     </p>
                                 </div>
 
-                                <div className="hidden md:flex md:col-span-3 bg-white rounded-2xl p-3 border border-[#E6D6B8]/80 shadow-xs items-center justify-center">
+                                <div className="bento-process-card hidden md:flex md:col-span-3 bg-white rounded-2xl p-3 border border-[#E6D6B8]/80 shadow-xs items-center justify-center">
                                     <img src="/images/editorial/kalash-craft.png" alt="Kalash Craft" className="w-full h-40 sm:h-52 object-cover rounded-xl img-studio-contrast" />
                                 </div>
 
-                                <div className="col-span-2 md:col-span-5 bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs grid grid-cols-12 gap-3 sm:gap-4 items-center">
+                                <div className="bento-process-card col-span-2 md:col-span-5 bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs grid grid-cols-12 gap-3 sm:gap-4 items-center">
                                     <div className="col-span-7 space-y-2 sm:space-y-3">
                                         <div className="flex items-center gap-2.5 sm:gap-3 border-b border-stone-200 pb-2.5 sm:pb-3">
                                             <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">04</span>
@@ -1642,7 +1717,7 @@ export default function App() {
                             </div>
 
                             <div className="grid md:grid-cols-12 gap-3.5 sm:gap-6">
-                                <div className="md:col-span-7 bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs flex flex-col justify-center space-y-2.5 sm:space-y-4">
+                                <div className="bento-process-card md:col-span-7 bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs flex flex-col justify-center space-y-2.5 sm:space-y-4">
                                     <div className="flex items-center gap-3 sm:gap-4 border-b border-stone-200 pb-2.5 sm:pb-3">
                                         <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">05</span>
                                         <div className="border-l border-stone-200 pl-3 sm:pl-4">
@@ -1660,7 +1735,7 @@ export default function App() {
                                     </div>
                                 </div>
 
-                                <div className="md:col-span-5 bg-white rounded-2xl p-3 border border-[#E6D6B8]/80 shadow-xs">
+                                <div className="bento-process-card md:col-span-5 bg-white rounded-2xl p-3 border border-[#E6D6B8]/80 shadow-xs">
                                     <img src="/images/products/nandi-bull.png" alt="Sacred Nandi" className="w-full h-40 sm:h-60 object-cover rounded-xl img-studio-contrast bg-stone-100" />
                                 </div>
                             </div>
@@ -1671,7 +1746,7 @@ export default function App() {
                     <section id="corporate-gifting" className="bg-jaali-ivory py-8 sm:py-16 reveal-section is-visible">
                         <div className="max-w-[1240px] mx-auto px-4 sm:px-8">
                             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-6">
-                                <div className="space-y-2 sm:space-y-3 max-w-xl">
+                                <div className="space-y-2 sm:space-y-3 max-w-xl corp-header-reveal">
                                     <h2 className="font-serif text-2xl min-[400px]:text-3xl sm:text-4xl lg:text-5xl text-[#161616]">Corporate & Bulk Gifting</h2>
                                     <p className="font-serif italic text-base sm:text-xl lg:text-2xl text-[#B88921]">Meaningful gifts. Crafted for your people.</p>
                                     <p className="text-[11.5px] sm:text-sm text-stone-500 leading-relaxed pt-0.5 sm:pt-1">
@@ -1702,28 +1777,28 @@ export default function App() {
                             </div>
 
                             <div className="mt-6 sm:mt-10 p-3.5 sm:p-5 rounded-2xl border border-[#E6D6B8] bg-[#FAF5E8]/60 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-                                <div className="bg-white p-3 sm:p-4 rounded-xl border border-stone-200/80 flex items-start gap-2.5 sm:gap-3">
+                                <div className="corp-benefit-card bg-white p-3 sm:p-4 rounded-xl border border-stone-200/80 flex items-start gap-2.5 sm:gap-3">
                                     <div className="p-1.5 sm:p-2 rounded-lg bg-[#FAF5E8] text-[#B88921] flex-shrink-0"><Tag className="w-4 h-4" /></div>
                                     <div className="min-w-0">
                                         <h4 className="font-serif font-semibold text-sm sm:text-base text-[#161616]">Bulk Pricing</h4>
                                         <p className="text-[10px] sm:text-[11px] text-stone-500">Tiered pricing for corporate orders</p>
                                     </div>
                                 </div>
-                                <div className="bg-white p-3 sm:p-4 rounded-xl border border-stone-200/80 flex items-start gap-2.5 sm:gap-3">
+                                <div className="corp-benefit-card bg-white p-3 sm:p-4 rounded-xl border border-stone-200/80 flex items-start gap-2.5 sm:gap-3">
                                     <div className="p-1.5 sm:p-2 rounded-lg bg-[#FAF5E8] text-[#B88921] flex-shrink-0"><Sparkles className="w-4 h-4" /></div>
                                     <div className="min-w-0">
                                         <h4 className="font-serif font-semibold text-sm sm:text-base text-[#161616]">Personalized</h4>
                                         <p className="text-[10px] sm:text-[11px] text-stone-500">Logo, plaques & custom packaging</p>
                                     </div>
                                 </div>
-                                <div className="bg-white p-3 sm:p-4 rounded-xl border border-stone-200/80 flex items-start gap-2.5 sm:gap-3">
+                                <div className="corp-benefit-card bg-white p-3 sm:p-4 rounded-xl border border-stone-200/80 flex items-start gap-2.5 sm:gap-3">
                                     <div className="p-1.5 sm:p-2 rounded-lg bg-[#FAF5E8] text-[#B88921] flex-shrink-0"><Truck className="w-4 h-4" /></div>
                                     <div className="min-w-0">
                                         <h4 className="font-serif font-semibold text-sm sm:text-base text-[#161616]">Pan-India</h4>
                                         <p className="text-[10px] sm:text-[11px] text-stone-500">Express delivery 1,000+ cities</p>
                                     </div>
                                 </div>
-                                <div className="bg-white p-3 sm:p-4 rounded-xl border border-stone-200/80 flex items-start gap-2.5 sm:gap-3">
+                                <div className="corp-benefit-card bg-white p-3 sm:p-4 rounded-xl border border-stone-200/80 flex items-start gap-2.5 sm:gap-3">
                                     <div className="p-1.5 sm:p-2 rounded-lg bg-[#FAF5E8] text-[#B88921] flex-shrink-0"><PackageCheck className="w-4 h-4" /></div>
                                     <div className="min-w-0">
                                         <h4 className="font-serif font-semibold text-sm sm:text-base text-[#161616]">Gift-Ready</h4>
@@ -1735,7 +1810,7 @@ export default function App() {
                     </section>
 
                     {/* ================= 12. SIMILAR PRODUCT 4-COLUMN SECTION ================= */}
-                    <section className="bg-[#FAF6EC] py-8 sm:py-14 reveal-section is-visible">
+                    <section id="featured-collectibles-section" className="bg-[#FAF6EC] py-8 sm:py-14 reveal-section is-visible">
                         <div className="max-w-[1280px] mx-auto px-3.5 sm:px-8">
                             <div className="flex items-center justify-center gap-2 sm:gap-4 mb-6 sm:mb-10">
                                 <span className="h-[1px] w-12 sm:w-44 bg-stone-300"></span>
@@ -1745,7 +1820,7 @@ export default function App() {
 
                             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
                                 {catalog.slice(10, 14).map(p => (
-                                    <div key={p.id} className="bg-white rounded-xl sm:rounded-2xl p-2 sm:p-4 border border-stone-200/80 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300 flex flex-col justify-between group">
+                                    <div key={p.id} className="featured-product-card bg-white rounded-xl sm:rounded-2xl p-2 sm:p-4 border border-stone-200/80 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300 flex flex-col justify-between group">
                                         <div>
                                             <div 
                                                 onClick={() => openProductPage(p)}
@@ -1825,7 +1900,7 @@ export default function App() {
 
 
                     {/* ================= 13. BLOG POSTS SECTION ================= */}
-                    <section className="bg-white py-8 sm:py-16 reveal-section is-visible">
+                    <section id="blog-posts-section" className="bg-white py-8 sm:py-16 reveal-section is-visible">
                         <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
                             <h2 className="font-serif text-2xl min-[400px]:text-3xl sm:text-4xl lg:text-5xl text-center text-[#161616] mb-5 sm:mb-8">Sacred Stories & Guides</h2>
 
@@ -1863,7 +1938,7 @@ export default function App() {
                                         <article
                                             key={blog.id}
                                             onClick={() => setSelectedArticle(blog)}
-                                            className="group cursor-pointer w-[68vw] min-w-[210px] max-w-[260px] sm:w-auto sm:max-w-none flex-shrink-0 snap-start"
+                                            className="blog-card-item group cursor-pointer w-[68vw] min-w-[210px] max-w-[260px] sm:w-auto sm:max-w-none flex-shrink-0 snap-start"
                                         >
                                             <div className="relative rounded-xl sm:rounded-2xl overflow-hidden aspect-[4/3] sm:aspect-square mb-2 sm:mb-4 bg-stone-900">
                                                 <img src={blog.img} alt={blog.title} className="w-full h-full object-cover img-studio-contrast group-hover:scale-105 transition duration-300" />
@@ -1887,7 +1962,7 @@ export default function App() {
                     </section>
 
                     {/* ================= 14. FREQUENTLY ASKED QUESTIONS ================= */}
-                    <section className="bg-white py-8 sm:py-14 border-t border-stone-100 reveal-section is-visible">
+                    <section id="faq-section" className="bg-white py-8 sm:py-14 border-t border-stone-100 reveal-section is-visible">
                         <div className="max-w-2xl mx-auto px-4 sm:px-6">
                             <div className="text-center mb-6 sm:mb-10">
                                 <p className="text-[11px] sm:text-xs text-stone-500 mb-1">Need help with your order?</p>
@@ -1898,7 +1973,7 @@ export default function App() {
 
                             <div className="divide-y divide-stone-200 border-y border-stone-200">
                                 {faqs.map((faq, idx) => (
-                                    <details key={idx} className="group py-3 sm:py-4">
+                                    <details key={idx} className="faq-row-item group py-3 sm:py-4">
                                         <summary className="flex items-center justify-between cursor-pointer text-[12px] sm:text-sm font-medium text-stone-800 list-none gap-3">
                                             <span className="flex-1">{faq.question}</span>
                                             <span className="text-lg font-light group-open:rotate-45 transition-transform flex-shrink-0 w-6 h-6 flex items-center justify-center">+</span>
@@ -1913,11 +1988,11 @@ export default function App() {
                     </section>
 
                     {/* ================= 14B. 3 TRUST SERVICE BLOCKS (REFERENCE LAYOUT ARRANGEMENT) ================= */}
-                    <section className="bg-[#FAF5E8] py-8 sm:py-12 border-t border-[#E6D6B8] reveal-section is-visible">
+                    <section id="trust-blocks-section" className="bg-[#FAF5E8] py-8 sm:py-12 border-t border-[#E6D6B8] reveal-section is-visible">
                         <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
                             <div className="flex sm:grid sm:grid-cols-3 gap-3.5 sm:gap-5 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 px-1 sm:px-0 no-scrollbar snap-x snap-mandatory">
                                 {/* Trust 1: Order Return */}
-                                <div className="w-[82vw] min-w-[270px] max-w-[330px] sm:w-auto flex-shrink-0 snap-center p-5 sm:p-6 rounded-2xl bg-white border border-[#E6D6B8] shadow-xs hover:shadow-md transition flex flex-col justify-between group">
+                                <div className="trust-service-card w-[82vw] min-w-[270px] max-w-[330px] sm:w-auto flex-shrink-0 snap-center p-5 sm:p-6 rounded-2xl bg-white border border-[#E6D6B8] shadow-xs hover:shadow-md transition flex flex-col justify-between group">
                                     <div>
                                         <div className="w-12 h-12 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center justify-center text-[#8E5B00] mb-3.5 group-hover:scale-105 transition">
                                             <RotateCcw className="w-6 h-6 stroke-[2]" />
@@ -1937,7 +2012,7 @@ export default function App() {
                                 </div>
 
                                 {/* Trust 2: Free Shipping */}
-                                <div className="w-[82vw] min-w-[270px] max-w-[330px] sm:w-auto flex-shrink-0 snap-center p-5 sm:p-6 rounded-2xl bg-white border border-[#E6D6B8] shadow-xs hover:shadow-md transition flex flex-col justify-between group">
+                                <div className="trust-service-card w-[82vw] min-w-[270px] max-w-[330px] sm:w-auto flex-shrink-0 snap-center p-5 sm:p-6 rounded-2xl bg-white border border-[#E6D6B8] shadow-xs hover:shadow-md transition flex flex-col justify-between group">
                                     <div>
                                         <div className="w-12 h-12 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center justify-center text-[#8E5B00] mb-3.5 group-hover:scale-105 transition">
                                             <Truck className="w-6 h-6 stroke-[2]" />
@@ -1957,7 +2032,7 @@ export default function App() {
                                 </div>
 
                                 {/* Trust 3: COD */}
-                                <div className="w-[82vw] min-w-[270px] max-w-[330px] sm:w-auto flex-shrink-0 snap-center p-5 sm:p-6 rounded-2xl bg-white border border-[#E6D6B8] shadow-xs hover:shadow-md transition flex flex-col justify-between group">
+                                <div className="trust-service-card w-[82vw] min-w-[270px] max-w-[330px] sm:w-auto flex-shrink-0 snap-center p-5 sm:p-6 rounded-2xl bg-white border border-[#E6D6B8] shadow-xs hover:shadow-md transition flex flex-col justify-between group">
                                     <div>
                                         <div className="w-12 h-12 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center justify-center text-[#8E5B00] mb-3.5 group-hover:scale-105 transition">
                                             <Banknote className="w-6 h-6 stroke-[2]" />
@@ -1980,9 +2055,9 @@ export default function App() {
                     </section>
 
                     {/* ================= 14C. JAIPUR SCULPTING ATELIER MAP & ADDRESS (REFERENCE LAYOUT ARRANGEMENT) ================= */}
-                    <section className="bg-white py-8 sm:py-12 border-t border-[#E6D6B8] reveal-section is-visible">
+                    <section id="atelier-map-section" className="bg-white py-8 sm:py-12 border-t border-[#E6D6B8] reveal-section is-visible">
                         <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
-                            <div className="bg-[#FAF5E8] rounded-2xl sm:rounded-3xl border border-[#E6D6B8] overflow-hidden shadow-sm flex flex-col md:flex-row">
+                            <div className="atelier-card bg-[#FAF5E8] rounded-2xl sm:rounded-3xl border border-[#E6D6B8] overflow-hidden shadow-sm flex flex-col md:flex-row">
                                 <div className="p-5 sm:p-10 md:w-1/2 flex flex-col justify-between space-y-3 sm:space-y-4">
                                     <div>
                                         <div className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-[#8E5B00] mb-1.5">
@@ -2219,7 +2294,7 @@ export default function App() {
                         ) : (
                             <div className={`grid grid-cols-2 sm:grid-cols-2 ${gridCols === 2 ? 'lg:grid-cols-2' : gridCols === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-2.5 sm:gap-6`}>
                                 {collectionItems.map(p => (
-                                    <div key={p.id} className="group flex flex-col justify-between bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-stone-200/90 shadow-2xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300">
+                                    <div key={p.id} className="catalog-grid-card group flex flex-col justify-between bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-stone-200/90 shadow-2xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300">
                                         <div>
                                             <div 
                                                 onClick={() => openProductPage(p)}
@@ -2301,7 +2376,7 @@ export default function App() {
             )}
 
             {/* ================= 15. FOOTER ================= */}
-            <footer className="bg-jaali-gold border-t border-[#E6D6B8] pt-16 pb-10 text-stone-700">
+            <footer id="site-footer" className="bg-jaali-gold border-t border-[#E6D6B8] pt-16 pb-10 text-stone-700">
                 <div className="max-w-[1320px] mx-auto px-4 sm:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12">
                     <div className="lg:col-span-4 space-y-4">
                         <div className="flex items-center gap-2">
@@ -2309,7 +2384,7 @@ export default function App() {
                                 src="/images/logo.png"
                                 alt="अमोल मार्बल मूर्ती भंडार - Amol Marble Murti Bhandar"
                                 className="h-20 sm:h-24 w-auto object-contain drop-shadow-sm cursor-pointer hover:scale-105 transition-transform"
-                                onClick={() => { navigateTo('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                                onClick={() => { navigateTo('home'); scrollTo(0); }}
                             />
                         </div>
                         <p className="font-serif italic text-base text-stone-600 max-w-xs">
