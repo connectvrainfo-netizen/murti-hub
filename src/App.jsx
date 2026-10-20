@@ -743,7 +743,7 @@ export default function App() {
                                         </h1>
 
                                         <p className="hidden min-[400px]:block text-xs sm:text-sm text-stone-600 leading-relaxed max-w-md mx-auto sm:mx-0 line-clamp-2 sm:line-clamp-none">
-                                            Lord Ram, Mata Sita, Laxman & Hanuman hand-chiseled with 24K gold foil embellishments. Consecrated for home mandir altars and car dashboard blessings.
+                                            Lord Ram, Mata Sita, Laxman & Hanuman hand-chiseled with 24K gold foil embellishments. Consecrated for home mandir altars and daily pooja.
                                         </p>
 
                                         {/* Price Callout (From ₹1,499) */}
@@ -818,7 +818,7 @@ export default function App() {
                                         </h2>
 
                                         <p className="text-[11px] min-[360px]:text-xs sm:text-sm text-stone-200/95 leading-relaxed max-w-lg drop-shadow line-clamp-2 sm:line-clamp-none">
-                                            Step inside अमोल मार्बल मूर्ती भंडार — India's home for hand-carved Makrana marble idols, car dashboard guardians, and handcrafted sacred temple collectibles.
+                                            Step inside अमोल मार्बल मूर्ती भंडार — India's home for hand-carved Makrana marble idols, home mandir deities, and handcrafted sacred temple collectibles.
                                         </p>
 
                                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-1 sm:pt-2">

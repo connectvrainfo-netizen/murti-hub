@@ -54,13 +54,13 @@ export const pageMeta = {
     'shop-all': {
         title: 'All Sacred Murtis',
         subtitle: 'Hand-Carved White Marble & Sanctified Temple Art',
-        desc: 'Explore our complete catalog of authentic Indian idols, consecrated for travel murtis, home mandirs, study desks, and divine gifting.',
+        desc: 'Explore our complete catalog of authentic Indian idols, consecrated for home mandirs, study desks, pooja rooms, and divine gifting.',
         count: `${catalog.length} items`,
         getItems: () => catalog
     },
     'navratri': {
         title: 'Navratri Festive Drop – Love, Joy & Celebration',
-        subtitle: 'Navratri Idols for Cars, Desks & Meaningful Gifting',
+        subtitle: 'Navratri Idols for Home Mandirs, Desks & Meaningful Gifting',
         desc: 'Celebrate love, joy and togetherness with Amol Marble Murti Bhandar\'s Limited Edition Navratri Festive Drop. Hand-finished resin and Makrana marble idols of Maa Durga, Lakshmi, Saraswati, Ganesha and Shiva.',
         count: '8 items',
         getItems: () => catalog.filter(p => p.group === 'navratri' || p.deity === 'Durga')
@@ -68,7 +68,7 @@ export const pageMeta = {
     'sacred': {
         title: 'Sacred Collectibles',
         subtitle: 'Temple Brass & Sculptural Masterpieces',
-        desc: 'Sacred Collectibles is our curated range of Hindu god idols designed for spaces beyond travel — home mandirs, office desks, shelves and display corners.',
+        desc: 'Sacred Collectibles is our curated range of Hindu god idols designed for home mandirs, office desks, shelves and display corners.',
         count: '9 items',
         getItems: () => catalog.filter(p => p.group === 'sacred' || p.group === 'most-loved')
     },
@@ -88,7 +88,7 @@ export const blogPosts = [
         tag: "BUYING GUIDE",
         title: "Choosing a Peaceful Idol for Your Journey: Shiva, Hanuman Ji & Ganesh Ji",
         heading: "Choosing a Peaceful\nIdol for Your Journey",
-        desc: "A sacred reminder for safe journeys and mindfulness on every drive. Explore Shiva Ji, Hanuman Ji, and Ganesh Ji travel murti placements according to Vaastu...",
+        desc: "A sacred presence for peace and mindfulness at home. Explore Shiva Ji, Hanuman Ji, and Ganesh Ji idol placements according to Vaastu...",
         img: "/images/products/standing-shiva-trishul.png"
     },
     {
@@ -117,8 +117,8 @@ export const faqs = [
         answer: "Every Amol Marble Murti Bhandar idol is nestled in precision laser-cut high-density EPE foam inside an impact-resistant box, wrapped in multi-layer corrugated shields. We offer a 100% Free Replacement Guarantee in case of any transit issue."
     },
     {
-        question: "Are these murtis suitable for car dashboards?",
-        answer: "Yes! Our car dashboard series is specifically designed with a balanced weighted pedestal and comes with complimentary residue-free 3M double-sided automotive adhesive tape that holds firmly even in peak summer heat."
+        question: "Are the murtis consecrated and ready for pooja?",
+        answer: "Yes. Each idol is finished to be Pran Pratishtha ready — you can perform the consecration ritual at home or in your mandir, following the Vaastu placement guidance we include with every order."
     },
     {
         question: "Do you ship pan-India and internationally?",

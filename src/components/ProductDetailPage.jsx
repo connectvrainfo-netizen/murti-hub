@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Star, ShieldCheck, Gem, Sparkles, Truck, Check, Heart, ShoppingBag,
+    Star, ShieldCheck, Gem, Sparkles, Check, Heart, ShoppingBag,
     ArrowRight, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw,
     ThumbsUp, ThumbsDown, MessageSquare, Award, Share2, MapPin,
     PackageCheck, Clock, Calendar, AlertCircle, Eye, HelpCircle
@@ -47,8 +47,8 @@ export default function ProductDetailPage({
             rating: 5,
             date: "10 Oct 2026",
             verified: true,
-            title: "The divine serenity on the face is hypnotic — sits rock steady on my car dash!",
-            content: "Ordered this sacred murti for my new Mahindra XUV700. The weight of the Makrana marble combined with the complimentary anti-skid base keeps it completely secure on highway drives. The hand-painted 24K gold accents reflect the morning sun beautifully. Pran Pratishtha fragrance was still fresh when unboxed!",
+            title: "The divine serenity on the face is hypnotic — sits beautifully in my home mandir!",
+            content: "Ordered this sacred murti for our home mandir. The weight and finish of the Makrana marble is exceptional, and the hand-painted 24K gold accents catch the morning light beautifully during aarti. Pran Pratishtha fragrance was still fresh when unboxed!",
             helpfulCount: 42,
             unhelpfulCount: 1,
             userVote: null,
@@ -597,7 +597,7 @@ export default function ProductDetailPage({
                                 <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
                                     <p className="font-semibold text-stone-400 uppercase text-[10px]">WEIGHT ESTIMATE</p>
                                     <p className="font-bold text-stone-900 text-sm">380g (9cm) • 1.2kg (15cm)</p>
-                                    <p className="text-stone-500 text-[11px]">Substantial hand feel preventing vibrations on vehicle dashboards.</p>
+                                    <p className="text-stone-500 text-[11px]">Substantial hand feel with a stable, well-balanced base.</p>
                                 </div>
                                 <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
                                     <p className="font-semibold text-stone-400 uppercase text-[10px]">ARTISAN PROVENANCE</p>
@@ -610,7 +610,7 @@ export default function ProductDetailPage({
                         {activeTab === 'vaastu' && (
                             <div className="space-y-4 text-xs sm:text-sm text-stone-600 leading-relaxed max-w-3xl">
                                 <p>
-                                    According to ancient Sanatan Vaastu Shastra, placing this consecrated <strong>{product.deity}</strong> idol in your home or vehicle unlocks auspicious vibrations:
+                                    According to ancient Sanatan Vaastu Shastra, placing this consecrated <strong>{product.deity}</strong> idol in your home unlocks auspicious vibrations:
                                 </p>
                                 <div className="grid sm:grid-cols-2 gap-4 pt-2">
                                     <div className="p-4 rounded-2xl bg-[#FAF5E8] border border-[#E6D6B8] space-y-1.5">
@@ -623,10 +623,10 @@ export default function ProductDetailPage({
                                     </div>
                                     <div className="p-4 rounded-2xl bg-[#FAF5E8] border border-[#E6D6B8] space-y-1.5">
                                         <h4 className="font-bold text-[#161616] text-xs uppercase flex items-center gap-1.5">
-                                            <Truck className="w-3.5 h-3.5 text-[#C69722]" /> Placement Guidance
+                                            <MapPin className="w-3.5 h-3.5 text-[#C69722]" /> Office & Study Desk
                                         </h4>
                                         <p className="text-xs text-stone-600">
-                                            Position centrally on the dashboard facing inwards towards the cabin or forward with clear sight. The included silicone pad keeps it steady without residue.
+                                            Place on a clean, slightly raised surface facing you, ideally in the East or North-East. Keep the area tidy to channel calm, focused and positive energy through the day.
                                         </p>
                                     </div>
                                 </div>
