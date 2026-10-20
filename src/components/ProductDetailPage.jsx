@@ -24,15 +24,11 @@ export default function ProductDetailPage({
     }, [product.id]);
 
     // Product Variations State
-    const [selectedSize, setSelectedSize] = useState('9 cm (Car Dashboard / Small Altar)');
-    const [selectedFinish, setSelectedFinish] = useState('Pure Makrana White');
+    const [selectedSize, setSelectedSize] = useState('9 cm (Compact / Small Altar)');
     const [qty, setQty] = useState(1);
     const [activeTab, setActiveTab] = useState('specs'); // 'specs' | 'vaastu' | 'care' | 'shipping'
     const [activeImageIdx, setActiveImageIdx] = useState(0);
 
-    // Delivery Pincode Checker State
-    const [pincode, setPincode] = useState('');
-    const [pincodeResult, setPincodeResult] = useState(null);
 
     // Review Filters & Interactive Voting State
     const [reviewFilter, setReviewFilter] = useState('all'); // 'all' | '5' | 'with-photos' | 'car-dash'
@@ -197,41 +193,14 @@ export default function ProductDetailPage({
             zoomClass: 'scale-135 object-cover object-top'
         },
         {
-            id: 'altar',
+            id: 'detail2',
             title: 'Mandir Altar Placement',
             caption: 'Home Mandir Placement • Consecrated for Daily Pooja',
             img: product.img,
             desc: 'Visualized in a serene home mandir setting with brass lamps and marigold garlands.',
             zoomClass: 'scale-100 brightness-105 object-contain'
-        },
-        {
-            id: 'packaging',
-            title: 'Velvet Gift Packaging',
-            caption: 'Presentation • 7-Layer Impact-Proof Wooden Crate & Velvet Box',
-            img: product.img,
-            desc: 'Packaged in a royal crimson velvet gift box, protected by high-density foam for zero transit damage.',
-            zoomClass: 'scale-95 object-contain'
         }
     ];
-
-    // Check Pincode Delivery
-    const handleCheckPincode = (e) => {
-        e.preventDefault();
-        const pin = pincode.trim();
-        if (pin.length !== 6 || !/^\d+$/.test(pin)) {
-            setPincodeResult({ valid: false, message: 'Please enter a valid 6-digit Indian pincode.' });
-            return;
-        }
-
-        const isMetro = ['11', '40', '56', '60', '70', '50', '30'].some(prefix => pin.startsWith(prefix));
-        setPincodeResult({
-            valid: true,
-            isMetro,
-            eta: isMetro ? '2 to 3 Business Days' : '3 to 5 Business Days',
-            courier: 'BlueDart Express Air (Insured)',
-            cod: true
-        });
-    };
 
     // Handle Review Submit
     const handleReviewSubmit = (e) => {
@@ -490,12 +459,12 @@ export default function ProductDetailPage({
                             <label className="flex items-center justify-between text-xs font-bold text-stone-800 uppercase tracking-wider">
                                 <span>SELECT IDOL SIZE:</span>
                                 <span className="text-[#C69722] text-[11px] font-medium lowercase">
-                                    {selectedSize.includes('9 cm') ? 'ideal for car dash & office desk' : 'ideal for grand home mandir'}
+                                    {selectedSize.includes('9 cm') ? 'ideal for travel & office desk' : 'ideal for grand home mandir'}
                                 </span>
                             </label>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                 {[
-                                    { label: '9 cm (Car Dashboard)', desc: 'Standard', extra: 0 },
+                                    { label: '9 cm (Compact)', desc: 'Standard', extra: 0 },
                                     { label: '15 cm (Home Mandir)', desc: '+₹600', extra: 600 },
                                     { label: '24 cm (Grand Temple)', desc: '+₹1,500', extra: 1500 }
                                 ].map(size => {
@@ -512,36 +481,6 @@ export default function ProductDetailPage({
                                         >
                                             <span className="text-xs font-bold">{size.label.split(' ')[0]} {size.label.split(' ')[1]}</span>
                                             <span className={`text-[10px] mt-1 ${isSelected ? 'text-[#F7C600]' : 'text-stone-500'}`}>{size.desc}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Variation 2: Sacred Finish Selector */}
-                        <div className="space-y-2.5">
-                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
-                                SACRED FINISH:
-                            </label>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                {[
-                                    { name: 'Pure Makrana White', sub: 'Natural Stone' },
-                                    { name: '24K Gold Zaree Painted', sub: 'Hand-Embossed' },
-                                    { name: 'Antique Polished Brass', sub: 'Vintage Patina' }
-                                ].map(finish => {
-                                    const isSelected = selectedFinish === finish.name;
-                                    return (
-                                        <button
-                                            key={finish.name}
-                                            onClick={() => setSelectedFinish(finish.name)}
-                                            className={`p-3 rounded-xl border text-left transition min-h-[48px] tap-target-48 ${
-                                                isSelected
-                                                    ? 'border-[#C69722] bg-[#FAF5E8] text-[#161616] shadow-xs'
-                                                    : 'border-stone-200 bg-white text-stone-700 hover:border-[#C69722]'
-                                            }`}
-                                        >
-                                            <span className="text-xs font-bold block leading-snug">{finish.name}</span>
-                                            <span className="text-[10px] text-stone-500 mt-0.5 block">{finish.sub}</span>
                                         </button>
                                     );
                                 })}
@@ -577,7 +516,7 @@ export default function ProductDetailPage({
                                             onAddToCart({
                                                 ...product,
                                                 price: finalPrice,
-                                                title: `${product.title} (${selectedSize.split(' ')[0]} - ${selectedFinish})`
+                                                title: `${product.title} (${selectedSize.split(' ')[0]} cm)`
                                             }, false);
                                         }
                                     }}
@@ -593,7 +532,7 @@ export default function ProductDetailPage({
                                     const itemToBuy = {
                                         ...product,
                                         price: finalPrice,
-                                        title: `${product.title} (${selectedSize.split(' ')[0]} - ${selectedFinish})`
+                                        title: `${product.title} (${selectedSize.split(' ')[0]} cm)`
                                     };
                                     if (onBuyNow) {
                                         onBuyNow(itemToBuy);
@@ -603,72 +542,16 @@ export default function ProductDetailPage({
                                 }}
                                 className="w-full min-h-[50px] py-4 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] text-xs font-extrabold tracking-widest uppercase transition shadow-lg flex items-center justify-center gap-2 active:scale-98 tap-target-48"
                             >
-                                <span>BUY NOW WITH CASH ON DELIVERY</span>
+                                <span>BUY NOW ON WHATSAPP</span>
                                 <ArrowRight className="w-4 h-4" />
                             </button>
-                        </div>
 
-                        {/* Delivery Pincode Estimator */}
-                        <div className="p-4 rounded-2xl bg-white border border-stone-200 space-y-2.5">
-                            <label htmlFor="pincode-input" className="text-xs font-bold text-stone-800 flex items-center gap-1.5 uppercase">
-                                <Truck className="w-4 h-4 text-[#C69722]" />
-                                <span>ESTIMATE DELIVERY TIMELINE:</span>
-                            </label>
-                            <form onSubmit={handleCheckPincode} className="flex gap-2">
-                                <input
-                                    id="pincode-input"
-                                    name="pincode"
-                                    type="text"
-                                    inputMode="numeric"
-                                    pattern="[0-9]*"
-                                    autoComplete="postal-code"
-                                    maxLength="6"
-                                    value={pincode}
-                                    onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-                                    placeholder="Enter 6-digit Pincode (e.g. 110001)"
-                                    className="flex-1 px-3 py-3 text-base sm:text-xs rounded-xl border border-stone-300 focus:outline-none focus:border-black min-h-[48px]"
-                                />
-                                <button
-                                    type="submit"
-                                    className="px-5 py-3 bg-[#161616] text-white text-xs font-semibold rounded-xl hover:bg-[#C69722] transition min-h-[48px] tap-target-48"
-                                >
-                                    Check
-                                </button>
-                            </form>
-                            {pincodeResult && (
-                                <div className={`text-xs p-2.5 rounded-xl ${pincodeResult.valid ? 'bg-green-50 text-green-800 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                                    {pincodeResult.valid ? (
-                                        <div className="space-y-0.5">
-                                            <p className="font-bold flex items-center gap-1">
-                                                <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                                                Delivery in {pincodeResult.eta}
-                                            </p>
-                                            <p className="text-[11px] text-green-700">Dispatch from Jaipur Atelier via {pincodeResult.courier} • COD Available</p>
-                                        </div>
-                                    ) : (
-                                        <p>{pincodeResult.message}</p>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Sacred Trust Strip */}
-                        <div className="grid grid-cols-2 gap-3 pt-2 text-[11px] text-stone-700">
-                            <div className="p-3 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center gap-2.5">
-                                <Gem className="w-4 h-4 text-[#C69722] flex-shrink-0" />
-                                <span>100% Hand-Carved Makrana Marble</span>
-                            </div>
-                            <div className="p-3 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center gap-2.5">
-                                <Sparkles className="w-4 h-4 text-[#C69722] flex-shrink-0" />
-                                <span>Pran Pratishtha Ready</span>
-                            </div>
-                            <div className="p-3 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center gap-2.5">
-                                <PackageCheck className="w-4 h-4 text-[#C69722] flex-shrink-0" />
-                                <span>7-Layer Wooden Crate Insured</span>
-                            </div>
-                            <div className="p-3 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center gap-2.5">
-                                <RotateCcw className="w-4 h-4 text-[#C69722] flex-shrink-0" />
-                                <span>7-Day Zero-Risk Returns</span>
+                            {/* Handmade Variation Disclaimer */}
+                            <div className="flex items-start gap-2 p-3 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] text-[11px] text-stone-600 leading-relaxed">
+                                <AlertCircle className="w-4 h-4 text-[#C69722] flex-shrink-0 mt-0.5" />
+                                <span>
+                                    <strong className="text-[#161616]">Please note:</strong> each idol is hand-carved and hand-painted, so the piece you receive may have minor natural variations in shade, finish or detailing compared to the catalog image — or it may match it closely. This is normal for handmade sacred art.
+                                </span>
                             </div>
                         </div>
 
@@ -740,7 +623,7 @@ export default function ProductDetailPage({
                                     </div>
                                     <div className="p-4 rounded-2xl bg-[#FAF5E8] border border-[#E6D6B8] space-y-1.5">
                                         <h4 className="font-bold text-[#161616] text-xs uppercase flex items-center gap-1.5">
-                                            <Truck className="w-3.5 h-3.5 text-[#C69722]" /> Car Dashboard Placement
+                                            <Truck className="w-3.5 h-3.5 text-[#C69722]" /> Placement Guidance
                                         </h4>
                                         <p className="text-xs text-stone-600">
                                             Position centrally on the dashboard facing inwards towards the cabin or forward with clear sight. The included silicone pad keeps it steady without residue.
@@ -960,7 +843,7 @@ export default function ProductDetailPage({
                                 { key: 'all', label: `All Reviews (${reviews.length})` },
                                 { key: '5', label: '5 Stars Only' },
                                 { key: 'with-photos', label: 'With Photos' },
-                                { key: 'car-dash', label: 'Car Dashboard Reviews' }
+                                { key: 'car-dash', label: 'Verified Buyer Reviews' }
                             ].map(flt => (
                                 <button
                                     key={flt.key}
@@ -1201,7 +1084,7 @@ export default function ProductDetailPage({
                                 onAddToCart({
                                     ...product,
                                     price: finalPrice,
-                                    title: `${product.title} (${selectedSize.split(' ')[0]} - ${selectedFinish})`
+                                    title: `${product.title} (${selectedSize.split(' ')[0]} cm)`
                                 }, false);
                             }
                         }}
@@ -1218,7 +1101,7 @@ export default function ProductDetailPage({
                             const itemToBuy = {
                                 ...product,
                                 price: finalPrice,
-                                title: `${product.title} (${selectedSize.split(' ')[0]} - ${selectedFinish})`
+                                title: `${product.title} (${selectedSize.split(' ')[0]} cm)`
                             };
                             if (onBuyNow) {
                                 onBuyNow(itemToBuy);

@@ -37,13 +37,13 @@ export const catalog = [
     { id: 16, title: "Shri Gajanan Maharaj Shegaon Avatar with Marigold Garland - Hand-Finished Marble", price: 1499, oldPrice: 2299, off: "34% OFF", deity: "Gajanan Maharaj", group: "sacred", img: "/images/products/gajanan-maharaj.png" },
     { id: 17, title: "Grand Temple Kalash Pinnacle Tower - Mirror-Polished Brass", price: 899, oldPrice: 1499, off: "40% OFF", deity: "Shiva", group: "sacred", img: "/images/products/golden-kalash-shikhar.png" },
     { id: 18, title: "Trimurti Bhagwan Dattatreya with Kamadhenu & Four Sacred Vedas", price: 1499, oldPrice: 1999, off: "25% OFF", deity: "Murugan", group: "sacred", img: "/images/products/dattatreya-kamadhenu.png" },
-    { id: 19, title: "Baal Roop Kaali Mata & Durga Lion-Rider Car Dashboard Idol", price: 1299, oldPrice: 1999, off: "35% OFF", deity: "Durga", group: "baal-roop", img: "/images/products/durga-sherawali.png" },
+    { id: 19, title: "Baal Roop Kaali Mata & Durga Lion-Rider Idol", price: 1299, oldPrice: 1999, off: "35% OFF", deity: "Durga", group: "baal-roop", img: "/images/products/durga-sherawali.png" },
     { id: 20, title: "Pavan Sut Hanuman Ji with Sanjeevani Mountain - Road Guardian", price: 1499, oldPrice: 1999, off: "25% OFF", deity: "Hanuman", group: "baal-roop", img: "/images/products/hanuman-sanjeevani.png" }
 ];
 
 export const overlayCards = [
     { id: 3, title: "Standing Mahadev with Golden Trishul & Damru | Hand-Finished White Marble", price: "₹1,499.00", old: "₹2,599", img: "/images/products/standing-shiva-trishul.png" },
-    { id: 11, title: "Veer Hanuman Carrying Sanjeevani Mountain | Road Guardian Car Dashboard Idol", price: "₹1,299.00", old: "₹1,999", img: "/images/products/hanuman-sanjeevani.png" },
+    { id: 11, title: "Veer Hanuman Carrying Sanjeevani Mountain | Road Guardian Idol", price: "₹1,299.00", old: "₹1,999", img: "/images/products/hanuman-sanjeevani.png" },
     { id: 12, title: "Bhakt Hanuman Ji in Pranam - Anjali Mudra | Crimson Altar Idol", price: "₹1,999.00", old: "₹2,999", img: "/images/products/hanuman-pranam.png" },
     { id: 5, title: "Sacred Shivling with Golden Sheshnaag Hood | Sacred Altar Resin-Bonded Marble", price: "₹999.00", old: "₹2,999", img: "/images/products/shivling-sheshnaag.png" },
     { id: 13, title: "Lord Ganesha Trio in White Marble with Golden Crowns & Modak", price: "₹1,999.00", old: "₹2,999", img: "/images/products/ganesha-trio.png" },
@@ -54,7 +54,7 @@ export const pageMeta = {
     'shop-all': {
         title: 'All Sacred Murtis',
         subtitle: 'Hand-Carved White Marble & Sanctified Temple Art',
-        desc: 'Explore our complete catalog of authentic Indian idols, consecrated for car dashboards, home mandirs, study desks, and divine gifting.',
+        desc: 'Explore our complete catalog of authentic Indian idols, consecrated for travel murtis, home mandirs, study desks, and divine gifting.',
         count: `${catalog.length} items`,
         getItems: () => catalog
     },
@@ -68,7 +68,7 @@ export const pageMeta = {
     'sacred': {
         title: 'Sacred Collectibles',
         subtitle: 'Temple Brass & Sculptural Masterpieces',
-        desc: 'Sacred Collectibles is our curated range of Hindu god idols designed for spaces beyond the car — home mandirs, office desks, shelves and display corners.',
+        desc: 'Sacred Collectibles is our curated range of Hindu god idols designed for spaces beyond travel — home mandirs, office desks, shelves and display corners.',
         count: '9 items',
         getItems: () => catalog.filter(p => p.group === 'sacred' || p.group === 'most-loved')
     },
@@ -86,9 +86,9 @@ export const blogPosts = [
         id: 1,
         category: "bhakti",
         tag: "BUYING GUIDE",
-        title: "Choosing a Peaceful Car Dashboard Idol: Shiva, Hanuman Ji & Ganesh Ji",
-        heading: "Choosing a Peaceful\nCar Dashboard Idol",
-        desc: "A sacred reminder for safe journeys and mindfulness on every drive. Explore Shiva Ji, Hanuman Ji, and Ganesh Ji dashboard placements according to Vaastu...",
+        title: "Choosing a Peaceful Idol for Your Journey: Shiva, Hanuman Ji & Ganesh Ji",
+        heading: "Choosing a Peaceful\nIdol for Your Journey",
+        desc: "A sacred reminder for safe journeys and mindfulness on every drive. Explore Shiva Ji, Hanuman Ji, and Ganesh Ji travel murti placements according to Vaastu...",
         img: "/images/products/standing-shiva-trishul.png"
     },
     {

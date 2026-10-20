@@ -151,7 +151,8 @@ export default function IntroAnimation({ onComplete, autoDismissMs = 4800 }) {
                     <img
                         src="/images/intro/amol-murti-logo.png"
                         alt="अमोल मार्बल मूर्ती भंडार - Amol Marble Murti Bhandar"
-                        className="max-h-[105px] sm:max-h-[140px] md:max-h-[175px] lg:max-h-[195px] w-auto object-contain hover:scale-105 transition-transform duration-500"
+                        className="w-auto object-contain hover:scale-105 transition-transform duration-500"
+                        style={{ maxHeight: 'clamp(70px, 12vh, 195px)' }}
                     />
 
                     {/* Auspicious Subtitle Tagline */}
@@ -199,7 +200,8 @@ export default function IntroAnimation({ onComplete, autoDismissMs = 4800 }) {
                                 e.currentTarget.src = '/images/intro/gajanan-maharaj-seated.jpg';
                             }}
                             alt="Sant Shiromani Shri Gajanan Maharaj"
-                            className="max-h-[230px] sm:max-h-[320px] md:max-h-[400px] lg:max-h-[450px] w-auto object-contain cursor-pointer transition-transform duration-300 hover:scale-105"
+                            className="w-auto object-contain cursor-pointer transition-transform duration-300 hover:scale-105"
+                            style={{ maxHeight: 'clamp(160px, 42vh, 450px)' }}
                             onClick={handleDismiss}
                         />
                     </div>
@@ -226,7 +228,8 @@ export default function IntroAnimation({ onComplete, autoDismissMs = 4800 }) {
                         <img
                             src="/images/intro/brahmandnayak-banner.png"
                             alt="|| ब्रम्हांडनायक ||"
-                            className="max-h-[48px] sm:max-h-[65px] md:max-h-[80px] lg:max-h-[90px] w-auto object-contain rounded-lg"
+                            className="w-auto object-contain rounded-lg"
+                            style={{ maxHeight: 'clamp(36px, 7vh, 90px)' }}
                         />
                     </div>
 

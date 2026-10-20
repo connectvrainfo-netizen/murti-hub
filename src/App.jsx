@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    ChevronLeft, ChevronRight, ChevronDown, User, Search, ShoppingBag,
-    ShoppingCart, Car, Sparkles, Gift, ShieldCheck, ArrowRight, Tag,
+    ChevronLeft, ChevronRight, User, Search, ShoppingBag,
+    ShoppingCart, Sparkles, Gift, ShieldCheck, ArrowRight, Tag,
     Truck, PackageCheck, Award, CheckCircle2, Pause,
     Play, Volume2, VolumeX, Columns, LayoutGrid, Grid, Instagram,
     Youtube, Gem, Heart, SlidersHorizontal, RotateCcw, Percent, Check, Star, Menu, X,
     MapPin, Clock, Banknote, Eye
 } from 'lucide-react';
-import { deityCategories, catalog, overlayCards, pageMeta, blogPosts, faqs } from './data/catalog';
+import { deityCategories, catalog, overlayCards, pageMeta, faqs } from './data/catalog';
 import ProductDetailPage from './components/ProductDetailPage';
 import ProductDetailModal from './components/ProductDetailModal';
 import CheckoutModal from './components/CheckoutModal';
 import OrderTrackingModal from './components/OrderTrackingModal';
 import BulkQuoteModal from './components/BulkQuoteModal';
-import ArticleModal from './components/ArticleModal';
+import InquiryModal from './components/InquiryModal';
 import InfoModal from './components/InfoModal';
 import FilterDrawer from './components/FilterDrawer';
 import IntroAnimation from './components/IntroAnimation';
@@ -60,7 +60,6 @@ export default function App() {
     const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
     const [trackingOrderId, setTrackingOrderId] = useState('');
     const [isBulkQuoteOpen, setIsBulkQuoteOpen] = useState(false);
-    const [selectedArticle, setSelectedArticle] = useState(null);
     const [infoModalKey, setInfoModalKey] = useState(null);
 
 
@@ -133,6 +132,19 @@ export default function App() {
         }
     };
 
+    // Buy Now opens this inquiry form to collect customer details before messaging WhatsApp
+    const [inquiryProduct, setInquiryProduct] = useState(null);
+    const buyOnWhatsApp = (product) => setInquiryProduct(product);
+
+    const submitWhatsAppInquiry = (product, customer) => {
+        const priceNum = typeof product.price === 'string'
+            ? parseInt(product.price.replace(/[^\d]/g, ''), 10) || 999
+            : product.price;
+        const message = `Hi, I'm interested in this idol:\n\n*${product.title}*\nPrice: ₹${priceNum.toLocaleString('en-IN')}\n\n*My Details:*\nName: ${customer.name}\nPhone: ${customer.phone}\nAddress: ${customer.address}\nPincode: ${customer.pincode}\n\nPlease share more details and availability.`;
+        window.open(`https://wa.me/917020676423?text=${encodeURIComponent(message)}`, '_blank');
+        setInquiryProduct(null);
+    };
+
     const updateCartQty = (productId, delta) => {
         setCart(prev => {
             return prev
@@ -193,9 +205,6 @@ export default function App() {
     // 10. Google Quality Scorecard State
     const [isGoogleQualityOpen, setIsGoogleQualityOpen] = useState(false);
 
-    // 11. Blog Filter State
-    const [activeBlogCategory, setActiveBlogCategory] = useState('all');
-
     // 12. Newsletter State
     const [newsletterEmail, setNewsletterEmail] = useState('');
     const handleNewsletterSubmit = (e) => {
@@ -213,11 +222,11 @@ export default function App() {
         isCheckoutOpen ||
         isTrackingModalOpen ||
         isBulkQuoteOpen ||
-        selectedArticle ||
         infoModalKey ||
         isFilterDrawerOpen ||
         isCartOpen ||
-        isMobileMenuOpen
+        isMobileMenuOpen ||
+        inquiryProduct
     );
 
     // 60fps Lenis Smooth Momentum Scroll & GSAP ScrollTrigger Integration
@@ -261,6 +270,9 @@ export default function App() {
     const navigateTo = (pageKey, deity = null) => {
         setCurrentPage(pageKey);
         setActiveDeityFilter(deity);
+        setFilterPlacement('all');
+        setFilterPriceRange('all');
+        setSearchQuery('');
         setIsWishlistFilterActive(false);
         if (pageKey !== 'product') setSelectedProduct(null);
         if (pageKey === 'home') setActiveHeroSlide(1);
@@ -370,88 +382,27 @@ export default function App() {
                     </button>
 
                     {/* Center Unified Single-Line Navigation Menu */}
-                    <nav className="hidden lg:flex items-center gap-3.5 xl:gap-5 2xl:gap-7 text-[11px] xl:text-[11.5px] font-semibold tracking-[0.14em] uppercase text-[#222222] whitespace-nowrap">
+                    <nav className="desktop-nav-menu hidden lg:flex flex-1 items-center justify-center gap-10 xl:gap-14 2xl:gap-16 text-[12px] xl:text-[12.5px] font-semibold tracking-[0.14em] uppercase text-[#222222] whitespace-nowrap">
                         <button
                             onClick={() => navigateTo('home')}
                             className={`nav-item-link ${currentPage === 'home' ? 'active-nav' : ''}`}>
                             HOME
                         </button>
                         <button
+                            onClick={() => { navigateTo('home'); setTimeout(() => document.getElementById('hero-slider')?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                            className="nav-item-link">
+                            ABOUT
+                        </button>
+                        <button
                             onClick={() => navigateTo('shop-all')}
                             className={`nav-item-link ${currentPage === 'shop-all' && !activeDeityFilter ? 'active-nav' : ''}`}>
-                            SHOP ALL
-                        </button>
-
-                        {/* Dropdown: SHOP BY DEITY */}
-                        <div className="relative group">
-                            <button className="flex items-center gap-1 nav-item-link uppercase">
-                                SHOP BY DEITY <ChevronDown className="w-3 h-3 stroke-[2] transition-transform group-hover:rotate-180" />
-                            </button>
-                            <div className="absolute left-0 top-full pt-2 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
-                                <div className="bg-[#FAF5E8] rounded-xl shadow-2xl border border-[#E2D4B7] py-2.5 w-52 text-left normal-case tracking-normal text-[13px] text-stone-800">
-                                    {['Hanuman', 'Shiva', 'Ganesha', 'Krishna', 'Ram', 'Durga', 'Gajanan Maharaj', 'Murugan'].map(deity => (
-                                        <button
-                                            key={deity}
-                                            onClick={() => navigateTo('shop-all', deity)}
-                                            className="w-full text-left flex items-center gap-2.5 px-5 py-2 hover:bg-white hover:text-[#C69722] font-medium transition"
-                                        >
-                                            <span className="w-1.5 h-1.5 rounded-full bg-[#C69722]"></span> {deity}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Dropdown: SHOP BY PLACEMENT */}
-                        <div className="relative group">
-                            <button className="flex items-center gap-1 nav-item-link uppercase">
-                                SHOP BY PLACEMENT <ChevronDown className="w-3 h-3 stroke-[2] transition-transform group-hover:rotate-180" />
-                            </button>
-                            <div className="absolute left-0 top-full pt-2 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
-                                <div className="bg-[#FAF5E8] rounded-xl shadow-2xl border border-[#E2D4B7] py-2.5 w-52 text-left normal-case tracking-normal text-[13px] text-stone-800">
-                                    <button onClick={() => navigateTo('shop-all', 'Car Dashboard')} className="w-full text-left block px-5 py-2 hover:bg-white hover:text-[#C69722] font-medium transition">Car Dashboard Idols</button>
-                                    <button onClick={() => navigateTo('sacred')} className="w-full text-left block px-5 py-2 hover:bg-white hover:text-[#C69722] font-medium transition">Home Mandir Murtis</button>
-                                    <button onClick={() => navigateTo('sacred')} className="w-full text-left block px-5 py-2 hover:bg-white hover:text-[#C69722] font-medium transition">Office Desk Collectibles</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button
-                            onClick={() => navigateTo('navratri')}
-                            className={`nav-item-link ${currentPage === 'navratri' ? 'active-nav' : ''}`}>
-                            NAVRATRI COLLECTION
+                            SHOP
                         </button>
                         <button
-                            onClick={() => navigateTo('sacred')}
-                            className={`nav-item-link ${currentPage === 'sacred' ? 'active-nav' : ''}`}>
-                            SACRED COLLECTIBLES
-                        </button>
-                        <button
-                            onClick={() => navigateTo('shop-all', 'Car Dashboard')}
+                            onClick={() => setInfoModalKey('contact')}
                             className="nav-item-link">
-                            CAR DASHBOARD
+                            CONTACT
                         </button>
-                        <button
-                            onClick={() => navigateTo('baal-roop')}
-                            className={`nav-item-link ${currentPage === 'baal-roop' ? 'active-nav' : ''}`}>
-                            BAAL ROOP
-                        </button>
-
-                        {/* Dropdown: GIFTING */}
-                        <div className="relative group">
-                            <button className="flex items-center gap-1 nav-item-link uppercase">
-                                GIFTING <ChevronDown className="w-3 h-3 stroke-[2] transition-transform group-hover:rotate-180" />
-                            </button>
-                            <div className="absolute left-0 top-full pt-2 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
-                                <div className="bg-[#FAF5E8] rounded-xl shadow-2xl border border-[#E2D4B7] py-2.5 w-56 text-left normal-case tracking-normal text-[13px] text-stone-800">
-                                    <button onClick={() => navigateTo('navratri')} className="w-full text-left block px-5 py-2 hover:bg-white hover:text-[#C69722] font-medium transition">Spiritual Gifts</button>
-                                    <button onClick={() => navigateTo('shop-all')} className="w-full text-left block px-5 py-2 hover:bg-white hover:text-[#C69722] font-medium transition">Gifts Under ₹999</button>
-                                    <button onClick={() => navigateTo('sacred')} className="w-full text-left block px-5 py-2 hover:bg-white hover:text-[#C69722] font-medium transition">Premium Gifts</button>
-                                    <button onClick={() => navigateTo('shop-all')} className="w-full text-left block px-5 py-2 hover:bg-white hover:text-[#C69722] font-medium transition">New Car Blessings</button>
-                                    <button onClick={() => { navigateTo('home'); setTimeout(() => document.getElementById('corporate-gifting')?.scrollIntoView({ behavior: 'smooth' }), 100); }} className="w-full text-left block px-5 py-2 hover:bg-white hover:text-[#C69722] font-medium transition">Bulk & Corporate Gifting</button>
-                                </div>
-                            </div>
-                        </div>
                     </nav>
 
                     {/* Right Utility Icons */}
@@ -536,7 +487,7 @@ export default function App() {
                         <button
                             type="button"
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="lg:hidden w-10 h-10 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition tap-target-44"
+                            className="mobile-hamburger-btn lg:hidden w-10 h-10 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition tap-target-44"
                             aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
                         >
                             {isMobileMenuOpen ? (
@@ -588,13 +539,6 @@ export default function App() {
                                 className="min-h-[48px] px-3.5 py-3 rounded-xl text-left flex items-center bg-white text-stone-800 shadow-xs transition active:scale-98"
                             >
                                 Sacred Idols
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => navigateTo('shop-all', 'Car Dashboard')}
-                                className="min-h-[48px] px-3.5 py-3 rounded-xl text-left flex items-center bg-white text-stone-800 shadow-xs transition active:scale-98"
-                            >
-                                Car Dashboard
                             </button>
                             <button
                                 type="button"
@@ -686,7 +630,7 @@ export default function App() {
                             {/* Popular Quick Searches */}
                             <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
                                 <span className="text-stone-400 font-medium">Trending:</span>
-                                {['Ram Darbar', 'Standing Mahadev', 'Panchmukhi Hanuman', 'Ganesha Trio', 'Durga', 'Car Dashboard'].map(tag => (
+                                {['Ram Darbar', 'Standing Mahadev', 'Panchmukhi Hanuman', 'Ganesha Trio', 'Durga'].map(tag => (
                                     <button
                                         key={tag}
                                         onClick={() => {
@@ -990,88 +934,6 @@ export default function App() {
                         </div>
                     </section>
 
-                    {/* ================= 4B. 3 CATEGORY SPOTLIGHT CARDS (REFERENCE LAYOUT ARRANGEMENT) ================= */}
-                    <section id="spotlight-section" className="bg-white py-5 sm:py-6 border-b border-[#E6D6B8] reveal-section is-visible">
-                        <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
-                            <div className="flex sm:grid sm:grid-cols-3 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 px-1 sm:px-0 no-scrollbar snap-x snap-mandatory">
-                                {/* Card 1: Car Dashboard Idols */}
-                                <div
-                                    onClick={() => { setActiveDeityFilter(null); setFilterPlacement('car-dash'); navigateTo('shop-all'); }}
-                                    className="spotlight-card w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
-                                >
-                                    <div className="space-y-1.5 flex-1 min-w-0">
-                                        <span className="text-[9px] sm:text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">PROTECTION ON ROADS</span>
-                                        <h3 className="font-serif text-base sm:text-xl font-bold text-[#161616] group-hover:text-[#8E5B00] transition">
-                                            Car Dashboard
-                                        </h3>
-                                        <p className="text-[11px] sm:text-[11.5px] text-stone-600 line-clamp-2 leading-relaxed">
-                                            9 cm Makrana idols with complimentary anti-skid base.
-                                        </p>
-                                        <div className="pt-1">
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#8E5B00]">
-                                                <span>Shop Now</span>
-                                                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white p-1.5 flex-shrink-0 border border-stone-200/80 shadow-xs flex items-center justify-center">
-                                        <img src="/images/products/bal-ganesha-flute.png" alt="Car Dashboard Idols" className="w-full h-full object-contain group-hover:scale-105 transition duration-300" />
-                                    </div>
-                                </div>
-
-                                {/* Card 2: Home Mandir Murtis */}
-                                <div
-                                    onClick={() => { setActiveDeityFilter(null); setFilterPlacement('mandir'); navigateTo('shop-all'); }}
-                                    className="spotlight-card w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
-                                >
-                                    <div className="space-y-1.5 flex-1 min-w-0">
-                                        <span className="text-[9px] sm:text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">SANCTIFIED ALTARS</span>
-                                        <h3 className="font-serif text-base sm:text-xl font-bold text-[#161616] group-hover:text-[#8E5B00] transition">
-                                            Home Mandir
-                                        </h3>
-                                        <p className="text-[11px] sm:text-[11.5px] text-stone-600 line-clamp-2 leading-relaxed">
-                                            15 cm to 24 cm consecrated altar murtis.
-                                        </p>
-                                        <div className="pt-1">
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#8E5B00]">
-                                                <span>Shop Now</span>
-                                                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white p-1.5 flex-shrink-0 border border-stone-200/80 shadow-xs flex items-center justify-center">
-                                        <img src="/images/products/ram-darbar.png" alt="Home Mandir Idols" className="w-full h-full object-contain group-hover:scale-105 transition duration-300" />
-                                    </div>
-                                </div>
-
-                                {/* Card 3: Sacred Gifting */}
-                                <div
-                                    onClick={() => navigateTo('gifting')}
-                                    className="spotlight-card w-[82vw] min-w-[270px] max-w-[320px] sm:w-auto flex-shrink-0 snap-center bg-gradient-to-br from-[#FAF5E8] to-[#FFFDF9] rounded-2xl border border-[#E6D6B8] p-4 sm:p-5 shadow-xs hover:shadow-md transition flex items-center justify-between gap-3 group cursor-pointer"
-                                >
-                                    <div className="space-y-1.5 flex-1 min-w-0">
-                                        <span className="text-[9px] sm:text-[9.5px] font-bold tracking-wider uppercase text-[#8E5B00]">ROYAL PRESENTATION</span>
-                                        <h3 className="font-serif text-base sm:text-xl font-bold text-[#161616] group-hover:text-[#8E5B00] transition">
-                                            Sacred Gifting
-                                        </h3>
-                                        <p className="text-[11px] sm:text-[11.5px] text-stone-600 line-clamp-2 leading-relaxed">
-                                            Crimson velvet gift packaging for occasions.
-                                        </p>
-                                        <div className="pt-1">
-                                            <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[#8E5B00]">
-                                                <span>Shop Now</span>
-                                                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition" />
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden bg-white p-1.5 flex-shrink-0 border border-stone-200/80 shadow-xs flex items-center justify-center">
-                                        <img src="/images/products/standing-shiva-trishul.png" alt="Sacred Gifting" className="w-full h-full object-contain group-hover:scale-105 transition duration-300" />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
                     {/* ================= 5. WHY AMOL MARBLE MURTI BHANDAR ================= */}
                     <section id="why-section" className="bg-why-murtihub py-5 sm:py-12 border-y border-[#E2C88B] reveal-section is-visible">
                         <div className="max-w-5xl mx-auto px-4 text-center">
@@ -1083,15 +945,7 @@ export default function App() {
                                 <span className="why-divider-line h-[1px] w-6 sm:w-32 bg-gradient-to-l from-transparent to-[#B88921]"></span>
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-6">
-                                <div className="why-pillar-card flex flex-col items-center group p-1 sm:p-2">
-                                    <div className="w-10 h-11 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-1.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
-                                        <Car className="w-5 h-5 sm:w-7 sm:h-7 stroke-[1.8]" />
-                                    </div>
-                                    <h3 className="font-serif text-xs sm:text-lg md:text-[19px] font-semibold text-[#161616]">Car dashboard</h3>
-                                    <p className="text-[9.5px] sm:text-[11px] text-stone-600 mt-0.5 leading-snug">Engineered to sit secure on your dash</p>
-                                </div>
-
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-6">
                                 <div className="why-pillar-card flex flex-col items-center group p-1 sm:p-2">
                                     <div className="w-10 h-11 sm:w-16 sm:h-20 gold-pedestal-icon flex items-center justify-center text-[#2B1F06] mb-1.5 sm:mb-3.5 group-hover:-translate-y-1.5 transition duration-300">
                                         <Sparkles className="w-5 h-5 sm:w-7 sm:h-7 stroke-[1.8]" />
@@ -1139,12 +993,6 @@ export default function App() {
                                     className="px-4 py-2 rounded-full bg-[#161616] text-[#F7C600] text-xs font-bold uppercase tracking-wider shadow-xs tap-target-48 flex items-center gap-1.5 shrink-0"
                                 >
                                     <span>★ All Featured</span>
-                                </button>
-                                <button
-                                    onClick={() => { setActiveDeityFilter(null); setFilterPlacement('car-dash'); navigateTo('shop-all'); }}
-                                    className="px-4 py-2 rounded-full bg-white hover:bg-stone-50 text-stone-700 hover:text-black border border-stone-200 text-xs font-semibold uppercase tracking-wider tap-target-48 shrink-0 transition"
-                                >
-                                    <span>Car Dashboard</span>
                                 </button>
                                 <button
                                     onClick={() => { setActiveDeityFilter(null); setFilterPlacement('mandir'); navigateTo('shop-all'); }}
@@ -1229,12 +1077,9 @@ export default function App() {
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    onClick={() => {
-                                                        addToCart(p);
-                                                        setIsCheckoutOpen(true);
-                                                    }}
+                                                    onClick={() => buyOnWhatsApp(p)}
                                                     className="w-full min-h-[40px] sm:min-h-[42px] py-2 px-1 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[10px] sm:text-[11px] font-black uppercase transition-all duration-150 shadow-2xs flex items-center justify-center active:scale-95 tap-target-44"
-                                                    title="Instant Buy"
+                                                    title="Inquire on WhatsApp"
                                                 >
                                                     <span className="truncate">BUY NOW</span>
                                                 </button>
@@ -1451,12 +1296,9 @@ export default function App() {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => {
-                                                            addToCart(p);
-                                                            setIsCheckoutOpen(true);
-                                                        }}
+                                                        onClick={() => buyOnWhatsApp(p)}
                                                         className="w-full min-h-[38px] sm:min-h-[42px] py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[10px] sm:text-[11px] font-black uppercase transition-all duration-150 shadow-2xs flex items-center justify-center active:scale-95 tap-target-44"
-                                                        title="Instant Buy"
+                                                        title="Inquire on WhatsApp"
                                                     >
                                                         <span className="truncate">BUY NOW</span>
                                                     </button>
@@ -1488,7 +1330,7 @@ export default function App() {
                             <div className="flex items-center justify-between mb-6 px-1">
                                 <div>
                                     <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#F7C600]">✦ SACRED HIGHLIGHTS ✦</span>
-                                    <h3 className="font-serif text-2xl sm:text-3xl text-white mt-1">Car Dashboard & Altar Idols</h3>
+                                    <h3 className="font-serif text-2xl sm:text-3xl text-white mt-1">Sacred Altar Idols</h3>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
@@ -1547,12 +1389,9 @@ export default function App() {
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    addToCart(c);
-                                                    setIsCheckoutOpen(true);
-                                                }}
+                                                onClick={() => buyOnWhatsApp(c)}
                                                 className="w-full text-[#F7C600] hover:text-white text-[10px] sm:text-xs font-semibold min-h-[38px] sm:min-h-[42px] py-2 px-1 transition tap-target-44 active:scale-95 flex items-center justify-center gap-1"
-                                                title="Instant Buy"
+                                                title="Inquire on WhatsApp"
                                             >
                                                 <span className="truncate">Buy Now</span>
                                                 <ArrowRight className="w-3 h-3 shrink-0" />
@@ -1641,46 +1480,34 @@ export default function App() {
                                 <h2 className="font-serif text-2xl min-[400px]:text-3xl sm:text-4xl lg:text-5xl text-[#161616]">Where Faith Finds Form.</h2>
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-3.5 sm:gap-6 mb-3.5 sm:mb-6">
-                                <div className="bento-process-card bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs grid grid-cols-12 gap-3.5 sm:gap-5 items-center">
-                                    <div className="col-span-7 space-y-2 sm:space-y-3">
-                                        <div className="flex items-center gap-2.5 sm:gap-3.5 border-b border-stone-200 pb-2.5 sm:pb-3">
-                                            <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">01</span>
-                                            <div className="border-l border-stone-200 pl-2.5 sm:pl-3.5">
-                                                <h3 className="font-serif text-base sm:text-xl font-semibold text-[#161616] leading-tight">Traditional<br />Design</h3>
-                                                <p className="text-[8px] sm:text-[9px] tracking-[0.16em] uppercase text-stone-400 mt-0.5 sm:mt-1">CONCEPT & CRAFTSMANSHIP</p>
-                                            </div>
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-6">
+                                <div className="bento-process-card bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs space-y-2 sm:space-y-3">
+                                    <div className="flex items-center gap-2.5 sm:gap-3.5 border-b border-stone-200 pb-2.5 sm:pb-3">
+                                        <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">01</span>
+                                        <div className="border-l border-stone-200 pl-2.5 sm:pl-3.5">
+                                            <h3 className="font-serif text-base sm:text-xl font-semibold text-[#161616] leading-tight">Traditional<br />Design</h3>
+                                            <p className="text-[8px] sm:text-[9px] tracking-[0.16em] uppercase text-stone-400 mt-0.5 sm:mt-1">CONCEPT & CRAFTSMANSHIP</p>
                                         </div>
-                                        <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed">
-                                            Every Murti begins with sacred Shilpa Shastra proportions, inspired by ancient Indian temple art.
-                                        </p>
                                     </div>
-                                    <div className="col-span-5">
-                                        <img src="/images/products/ram-darbar.png" alt="Ram Darbar" className="w-full h-28 sm:h-44 object-cover rounded-xl img-studio-contrast bg-stone-100" />
-                                    </div>
+                                    <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed">
+                                        Every Murti begins with sacred Shilpa Shastra proportions, inspired by ancient Indian temple art.
+                                    </p>
                                 </div>
 
-                                <div className="bento-process-card bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs grid grid-cols-12 gap-3.5 sm:gap-5 items-center">
-                                    <div className="col-span-7 space-y-2 sm:space-y-3">
-                                        <div className="flex items-center gap-2.5 sm:gap-3.5 border-b border-stone-200 pb-2.5 sm:pb-3">
-                                            <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">02</span>
-                                            <div className="border-l border-stone-200 pl-2.5 sm:pl-3.5">
-                                                <h3 className="font-serif text-base sm:text-xl font-semibold text-[#161616] leading-tight">Premium<br />Materials</h3>
-                                                <p className="text-[8px] sm:text-[9px] tracking-[0.16em] uppercase text-stone-400 mt-0.5 sm:mt-1">QUALITY & DURABILITY</p>
-                                            </div>
+                                <div className="bento-process-card bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs space-y-2 sm:space-y-3">
+                                    <div className="flex items-center gap-2.5 sm:gap-3.5 border-b border-stone-200 pb-2.5 sm:pb-3">
+                                        <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">02</span>
+                                        <div className="border-l border-stone-200 pl-2.5 sm:pl-3.5">
+                                            <h3 className="font-serif text-base sm:text-xl font-semibold text-[#161616] leading-tight">Premium<br />Materials</h3>
+                                            <p className="text-[8px] sm:text-[9px] tracking-[0.16em] uppercase text-stone-400 mt-0.5 sm:mt-1">QUALITY & DURABILITY</p>
                                         </div>
-                                        <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed">
-                                            Pure white Makrana marble and heavy virgin brass — lustrous, chip-resistant, consecrated for generations.
-                                        </p>
                                     </div>
-                                    <div className="col-span-5">
-                                        <img src="/images/products/ganesha-trio.png" alt="Marble Ganesha Trio" className="w-full h-28 sm:h-44 object-cover rounded-xl img-studio-contrast bg-stone-100" />
-                                    </div>
+                                    <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed">
+                                        Pure white Makrana marble and heavy virgin brass — lustrous, chip-resistant, consecrated for generations.
+                                    </p>
                                 </div>
-                            </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-12 gap-3.5 sm:gap-6 mb-3.5 sm:mb-6">
-                                <div className="bento-process-card col-span-2 md:col-span-4 bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs flex flex-col justify-center space-y-2 sm:space-y-3">
+                                <div className="bento-process-card bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs space-y-2 sm:space-y-3">
                                     <div className="flex items-center gap-2.5 sm:gap-3.5 border-b border-stone-200 pb-2.5 sm:pb-3">
                                         <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">03</span>
                                         <div className="border-l border-stone-200 pl-2.5 sm:pl-3.5">
@@ -1693,31 +1520,20 @@ export default function App() {
                                     </p>
                                 </div>
 
-                                <div className="bento-process-card hidden md:flex md:col-span-3 bg-white rounded-2xl p-3 border border-[#E6D6B8]/80 shadow-xs items-center justify-center">
-                                    <img src="/images/editorial/kalash-craft.png" alt="Kalash Craft" className="w-full h-40 sm:h-52 object-cover rounded-xl img-studio-contrast" />
-                                </div>
-
-                                <div className="bento-process-card col-span-2 md:col-span-5 bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs grid grid-cols-12 gap-3 sm:gap-4 items-center">
-                                    <div className="col-span-7 space-y-2 sm:space-y-3">
-                                        <div className="flex items-center gap-2.5 sm:gap-3 border-b border-stone-200 pb-2.5 sm:pb-3">
-                                            <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">04</span>
-                                            <div className="border-l border-stone-200 pl-2.5 sm:pl-3">
-                                                <h3 className="font-serif text-base sm:text-xl font-semibold text-[#161616] leading-tight">Hand-Finished<br />with Care</h3>
-                                                <p className="text-[8px] sm:text-[9px] tracking-[0.16em] uppercase text-stone-400 mt-0.5 sm:mt-1">DETAILING & FINISHING</p>
-                                            </div>
+                                <div className="bento-process-card bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs space-y-2 sm:space-y-3">
+                                    <div className="flex items-center gap-2.5 sm:gap-3.5 border-b border-stone-200 pb-2.5 sm:pb-3">
+                                        <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">04</span>
+                                        <div className="border-l border-stone-200 pl-2.5 sm:pl-3.5">
+                                            <h3 className="font-serif text-base sm:text-xl font-semibold text-[#161616] leading-tight">Hand-Finished<br />with Care</h3>
+                                            <p className="text-[8px] sm:text-[9px] tracking-[0.16em] uppercase text-stone-400 mt-0.5 sm:mt-1">DETAILING & FINISHING</p>
                                         </div>
-                                        <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed">
-                                            From real gold-work to the compassionate gaze painted in each deity's eyes.
-                                        </p>
                                     </div>
-                                    <div className="col-span-5">
-                                        <img src="/images/products/standing-shiva-trishul.png" alt="Standing Shiva" className="w-full h-28 sm:h-44 object-cover rounded-xl img-studio-contrast bg-stone-100" />
-                                    </div>
+                                    <p className="text-[11px] sm:text-xs text-stone-500 leading-relaxed">
+                                        From real gold-work to the compassionate gaze painted in each deity's eyes.
+                                    </p>
                                 </div>
-                            </div>
 
-                            <div className="grid md:grid-cols-12 gap-3.5 sm:gap-6">
-                                <div className="bento-process-card md:col-span-7 bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs flex flex-col justify-center space-y-2.5 sm:space-y-4">
+                                <div className="bento-process-card bg-white rounded-2xl p-4 sm:p-8 border border-[#E6D6B8]/80 shadow-xs space-y-2.5 sm:space-y-4 lg:col-span-2">
                                     <div className="flex items-center gap-3 sm:gap-4 border-b border-stone-200 pb-2.5 sm:pb-3">
                                         <span className="font-serif text-2xl sm:text-4xl text-[#C69722] font-normal">05</span>
                                         <div className="border-l border-stone-200 pl-3 sm:pl-4">
@@ -1733,10 +1549,6 @@ export default function App() {
                                         <span className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#FAF5E8] text-[10px] sm:text-[11px] font-medium text-stone-700 border border-[#E6D6B8]">• Handmade</span>
                                         <span className="px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-[#FAF5E8] text-[10px] sm:text-[11px] font-medium text-stone-700 border border-[#E6D6B8]">• Safe Transit</span>
                                     </div>
-                                </div>
-
-                                <div className="bento-process-card md:col-span-5 bg-white rounded-2xl p-3 border border-[#E6D6B8]/80 shadow-xs">
-                                    <img src="/images/products/nandi-bull.png" alt="Sacred Nandi" className="w-full h-40 sm:h-60 object-cover rounded-xl img-studio-contrast bg-stone-100" />
                                 </div>
                             </div>
                         </div>
@@ -1805,158 +1617,6 @@ export default function App() {
                                         <p className="text-[10px] sm:text-[11px] text-stone-500">Velvet-lined gift boxes included</p>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* ================= 12. SIMILAR PRODUCT 4-COLUMN SECTION ================= */}
-                    <section id="featured-collectibles-section" className="bg-[#FAF6EC] py-8 sm:py-14 reveal-section is-visible">
-                        <div className="max-w-[1280px] mx-auto px-3.5 sm:px-8">
-                            <div className="flex items-center justify-center gap-2 sm:gap-4 mb-6 sm:mb-10">
-                                <span className="h-[1px] w-12 sm:w-44 bg-stone-300"></span>
-                                <h2 className="font-serif text-2xl sm:text-4xl text-[#161616] px-2 text-center">Featured Collectibles</h2>
-                                <span className="h-[1px] w-12 sm:w-44 bg-stone-300"></span>
-                            </div>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6">
-                                {catalog.slice(10, 14).map(p => (
-                                    <div key={p.id} className="featured-product-card bg-white rounded-xl sm:rounded-2xl p-2 sm:p-4 border border-stone-200/80 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300 flex flex-col justify-between group">
-                                        <div>
-                                            <div 
-                                                onClick={() => openProductPage(p)}
-                                                className="relative rounded-lg sm:rounded-xl overflow-hidden aspect-square sm:aspect-[3/4] mb-2 sm:mb-3.5 bg-gradient-to-b from-[#FAF5E8] to-[#F3EAD3] border border-stone-100 cursor-pointer"
-                                            >
-                                                <img src={p.img} alt={p.title} className="w-full h-full object-contain p-1.5 sm:p-2 img-studio-contrast group-hover:scale-105 transition-transform duration-500 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]" loading="lazy" />
-                                                {p.off && (
-                                                    <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 bg-[#161616]/90 backdrop-blur-xs text-[#F7C600] text-[8px] sm:text-[10px] font-extrabold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-md flex items-center gap-1">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-[#F7C600]"></span>
-                                                        {p.off.toUpperCase()}
-                                                    </span>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => toggleWishlist(p.id, e)}
-                                                    className={`absolute top-1.5 right-1.5 sm:top-2 sm:right-2 w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all shadow-md z-10 tap-target-48 ${
-                                                        wishlist.includes(p.id) ? 'bg-rose-50 text-rose-500 scale-105' : 'bg-white/95 text-stone-700 hover:text-rose-500 hover:scale-110'
-                                                    }`}
-                                                    aria-label={wishlist.includes(p.id) ? 'Remove from Wishlist' : 'Add to Wishlist'}
-                                                >
-                                                    <Heart className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${wishlist.includes(p.id) ? 'fill-current text-rose-500' : ''}`} />
-                                                </button>
-                                            </div>
-
-                                            <div className="flex items-center justify-between text-[8.5px] sm:text-[10px] font-bold tracking-widest uppercase text-[#9E781E] mb-1 sm:mb-1.5">
-                                                <span className="truncate max-w-[80px] sm:max-w-none">{p.deity ? `${p.deity} Murti` : 'Sacred Idol'}</span>
-                                                <span className="flex items-center gap-0.5 sm:gap-1 text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[8.5px] sm:text-[10px] font-bold">
-                                                    <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-amber-400 text-amber-500" /> 4.9
-                                                </span>
-                                            </div>
-
-                                            <h3 
-                                                onClick={() => openProductPage(p)}
-                                                className="text-xs sm:text-sm font-semibold text-[#181411] line-clamp-2 leading-snug cursor-pointer group-hover:text-[#C69722] transition-colors min-h-[36px] sm:min-h-[40px]"
-                                            >
-                                                {p.title}
-                                            </h3>
-
-                                            <div className="flex items-baseline gap-1 sm:gap-2 mt-1.5 sm:mt-2.5 mb-2 sm:mb-3 flex-wrap">
-                                                <span className="font-serif text-sm sm:text-2xl font-bold text-[#161616]">₹{p.price.toLocaleString('en-IN')}</span>
-                                                {p.oldPrice && (
-                                                    <span className="text-[10px] sm:text-xs text-stone-400 line-through">₹{p.oldPrice.toLocaleString('en-IN')}</span>
-                                                )}
-                                                {p.off && (
-                                                    <span className="px-1.5 py-0.2 sm:px-1.5 sm:py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[8.5px] sm:text-[10px] font-bold tracking-wide border border-emerald-200/50">
-                                                        {p.off}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-1.5 sm:gap-2 mt-auto pt-2.5 sm:pt-3 border-t border-stone-100">
-                                            <button
-                                                type="button"
-                                                onClick={() => addToCart(p)}
-                                                className="w-full min-h-[38px] sm:min-h-[44px] py-1.5 sm:py-2 px-1 rounded-xl bg-[#161616] hover:bg-[#C69722] text-[#F7C600] hover:text-white text-[10px] sm:text-[11px] font-bold tracking-wider uppercase transition-all duration-150 flex items-center justify-center gap-1 active:scale-95 shadow-2xs tap-target-44"
-                                            >
-                                                <ShoppingCart className="w-3.5 h-3.5 shrink-0" />
-                                                <span className="truncate">ADD</span>
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    addToCart(p);
-                                                    setIsCheckoutOpen(true);
-                                                }}
-                                                className="w-full min-h-[38px] sm:min-h-[44px] py-1.5 sm:py-2 px-1 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[10px] sm:text-[11px] font-black uppercase transition-all duration-150 shadow-xs flex items-center justify-center active:scale-95 tap-target-44"
-                                            >
-                                                <span className="truncate">BUY</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-
-
-                    {/* ================= 13. BLOG POSTS SECTION ================= */}
-                    <section id="blog-posts-section" className="bg-white py-8 sm:py-16 reveal-section is-visible">
-                        <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
-                            <h2 className="font-serif text-2xl min-[400px]:text-3xl sm:text-4xl lg:text-5xl text-center text-[#161616] mb-5 sm:mb-8">Sacred Stories & Guides</h2>
-
-                            <div className="flex items-center gap-2 mb-5 sm:mb-8 overflow-x-auto no-scrollbar py-1 px-0.5">
-                                <button
-                                    onClick={() => setActiveBlogCategory('all')}
-                                    className={`px-3.5 sm:px-4 py-1.5 rounded text-[10px] tracking-wider uppercase shrink-0 min-h-[36px] tap-target-48 ${activeBlogCategory === 'all' ? 'bg-[#161616] text-white font-bold' : 'border border-stone-300 text-stone-700 font-semibold'}`}
-                                >
-                                    ALL BLOGS
-                                </button>
-                                <button
-                                    onClick={() => setActiveBlogCategory('2026')}
-                                    className={`px-3.5 sm:px-4 py-1.5 rounded text-[10px] tracking-wider uppercase shrink-0 min-h-[36px] tap-target-48 ${activeBlogCategory === '2026' ? 'bg-[#161616] text-white font-bold' : 'border border-stone-300 text-stone-700 font-semibold'}`}
-                                >
-                                    2026 GUIDES
-                                </button>
-                                <button
-                                    onClick={() => setActiveBlogCategory('krishna')}
-                                    className={`px-3.5 sm:px-4 py-1.5 rounded text-[10px] tracking-wider uppercase shrink-0 min-h-[36px] tap-target-48 ${activeBlogCategory === 'krishna' ? 'bg-[#161616] text-white font-bold' : 'border border-stone-300 text-stone-700 font-semibold'}`}
-                                >
-                                    GANESHA & KRISHNA
-                                </button>
-                                <button
-                                    onClick={() => setActiveBlogCategory('bhakti')}
-                                    className={`px-3.5 sm:px-4 py-1.5 rounded text-[10px] tracking-wider uppercase shrink-0 min-h-[36px] tap-target-48 ${activeBlogCategory === 'bhakti' ? 'bg-[#161616] text-white font-bold' : 'border border-stone-300 text-stone-700 font-semibold'}`}
-                                >
-                                    BHAKTI & VAASTU
-                                </button>
-                            </div>
-
-                            <div className="flex sm:grid sm:grid-cols-3 gap-3 sm:gap-7 overflow-x-auto sm:overflow-visible no-scrollbar snap-x snap-mandatory pb-2 sm:pb-0">
-                                {blogPosts
-                                    .filter(b => activeBlogCategory === 'all' || b.category === activeBlogCategory)
-                                    .map(blog => (
-                                        <article
-                                            key={blog.id}
-                                            onClick={() => setSelectedArticle(blog)}
-                                            className="blog-card-item group cursor-pointer w-[68vw] min-w-[210px] max-w-[260px] sm:w-auto sm:max-w-none flex-shrink-0 snap-start"
-                                        >
-                                            <div className="relative rounded-xl sm:rounded-2xl overflow-hidden aspect-[4/3] sm:aspect-square mb-2 sm:mb-4 bg-stone-900">
-                                                <img src={blog.img} alt={blog.title} className="w-full h-full object-cover img-studio-contrast group-hover:scale-105 transition duration-300" />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent flex items-end p-3 sm:p-5">
-                                                    <p className="font-serif text-white text-sm sm:text-2xl font-bold leading-tight whitespace-pre-line">{blog.heading}</p>
-                                                </div>
-                                                <span className="absolute top-2 right-2 sm:top-3 sm:right-3 bg-[#161616]/90 text-white text-[8px] sm:text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded">
-                                                    {blog.tag}
-                                                </span>
-                                            </div>
-                                            <h3 className="font-serif text-sm sm:text-xl font-semibold text-[#161616] group-hover:text-[#C69722] transition leading-snug line-clamp-2">
-                                                {blog.title}
-                                            </h3>
-                                            <p className="text-[10px] sm:text-xs text-stone-500 mt-1 sm:mt-2 line-clamp-2">
-                                                {blog.desc}
-                                            </p>
-                                        </article>
-                                    ))}
                             </div>
                         </div>
                     </section>
@@ -2131,10 +1791,7 @@ export default function App() {
                     product={selectedProduct}
                     onBack={handleBackFromProduct}
                     onAddToCart={addToCart}
-                    onBuyNow={(prod) => {
-                        addToCart(prod, false);
-                        setIsCheckoutOpen(true);
-                    }}
+                    onBuyNow={(prod) => buyOnWhatsApp(prod)}
                     isWishlisted={wishlist.includes(selectedProduct?.id)}
                     onToggleWishlist={toggleWishlist}
                     onSelectProduct={openProductPage}
@@ -2252,7 +1909,7 @@ export default function App() {
                             )}
                             {filterPlacement !== 'all' && (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-white border border-[#C69722] text-[#161616] font-semibold text-[11px]">
-                                    Placement: {filterPlacement}
+                                    Placement: {filterPlacement === 'mandir' ? 'Home Mandir' : filterPlacement}
                                     <button onClick={() => setFilterPlacement('all')} className="hover:text-red-500 ml-1">✕</button>
                                 </span>
                             )}
@@ -2357,12 +2014,9 @@ export default function App() {
                                             </button>
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    addToCart(p);
-                                                    setIsCheckoutOpen(true);
-                                                }}
+                                                onClick={() => buyOnWhatsApp(p)}
                                                 className="w-full min-h-[36px] sm:min-h-[44px] py-1.5 sm:py-2 px-1 rounded-lg sm:rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#C69722] hover:from-[#C69722] hover:to-[#B3810E] text-[#161616] text-[9.5px] sm:text-[11px] font-black uppercase transition-all duration-150 shadow-2xs flex items-center justify-center active:scale-95"
-                                                title="Instant Buy"
+                                                title="Inquire on WhatsApp"
                                             >
                                                 <span className="truncate">BUY</span>
                                             </button>
@@ -2795,11 +2449,11 @@ export default function App() {
                  }}
              />
 
-             {/* ================= 23. SACRED ARTICLE READER MODAL ================= */}
-             <ArticleModal
-                 article={selectedArticle}
-                 onClose={() => setSelectedArticle(null)}
-                 onExploreDeity={(route) => navigateTo(route)}
+             {/* ================= 23. WHATSAPP BUY NOW INQUIRY MODAL ================= */}
+             <InquiryModal
+                 product={inquiryProduct}
+                 onClose={() => setInquiryProduct(null)}
+                 onSubmit={(customer) => submitWhatsAppInquiry(inquiryProduct, customer)}
              />
 
              {/* ================= 24. SHOPPING POLICIES & CONCIERGE MODAL ================= */}

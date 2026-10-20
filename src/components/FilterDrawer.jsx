@@ -18,11 +18,11 @@ export default function FilterDrawer({
     const deities = ['All Deities', 'Hanuman', 'Shiva', 'Krishna', 'Ganesha', 'Ram', 'Durga', 'Gajanan Maharaj', 'Murugan'];
     const priceOptions = [
         { label: 'All Prices', val: 'all' },
-        { label: 'Under ₹1,000 (Gifting & Dashboard)', val: 'under-1000' },
+        { label: 'Under ₹1,000 (Gifting & Small Idols)', val: 'under-1000' },
         { label: '₹1,000 - ₹2,000 (Home Mandir)', val: '1000-2000' },
         { label: 'Above ₹2,000 (Grand Sacred Altars)', val: 'above-2000' }
     ];
-    const placements = ['All Placements', 'Car Dashboard', 'Home Mandir', 'Office Desk'];
+    const placements = ['All Placements', 'Home Mandir', 'Office Desk'];
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs">

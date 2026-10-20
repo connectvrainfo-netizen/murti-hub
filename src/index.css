@@ -4,6 +4,19 @@
     box-sizing: border-box;
 }
 
+/* Show the full nav on mouse/trackpad (desktop) devices regardless of window
+   width, and the hamburger menu on touch (mobile/tablet) devices regardless
+   of width — so a narrow, un-maximized desktop window still gets the full
+   nav instead of the hamburger. */
+@media (hover: hover) and (pointer: fine) {
+    .mobile-hamburger-btn { display: none !important; }
+    .desktop-nav-menu { display: flex !important; }
+}
+@media (hover: none), (pointer: coarse) {
+    .mobile-hamburger-btn { display: flex !important; }
+    .desktop-nav-menu { display: none !important; }
+}
+
 html {
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
@@ -214,7 +227,9 @@ video {
 .deity-cat-card img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
+    padding: 6px;
     display: block;
     border-radius: 14px;
     transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);

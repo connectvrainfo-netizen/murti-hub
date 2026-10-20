@@ -10,7 +10,7 @@ export default function ProductDetailModal({
 }) {
     if (!product) return null;
 
-    const [selectedSize, setSelectedSize] = useState('9 cm (Car Dashboard / Small Altar)');
+    const [selectedSize, setSelectedSize] = useState('9 cm (Compact / Small Altar)');
     const [selectedFinish, setSelectedFinish] = useState('Pure Makrana White');
     const [qty, setQty] = useState(1);
     const [activeTab, setActiveTab] = useState('specs'); // 'specs' | 'vaastu' | 'care'
@@ -124,7 +124,7 @@ export default function ProductDetailModal({
                                 </label>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     {[
-                                        '9 cm (Car Dashboard)',
+                                        '9 cm (Compact)',
                                         '15 cm (Home Mandir)',
                                         '24 cm (Grand Temple)'
                                     ].map(sz => (
