@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Noto+Serif+Devanagari:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 * {
     box-sizing: border-box;
 }
@@ -59,6 +63,31 @@ body {
 .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+/* Custom sleek gold/dark scrollbar for dialogs, drawers & modal containers */
+[data-lenis-prevent] {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+[data-lenis-prevent]::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+[data-lenis-prevent]::-webkit-scrollbar-track {
+    background: #FAF5E8;
+    border-radius: 9999px;
+}
+
+[data-lenis-prevent]::-webkit-scrollbar-thumb {
+    background: #D4B26A;
+    border-radius: 9999px;
+}
+
+[data-lenis-prevent]::-webkit-scrollbar-thumb:hover {
+    background: #C69722;
 }
 
 /* Enforce 16px minimum input font-size on mobile to prevent iOS Safari auto-zoom */

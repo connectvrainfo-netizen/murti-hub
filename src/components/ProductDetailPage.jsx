@@ -3,9 +3,11 @@ import {
     Star, ShieldCheck, Gem, Sparkles, Check, Heart, ShoppingBag,
     ArrowRight, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw,
     ThumbsUp, ThumbsDown, MessageSquare, Award, Share2, MapPin,
-    PackageCheck, Clock, Calendar, AlertCircle, Eye, HelpCircle
+    PackageCheck, Clock, Calendar, AlertCircle, Eye, HelpCircle, Lock,
+    Tag
 } from 'lucide-react';
 import { catalog } from '../data/catalog';
+import api from '../services/api';
 
 export default function ProductDetailPage({
     product,
@@ -14,14 +16,17 @@ export default function ProductDetailPage({
     onBuyNow,
     isWishlisted,
     onToggleWishlist,
-    onSelectProduct
+    onSelectProduct,
+    globalRatingMode = 'enabled',
+    masterSizes = []
 }) {
     if (!product) return null;
 
-    // Scroll to top on product change
+    // Scroll to top and reset image index on product change
     useEffect(() => {
+        setActiveImageIdx(0);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, [product.id]);
+    }, [product?.id]);
 
     // Product Variations State
     const [selectedSize, setSelectedSize] = useState('9 cm (Compact / Small Altar)');
@@ -35,6 +40,8 @@ export default function ProductDetailPage({
     const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
     const [newReview, setNewReview] = useState({ name: '', rating: 5, title: '', comment: '', location: '' });
     const [reviewSubmitted, setReviewSubmitted] = useState(false);
+    const [reviewError, setReviewError] = useState('');
+    const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
     // Initial Reviews Data with User-Requested Fields:
     // Customer name/avatar, Star rating, Title & description, Verified badge, Purchase date, Helpful/not helpful, Seller response
@@ -157,22 +164,41 @@ export default function ProductDetailPage({
     // Calculate Price Based on Variations
     const priceNum = typeof product.price === 'string'
         ? parseInt(product.price.replace(/[^\d]/g, ''), 10) || 999
-        : product.price;
+        : (Number(product.price) || 999);
 
-    const oldPriceNum = product.oldPrice || (typeof product.old === 'string' ? parseInt(product.old.replace(/[^\d]/g, ''), 10) : priceNum + 700);
+    const oldPriceNum = Number(product.oldPrice) || Number(product.old_price) || (typeof product.old === 'string' ? parseInt(product.old.replace(/[^\d]/g, ''), 10) : priceNum + 700);
 
-    const sizePriceAdd = selectedSize.includes('15 cm') ? 600 : selectedSize.includes('24 cm') ? 1500 : 0;
+    const sizePriceAdd = (selectedSize && selectedSize.includes('15 cm')) ? 600 : (selectedSize && selectedSize.includes('24 cm')) ? 1500 : 0;
     const finalPrice = priceNum + sizePriceAdd;
     const finalOldPrice = oldPriceNum + sizePriceAdd;
     const savingsAmount = Math.max(0, finalOldPrice - finalPrice);
 
+    // Req #5: Effective rating mode
+    const effectiveRatingMode = (product.rating_mode && product.rating_mode !== 'enabled')
+        ? product.rating_mode
+        : (globalRatingMode || 'enabled');
+    const displayRating = product.static_rating_value || 4.9;
+
+    // Req #3: Dedicated Catalog Image Section
+    const customCatalogImages = (product.catalog_images && Array.isArray(product.catalog_images) && product.catalog_images.length > 0)
+        ? product.catalog_images.map((item, idx) => ({
+            id: `cat-${idx}`,
+            title: item.caption || `Catalog Angle ${idx + 1}`,
+            caption: item.caption || `Catalog Angle • Hand-Carved Makrana Marble`,
+            img: item.url || product.primary_catalog_image || product.img,
+            desc: item.caption || 'Authentic hand-carved Makrana marble sculpture from our atelier.',
+            zoomClass: 'scale-100 object-contain'
+        }))
+        : null;
+
     // Multi-Angle Thumbnail Gallery Views
-    const galleryViews = [
+    const baseProductImg = product.primary_catalog_image || product.img || '/images/products/ram-darbar.png';
+    const galleryViews = customCatalogImages || [
         {
             id: 'front',
             title: 'Front View',
             caption: 'Front View • Sacred Shilpa Shastra Symmetry',
-            img: product.img,
+            img: baseProductImg,
             desc: 'Frontal consecrated posture with serene benign expression and blessings mudra.',
             zoomClass: 'scale-100 object-contain'
         },
@@ -180,7 +206,7 @@ export default function ProductDetailPage({
             id: 'side',
             title: 'Side Angle & Depth',
             caption: 'Side Profile • Chiseled Contours & Sculptural Depth',
-            img: product.img,
+            img: baseProductImg,
             desc: 'Three-quarter sculptural angle revealing marble thickness, posture, and stable pedestal.',
             zoomClass: 'scale-105 rotate-1 object-contain'
         },
@@ -188,7 +214,7 @@ export default function ProductDetailPage({
             id: 'detail',
             title: '24K Gold Detailing',
             caption: 'Macro Close-Up • 24K Gold Foil Embossed Detailing',
-            img: product.img,
+            img: baseProductImg,
             desc: 'Intricate zaree border work applied with squirrel-hair brushes and pure gold leaf.',
             zoomClass: 'scale-135 object-cover object-top'
         },
@@ -196,46 +222,79 @@ export default function ProductDetailPage({
             id: 'detail2',
             title: 'Mandir Altar Placement',
             caption: 'Home Mandir Placement • Consecrated for Daily Pooja',
-            img: product.img,
+            img: baseProductImg,
             desc: 'Visualized in a serene home mandir setting with brass lamps and marigold garlands.',
             zoomClass: 'scale-100 brightness-105 object-contain'
         }
     ];
 
+    const safeActiveIdx = (activeImageIdx >= 0 && activeImageIdx < galleryViews.length) ? activeImageIdx : 0;
+    const currentView = galleryViews[safeActiveIdx] || galleryViews[0] || {
+        id: 'default',
+        title: product.title || 'Sacred Murti',
+        caption: 'Hand-Carved Makrana Marble Idol',
+        img: baseProductImg,
+        desc: 'Handcrafted Makrana marble sculpture.',
+        zoomClass: 'scale-100 object-contain'
+    };
+
     // Handle Review Submit
-    const handleReviewSubmit = (e) => {
+    const handleReviewSubmit = async (e) => {
         e.preventDefault();
-        if (!newReview.name || !newReview.title || !newReview.comment) return;
+        setReviewError('');
 
-        const createdReview = {
-            id: Date.now(),
-            author: newReview.name,
-            avatarColor: "bg-amber-600",
-            location: newReview.location || "India",
-            rating: newReview.rating,
-            date: "Just now",
-            verified: true,
-            title: newReview.title,
-            content: newReview.comment,
-            helpfulCount: 0,
-            unhelpfulCount: 0,
-            userVote: null,
-            tag: "mandir",
-            hasPhoto: false,
-            sellerReply: {
-                author: "Amol Murti Concierge",
+        if (!newReview.name || !newReview.title || !newReview.comment) {
+            setReviewError('Please complete all required fields (name, headline, detailed review).');
+            return;
+        }
+
+        setIsSubmittingReview(true);
+        try {
+            const apiRes = await api.submitReview(product.id, {
+                murti_id: String(product.id),
+                author: newReview.name,
+                location: newReview.location || "Jaipur, Rajasthan",
+                rating: newReview.rating,
+                title: newReview.title,
+                content: newReview.comment
+            });
+
+            const createdReview = (apiRes && apiRes.data) ? apiRes.data : {
+                id: Date.now(),
+                author: newReview.name,
+                avatarColor: "bg-amber-600",
+                location: newReview.location || "India",
+                rating: newReview.rating,
                 date: "Just now",
-                text: `Dhanyawad ${newReview.name} ji! Your sacred review has been verified and published. May Bhagwan bless your home with peace and divine grace.`
-            }
-        };
+                verified: true,
+                title: newReview.title,
+                content: newReview.comment,
+                helpfulCount: 0,
+                unhelpfulCount: 0,
+                userVote: null,
+                tag: "mandir",
+                hasPhoto: false,
+                sellerReply: {
+                    author: "Amol Murti Concierge",
+                    date: "Just now",
+                    text: `Dhanyawad ${newReview.name} ji! Your sacred review has been verified and published. May Bhagwan bless your home with peace and divine grace.`
+                }
+            };
 
-        setReviews(prev => [createdReview, ...prev]);
-        setReviewSubmitted(true);
-        setTimeout(() => {
-            setIsWriteReviewOpen(false);
-            setReviewSubmitted(false);
-            setNewReview({ name: '', rating: 5, title: '', comment: '', location: '' });
-        }, 1500);
+            setReviews(prev => [createdReview, ...prev]);
+            setReviewSubmitted(true);
+            setTimeout(() => {
+                setIsWriteReviewOpen(false);
+                setReviewSubmitted(false);
+                setNewReview({ name: '', rating: 5, title: '', comment: '', location: '' });
+                setReviewError('');
+            }, 1500);
+        } catch (err) {
+            console.error('API review submission failed:', err);
+            setReviewError(err.message || 'Unable to submit review. Please try again.');
+        } finally {
+            setIsSubmittingReview(false);
+        }
     };
 
     // Filtered Reviews List
@@ -339,10 +398,10 @@ export default function ProductDetailPage({
                         <div className="flex-1 relative rounded-3xl overflow-hidden bg-white border border-[#E6D6B8] shadow-lg group">
                             <div className="relative aspect-square sm:aspect-[4/3] lg:aspect-square overflow-hidden bg-[#FBF9F3]">
                                 <img
-                                    key={activeImageIdx}
-                                    src={galleryViews[activeImageIdx].img}
-                                    alt={galleryViews[activeImageIdx].title}
-                                    className={`w-full h-full object-contain p-4 sm:p-8 img-studio-contrast transition-all duration-500 transform ${galleryViews[activeImageIdx].zoomClass || ''} group-hover:scale-105 animate-in fade-in`}
+                                    key={safeActiveIdx}
+                                    src={currentView.img}
+                                    alt={currentView.title}
+                                    className={`w-full h-full object-contain p-4 sm:p-8 img-studio-contrast transition-all duration-500 transform ${currentView.zoomClass || ''} group-hover:scale-105 animate-in fade-in`}
                                 />
 
                                 {/* Deity & Material Floating Badge */}
@@ -389,11 +448,11 @@ export default function ProductDetailPage({
                                 {/* Active View Caption Ribbon */}
                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-4 text-white flex items-end justify-between">
                                     <div>
-                                        <p className="text-xs font-semibold text-[#F7C600]">{galleryViews[activeImageIdx].caption}</p>
-                                        <p className="text-[11px] text-stone-200 mt-0.5 line-clamp-1">{galleryViews[activeImageIdx].desc}</p>
+                                        <p className="text-xs font-semibold text-[#F7C600]">{currentView.caption}</p>
+                                        <p className="text-[11px] text-stone-200 mt-0.5 line-clamp-1">{currentView.desc}</p>
                                     </div>
                                     <span className="text-[10px] font-mono font-bold bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded">
-                                        {activeImageIdx + 1} / {galleryViews.length}
+                                        {safeActiveIdx + 1} / {galleryViews.length}
                                     </span>
                                 </div>
                             </div>
@@ -414,15 +473,21 @@ export default function ProductDetailPage({
 
                             {/* Rating and Social Proof */}
                             <div className="flex items-center gap-3 mt-3.5 pb-4 border-b border-stone-200">
-                                <a href="#reviews" className="flex items-center gap-1.5 bg-[#FAF5E8] px-3 py-1 rounded-full border border-[#E6D6B8] hover:bg-[#F3E8CE] transition">
-                                    <div className="flex text-amber-500">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                                        ))}
-                                    </div>
-                                    <span className="text-xs font-bold text-[#161616]">4.9</span>
-                                    <span className="text-[11px] text-stone-500">• 142 Verified Reviews</span>
-                                </a>
+                                {effectiveRatingMode !== 'hidden' ? (
+                                    <a href="#reviews" className="flex items-center gap-1.5 bg-[#FAF5E8] px-3 py-1 rounded-full border border-[#E6D6B8] hover:bg-[#F3E8CE] transition">
+                                        <div className="flex text-amber-500">
+                                            {[...Array(5)].map((_, i) => (
+                                                <Star key={i} className="w-3.5 h-3.5 fill-current" />
+                                            ))}
+                                        </div>
+                                        <span className="text-xs font-bold text-[#161616]">{displayRating}</span>
+                                        <span className="text-[11px] text-stone-500">• {product.static_reviews_count || 142} Verified Reviews</span>
+                                    </a>
+                                ) : (
+                                    <span className="text-xs font-bold text-[#8E5B00] bg-[#FAF5E8] px-3 py-1 rounded-full border border-[#E6D6B8]">
+                                        ✦ 100% Consecrated Makrana Marble
+                                    </span>
+                                )}
 
                                 <span className="text-[11px] text-green-700 font-semibold flex items-center gap-1">
                                     <CheckCircle2 className="w-3.5 h-3.5" /> Consecration Ready
@@ -454,7 +519,24 @@ export default function ProductDetailPage({
                             </div>
                         </div>
 
-                        {/* Variation 1: Size Selector */}
+                        {/* Product Description & Dimensions Highlight */}
+                        {(product.description || product.dimensions) && (
+                            <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E6D6B8] space-y-2 text-stone-700 shadow-2xs">
+                                {product.description && (
+                                    <p className="text-xs sm:text-[12.5px] leading-relaxed text-stone-600">
+                                        {product.description}
+                                    </p>
+                                )}
+                                {product.dimensions && (
+                                    <div className="pt-1 flex items-center gap-2 text-xs font-bold text-[#8E5B00]">
+                                        <Tag className="w-3.5 h-3.5 text-[#C69722]" />
+                                        <span>Size & Dimensions: {product.dimensions}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Variation 1: Size Selector (Req #7: Dynamic Master Sizes) */}
                         <div className="space-y-2.5">
                             <label className="flex items-center justify-between text-xs font-bold text-stone-800 uppercase tracking-wider">
                                 <span>SELECT IDOL SIZE:</span>
@@ -463,11 +545,24 @@ export default function ProductDetailPage({
                                 </span>
                             </label>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                {[
-                                    { label: '9 cm (Compact)', desc: 'Standard', extra: 0 },
-                                    { label: '15 cm (Home Mandir)', desc: '+₹600', extra: 600 },
-                                    { label: '24 cm (Grand Temple)', desc: '+₹1,500', extra: 1500 }
-                                ].map(size => {
+                                {(product.variants && product.variants.length > 0
+                                    ? product.variants.map(v => ({
+                                        label: v.variant_name || `${v.size?.label || 'Custom Size'}`,
+                                        desc: v.discount_price ? `₹${v.price}` : `Standard`,
+                                        extra: (v.price - priceNum) > 0 ? (v.price - priceNum) : 0
+                                    }))
+                                    : (masterSizes && masterSizes.length > 0)
+                                    ? masterSizes.slice(0, 3).map((ms, idx) => ({
+                                        label: ms.label,
+                                        desc: ms.description || (idx === 0 ? 'Standard' : `+₹${idx * 600}`),
+                                        extra: idx * 600
+                                    }))
+                                    : [
+                                        { label: '9 cm (Compact)', desc: 'Standard', extra: 0 },
+                                        { label: '15 cm (Home Mandir)', desc: '+₹600', extra: 600 },
+                                        { label: '24 cm (Grand Temple)', desc: '+₹1,500', extra: 1500 }
+                                    ]
+                                ).map(size => {
                                     const isSelected = selectedSize.includes(size.label.split(' ')[0]);
                                     return (
                                         <button
@@ -479,7 +574,7 @@ export default function ProductDetailPage({
                                                     : 'border-stone-200 bg-white text-stone-700 hover:border-black'
                                             }`}
                                         >
-                                            <span className="text-xs font-bold">{size.label.split(' ')[0]} {size.label.split(' ')[1]}</span>
+                                            <span className="text-xs font-bold">{size.label.split(' ')[0]} {size.label.split(' ')[1] || ''}</span>
                                             <span className={`text-[10px] mt-1 ${isSelected ? 'text-[#F7C600]' : 'text-stone-500'}`}>{size.desc}</span>
                                         </button>
                                     );
@@ -671,7 +766,8 @@ export default function ProductDetailPage({
                     </div>
                 </div>
 
-                {/* ================= REVIEWS SECTION (USER-REQUESTED FEATURE) ================= */}
+                {/* ================= REVIEWS SECTION (USER-REQUESTED FEATURE: REQ #5) ================= */}
+                {effectiveRatingMode !== 'hidden' && (
                 <div id="reviews" className="mt-16 pt-10 border-t border-[#E6D6B8] scroll-mt-24">
                     {/* Review Header & Score Breakdown */}
                     <div className="bg-white rounded-3xl border border-[#E6D6B8] p-6 sm:p-10 shadow-sm mb-10">
@@ -720,12 +816,22 @@ export default function ProductDetailPage({
 
                             {/* Write Review CTA */}
                             <div className="md:col-span-3 text-center md:text-right">
-                                <button
-                                    onClick={() => setIsWriteReviewOpen(true)}
-                                    className="px-6 py-3 rounded-full bg-[#161616] hover:bg-[#C69722] text-white text-xs font-bold tracking-wider uppercase transition shadow-md w-full sm:w-auto"
-                                >
-                                    Write a Sacred Review
-                                </button>
+                                {effectiveRatingMode === 'read_only' ? (
+                                    <div className="inline-block p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-left">
+                                        <div className="flex items-center gap-1.5 font-bold text-xs">
+                                            <Lock className="w-3.5 h-3.5 text-amber-600" />
+                                            <span>Ratings in View-Only Mode</span>
+                                        </div>
+                                        <p className="text-[10px] text-stone-500 mt-1">Review submissions are paused by admin.</p>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setIsWriteReviewOpen(true)}
+                                        className="px-6 py-3 rounded-full bg-[#161616] hover:bg-[#C69722] text-white text-xs font-bold tracking-wider uppercase transition shadow-md w-full sm:w-auto"
+                                    >
+                                        Write a Sacred Review
+                                    </button>
+                                )}
                                 <p className="text-[10px] text-stone-400 mt-2">Only verified buyers can review</p>
                             </div>
                         </div>
@@ -814,19 +920,26 @@ export default function ProductDetailPage({
                                                 className="w-full px-3.5 py-3 text-base sm:text-xs rounded-xl border border-stone-300 bg-white"
                                             ></textarea>
                                         </div>
+                                        {reviewError && (
+                                            <div className="sm:col-span-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center gap-2">
+                                                <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                                                <span>{reviewError}</span>
+                                            </div>
+                                        )}
                                         <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
                                             <button
                                                 type="button"
-                                                onClick={() => setIsWriteReviewOpen(false)}
+                                                onClick={() => { setIsWriteReviewOpen(false); setReviewError(''); }}
                                                 className="min-h-[48px] px-6 py-2.5 rounded-xl border border-stone-300 text-xs font-semibold hover:border-black transition tap-target-48"
                                             >
                                                 Cancel
                                             </button>
                                             <button
                                                 type="submit"
-                                                className="min-h-[48px] px-7 py-2.5 rounded-xl bg-[#161616] hover:bg-[#C69722] text-white text-xs font-bold transition shadow-sm tap-target-48 active:scale-98"
+                                                disabled={isSubmittingReview}
+                                                className="min-h-[48px] px-7 py-2.5 rounded-xl bg-[#161616] hover:bg-[#C69722] disabled:opacity-50 text-white text-xs font-bold transition shadow-sm tap-target-48 active:scale-98 flex items-center gap-2"
                                             >
-                                                Submit Review
+                                                {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
                                             </button>
                                         </div>
                                     </div>
@@ -875,8 +988,8 @@ export default function ProductDetailPage({
                                 <div className="flex flex-wrap items-start justify-between gap-3">
                                     <div className="flex items-center gap-3">
                                         {/* Profile Avatar with Initials */}
-                                        <div className={`w-10 h-10 rounded-full ${rev.avatarColor} text-white flex items-center justify-center font-bold text-sm shadow-xs`}>
-                                            {rev.author.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                        <div className={`w-10 h-10 rounded-full ${rev.avatarColor || 'bg-amber-700'} text-white flex items-center justify-center font-bold text-sm shadow-xs`}>
+                                            {(rev.author || 'User').trim().split(/\s+/).map(n => n[0] || '').join('').slice(0, 2).toUpperCase() || 'AM'}
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-2">
@@ -985,6 +1098,7 @@ export default function ProductDetailPage({
                         ))}
                     </div>
                 </div>
+                )}
 
                 {/* ================= RELATED PRODUCTS / YOU MAY ALSO LIKE ================= */}
                 {relatedProducts.length > 0 && (
@@ -1032,7 +1146,7 @@ export default function ProductDetailPage({
                                             </span>
                                             {item.oldPrice && (
                                                 <span className="text-[10px] sm:text-[11px] text-stone-400 line-through">
-                                                    Rs. {item.oldPrice.toLocaleString('en-IN')}
+                                                    Rs. {typeof item.oldPrice === 'number' ? item.oldPrice.toLocaleString('en-IN') : item.oldPrice}
                                                 </span>
                                             )}
                                         </div>

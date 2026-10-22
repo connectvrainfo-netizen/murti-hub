@@ -31,3 +31,16 @@ pnpm-debug.log*
 defect/
 
 .vercel
+
+# Agent & AI artifacts
+.agents/
+skills-lock.json
+
+# Backend
+backend/.venv/
+backend/.env
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/.pytest_cache/

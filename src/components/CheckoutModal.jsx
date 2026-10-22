@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, CheckCircle2, ShieldCheck, Truck, CreditCard, Banknote, QrCode, Tag, ArrowRight, Sparkles } from 'lucide-react';
+import { X, CheckCircle2, ShieldCheck, Truck, CreditCard, Banknote, QrCode, Tag, ArrowRight, Sparkles, Loader2, AlertCircle } from 'lucide-react';
+import api from '../services/api';
 
 export default function CheckoutModal({
     isOpen,
@@ -17,6 +18,8 @@ export default function CheckoutModal({
     const [step, setStep] = useState(1); // 1: Address, 2: Payment, 3: Success
     const [couponInput, setCouponInput] = useState('');
     const [couponError, setCouponError] = useState('');
+    const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+    const [orderErrorMessage, setOrderErrorMessage] = useState('');
 
     const [shipping, setShipping] = useState({
         fullName: '',
@@ -53,19 +56,56 @@ export default function CheckoutModal({
         setStep(2);
     };
 
-    const handlePlaceOrder = () => {
-        const generatedOrderId = `MH-${Math.floor(100000 + Math.random() * 900000)}`;
-        const orderData = {
-            orderId: generatedOrderId,
-            items: [...cart],
-            total: cartTotal,
-            shipping,
-            paymentMethod,
-            date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-        };
-        setOrderInfo(orderData);
-        onOrderPlaced(orderData);
-        setStep(3);
+    const handlePlaceOrder = async () => {
+        setIsSubmittingOrder(true);
+        setOrderErrorMessage('');
+
+        try {
+            // Checklist Section 4: Authoritatively validate and place order
+            const orderPayload = {
+                items: cart.map(item => ({
+                    product_id: String(item.id),
+                    qty: item.qty || 1,
+                    selected_size: item.selectedSize || item.title || null
+                })),
+                shipping: {
+                    full_name: shipping.fullName,
+                    phone: shipping.phone,
+                    email: shipping.email || null,
+                    address: shipping.address,
+                    city: shipping.city || 'Jaipur',
+                    state: shipping.state || 'Rajasthan',
+                    pincode: shipping.pincode,
+                    notes: shipping.notes || null
+                },
+                payment_method: paymentMethod,
+                coupon_code: appliedCoupon?.code || null,
+                idempotency_key: `IDEMP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+            };
+
+            const response = await api.createOrder(orderPayload);
+            const serverOrder = response.data || response;
+
+            // Only report success after authoritative system confirms (Critical Rule)
+            const confirmedOrderData = {
+                orderId: serverOrder.order_id,
+                items: serverOrder.items || [...cart],
+                total: serverOrder.total || cartTotal,
+                shipping: serverOrder.shipping || shipping,
+                paymentMethod: serverOrder.payment_method || paymentMethod,
+                trackingNumber: serverOrder.tracking_number,
+                date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+            };
+
+            setOrderInfo(confirmedOrderData);
+            onOrderPlaced(confirmedOrderData);
+            setStep(3);
+        } catch (err) {
+            console.error('[Checkout Error]', err);
+            setOrderErrorMessage(err.message || 'Failed to confirm order with the store server. Please try again.');
+        } finally {
+            setIsSubmittingOrder(false);
+        }
     };
 
     return (
@@ -366,21 +406,41 @@ export default function CheckoutModal({
                             </button>
                         </div>
 
+                        {/* Error Feedback if Server Rejection occurs */}
+                        {orderErrorMessage && (
+                            <div className="p-3.5 bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl flex items-start gap-2 animate-in fade-in">
+                                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                                <span>{orderErrorMessage}</span>
+                            </div>
+                        )}
+
                         {/* Action Buttons */}
                         <div className="flex gap-3 pt-2">
                             <button
                                 type="button"
+                                disabled={isSubmittingOrder}
                                 onClick={() => setStep(1)}
-                                className="min-h-[50px] px-5 py-3 rounded-xl border border-stone-300 text-stone-700 text-xs font-bold uppercase hover:bg-stone-50 tap-target-48"
+                                className="min-h-[50px] px-5 py-3 rounded-xl border border-stone-300 text-stone-700 text-xs font-bold uppercase hover:bg-stone-50 tap-target-48 disabled:opacity-50"
                             >
                                 Back
                             </button>
                             <button
                                 type="button"
+                                disabled={isSubmittingOrder}
                                 onClick={handlePlaceOrder}
-                                className="flex-1 min-h-[50px] py-3.5 rounded-xl bg-[#F7C600] hover:bg-[#E2B400] text-[#161616] text-xs font-bold tracking-wider uppercase transition shadow-lg flex items-center justify-center gap-2 tap-target-48 active:scale-98"
+                                className="flex-1 min-h-[50px] py-3.5 rounded-xl bg-[#F7C600] hover:bg-[#E2B400] text-[#161616] text-xs font-bold tracking-wider uppercase transition shadow-lg flex items-center justify-center gap-2 tap-target-48 active:scale-98 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
-                                <Sparkles className="w-4 h-4" /> CONFIRM & PLACE SACRED ORDER (₹{cartTotal.toLocaleString('en-IN')})
+                                {isSubmittingOrder ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin text-[#161616]" />
+                                        <span>AUTHORITATIVELY VERIFYING & PLACING...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4" />
+                                        <span>CONFIRM & PLACE SACRED ORDER (₹{cartTotal.toLocaleString('en-IN')})</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

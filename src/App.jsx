@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { deityCategories, catalog, overlayCards, pageMeta, faqs } from './data/catalog';
 import ProductDetailPage from './components/ProductDetailPage';
+import ErrorBoundary from './components/ErrorBoundary';
 import ProductDetailModal from './components/ProductDetailModal';
 import CheckoutModal from './components/CheckoutModal';
 import OrderTrackingModal from './components/OrderTrackingModal';
@@ -18,29 +19,259 @@ import InfoModal from './components/InfoModal';
 import FilterDrawer from './components/FilterDrawer';
 import IntroAnimation from './components/IntroAnimation';
 import ScrollProgress from './components/ScrollProgress';
+import AdminPage from './components/AdminPage';
+import api from './services/api';
+import { supabase } from './utils/supabase';
 import { useLenisSmoothScroll } from './hooks/useLenisSmoothScroll';
 import { useGsapScrollAnimations } from './hooks/useGsapScrollAnimations';
 import { useContinuousScroll } from './hooks/useContinuousScroll';
+
+// Helper to determine if current URL is the dedicated admin page
+// Helper to determine if current URL is the dedicated admin page
+const checkIsAdminPath = () => {
+    if (typeof window === 'undefined') return false;
+    const path = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    return path === '/admin' || path.startsWith('/admin') || hash === '#admin';
+};
+
+// Helper to determine initial page, product, and category from URL parameters
+const getInitialNavigation = () => {
+    if (typeof window === 'undefined') return { page: 'home', product: null, deity: null };
+    if (checkIsAdminPath()) return { page: 'admin', product: null, deity: null };
+    
+    try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const productParam = searchParams.get('product');
+        if (productParam) {
+            const found = catalog.find(p => String(p.id) === String(productParam) || String(p.legacy_id) === String(productParam));
+            return { page: 'product', product: found || null, deity: null };
+        }
+        const pageParam = searchParams.get('page');
+        const categoryParam = searchParams.get('category');
+        if (pageParam) {
+            return { page: pageParam, product: null, deity: categoryParam || null };
+        }
+        if (categoryParam) {
+            return { page: 'shop-all', product: null, deity: categoryParam };
+        }
+    } catch {
+        // Fallback to home
+    }
+    return { page: 'home', product: null, deity: null };
+};
 
 export default function App() {
     // 0. Starting Animation State
     const [showIntro, setShowIntro] = useState(true);
 
-    // 1. Navigation & Page View State
-    const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'shop-all' | 'navratri' | 'sacred' | 'baal-roop'
-    const [activeDeityFilter, setActiveDeityFilter] = useState(null);
-    const [searchQuery, setSearchQuery] = useState('');
+    // Live backend settings & active festival data
+    const [siteSettings, setSiteSettings] = useState({
+        whatsapp_number: '+919876543210',
+        whatsapp_default_message: 'Namaste! I want to inquire about a Murti on Murti Hub.',
+        global_rating_mode: 'enabled'
+    });
+    const [activeFestivalSection, setActiveFestivalSection] = useState(null);
+    const [masterSizes, setMasterSizes] = useState([]);
+    const [liveProducts, setLiveProducts] = useState(catalog);
+    const [liveCategories, setLiveCategories] = useState(deityCategories);
+
+    // Fetch live backend settings, festival, products & categories on mount
+    const loadBackendData = () => {
+        api.getSettings().then(setSiteSettings).catch(() => {});
+        api.getActiveFestival().then(setActiveFestivalSection).catch(() => {});
+        api.getSizes().then(setMasterSizes).catch(() => {});
+        api.getProducts({ include_inactive: false }).then(res => {
+            const items = res?.items || (Array.isArray(res) ? res : null);
+            if (items && items.length > 0) {
+                setLiveProducts(items.map(p => ({
+                    ...p,
+                    id: p.id,
+                    legacy_id: p.legacy_id,
+                    title: p.title,
+                    price: p.price,
+                    oldPrice: p.old_price ?? p.oldPrice ?? 0,
+                    off: p.off_text ?? p.off ?? '',
+                    deity: p.deity,
+                    group: p.group_tag ?? p.group ?? 'most-loved',
+                    img: p.primary_catalog_image || p.img || '/images/products/ram-darbar.png',
+                    primary_catalog_image: p.primary_catalog_image || p.img || '/images/products/ram-darbar.png',
+                    description: p.description,
+                    material: p.material,
+                    dimensions: p.dimensions,
+                    weight: p.weight,
+                    stock_status: p.stock_status || 'in_stock',
+                    is_active: p.is_active !== false,
+                    pran_pratishtha_ready: p.pran_pratishtha_ready !== false,
+                    rating_mode: p.rating_mode || 'enabled',
+                    static_rating_value: p.static_rating_value ?? 4.9,
+                    catalog_images: p.catalog_images || [],
+                    variants: p.variants || []
+                })));
+
+                // If user loaded on direct ?product=ID URL, sync the live product
+                if (typeof window !== 'undefined') {
+                    const params = new URLSearchParams(window.location.search);
+                    const prodParam = params.get('product');
+                    if (prodParam) {
+                        const found = mapped.find(p => String(p.id) === String(prodParam) || String(p.legacy_id) === String(prodParam));
+                        if (found) setSelectedProduct(found);
+                    }
+                }
+            }
+        }).catch(() => {});
+        api.getCategories(false).then(cats => {
+            if (Array.isArray(cats) && cats.length > 0) {
+                setLiveCategories(cats.map(c => ({
+                    ...c,
+                    id: c.slug || c.id,
+                    db_id: c.id,
+                    name: c.name,
+                    route: c.slug === 'navratri-drop' ? 'navratri' : 'shop-all',
+                    deity: c.name,
+                    img: c.icon_image_url || c.img || '/images/categories/gajanan-maharaj@2x.png',
+                    banner_image_url: c.banner_image_url || '',
+                    is_active: c.is_active !== false
+                })));
+            }
+        }).catch(() => {});
+    };
+
+    // 1. Navigation & Page View State (Initializes to URL parameters or 'home')
+    const initialNav = getInitialNavigation();
+    const [currentPage, setCurrentPage] = useState(initialNav.page);
+    const [selectedProduct, setSelectedProduct] = useState(initialNav.product);
+    const [activeDeityFilter, setActiveDeityFilter] = useState(initialNav.deity);
+
+    // Initial Mount: Replace state in browser history so the root entry is structured
+    useEffect(() => {
+        loadBackendData();
+        if (typeof window !== 'undefined') {
+            window.__supabase = supabase;
+            const init = getInitialNavigation();
+            window.history.replaceState(
+                { page: init.page, productId: init.product?.id || init.product?.legacy_id, deity: init.deity },
+                '',
+                window.location.href
+            );
+        }
+    }, []);
+
+    // 2. Modals State
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [placedOrder, setPlacedOrder] = useState(null);
+    const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+    const [trackingOrderId, setTrackingOrderId] = useState('');
+    const [isBulkQuoteOpen, setIsBulkQuoteOpen] = useState(false);
+    const [infoModalKey, setInfoModalKey] = useState(null);
+    const [inquiryProduct, setInquiryProduct] = useState(null);
+    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isKwikPassOpen, setIsKwikPassOpen] = useState(false);
+    const [kwikPhone, setKwikPhone] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const [gridCols, setGridCols] = useState(4);
     const [sortBy, setSortBy] = useState('featured');
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-    // 2. Collection Filters
-    const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-    const [filterPriceRange, setFilterPriceRange] = useState('all'); // 'all' | 'under-1000' | '1000-2000' | 'above-2000'
+    const [filterPriceRange, setFilterPriceRange] = useState('all');
     const [filterPlacement, setFilterPlacement] = useState('all');
 
-    // 3. Wishlist State
+    // 3. Browser Forward/Back Button & History Synchronization
+    useEffect(() => {
+        const handleLocationChange = (event) => {
+            // 1. If any modal or drawer is open, closing it on back press keeps the user on the page
+            if (isCheckoutOpen) {
+                setIsCheckoutOpen(false);
+                return;
+            }
+            if (isTrackingModalOpen) {
+                setIsTrackingModalOpen(false);
+                return;
+            }
+            if (isBulkQuoteOpen) {
+                setIsBulkQuoteOpen(false);
+                return;
+            }
+            if (inquiryProduct) {
+                setInquiryProduct(null);
+                return;
+            }
+            if (infoModalKey) {
+                setInfoModalKey(null);
+                return;
+            }
+            if (isCartOpen) {
+                setIsCartOpen(false);
+                return;
+            }
+            if (isFilterDrawerOpen) {
+                setIsFilterDrawerOpen(false);
+                return;
+            }
+            if (isMobileMenuOpen) {
+                setIsMobileMenuOpen(false);
+                return;
+            }
+            if (isKwikPassOpen) {
+                setIsKwikPassOpen(false);
+                return;
+            }
+            if (isSearchOpen) {
+                setIsSearchOpen(false);
+                return;
+            }
+
+            // 2. Dedicated Admin path
+            if (checkIsAdminPath()) {
+                setCurrentPage('admin');
+                setSelectedProduct(null);
+                return;
+            }
+
+            // 3. Inspect URL query params and history state for products
+            const state = event?.state;
+            const searchParams = new URLSearchParams(window.location.search);
+            const productParam = searchParams.get('product') || (state?.page === 'product' ? state.productId : null);
+
+            if (productParam) {
+                const allItems = (liveProducts && liveProducts.length > 0) ? liveProducts : catalog;
+                const found = allItems.find(p => String(p.id) === String(productParam) || String(p.legacy_id) === String(productParam));
+                if (found) {
+                    setSelectedProduct(found);
+                    setCurrentPage('product');
+                    scrollTo(0);
+                    return;
+                }
+            }
+
+            // 4. Page and category restoration
+            const pageParam = searchParams.get('page');
+            const categoryParam = searchParams.get('category');
+            const targetPage = pageParam || state?.page || 'home';
+            const targetDeity = categoryParam || state?.deity || null;
+
+            setSelectedProduct(null);
+            setCurrentPage(targetPage);
+            setActiveDeityFilter(targetDeity);
+            setSearchQuery('');
+            setIsWishlistFilterActive(false);
+            scrollTo(0);
+        };
+
+        window.addEventListener('popstate', handleLocationChange);
+        window.addEventListener('hashchange', handleLocationChange);
+        return () => {
+            window.removeEventListener('popstate', handleLocationChange);
+            window.removeEventListener('hashchange', handleLocationChange);
+        };
+    }, [
+        isCheckoutOpen, isTrackingModalOpen, isBulkQuoteOpen, inquiryProduct,
+        infoModalKey, isCartOpen, isFilterDrawerOpen, isMobileMenuOpen,
+        isKwikPassOpen, isSearchOpen, liveProducts, currentPage
+    ]);
+
+    // 4. Wishlist State
     const [wishlist, setWishlist] = useState([1, 4]); // Pre-loaded with popular idols
     const [isWishlistFilterActive, setIsWishlistFilterActive] = useState(false);
     const toggleWishlist = (productId, e) => {
@@ -52,15 +283,6 @@ export default function App() {
             return updated;
         });
     };
-
-    // 4. Modals State
-    const [selectedProduct, setSelectedProduct] = useState(null);
-    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-    const [placedOrder, setPlacedOrder] = useState(null);
-    const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
-    const [trackingOrderId, setTrackingOrderId] = useState('');
-    const [isBulkQuoteOpen, setIsBulkQuoteOpen] = useState(false);
-    const [infoModalKey, setInfoModalKey] = useState(null);
 
 
 
@@ -101,7 +323,6 @@ export default function App() {
 
     // 7. Cart State & Safe Normalization
     const [cart, setCart] = useState([]);
-    const [isCartOpen, setIsCartOpen] = useState(false);
     const [appliedCoupon, setAppliedCoupon] = useState(null); // { code: 'DIVINE15', discountPercent: 15 }
 
     const addToCart = (product, openDrawer = false) => {
@@ -126,23 +347,23 @@ export default function App() {
         });
 
         if (openDrawer) {
-            setIsCartOpen(true);
+            openCartDrawer();
         } else {
             showToast(`Added "${product.title.slice(0, 24)}..." to Cart`);
         }
     };
 
     // Buy Now opens this inquiry form to collect customer details before messaging WhatsApp
-    const [inquiryProduct, setInquiryProduct] = useState(null);
-    const buyOnWhatsApp = (product) => setInquiryProduct(product);
+    const buyOnWhatsApp = (product) => openWhatsAppInquiry(product);
 
     const submitWhatsAppInquiry = (product, customer) => {
         const priceNum = typeof product.price === 'string'
             ? parseInt(product.price.replace(/[^\d]/g, ''), 10) || 999
             : product.price;
         const message = `Hi, I'm interested in this idol:\n\n*${product.title}*\nPrice: ₹${priceNum.toLocaleString('en-IN')}\n\n*My Details:*\nName: ${customer.name}\nPhone: ${customer.phone}\nAddress: ${customer.address}\nPincode: ${customer.pincode}\n\nPlease share more details and availability.`;
-        window.open(`https://wa.me/917020676423?text=${encodeURIComponent(message)}`, '_blank');
-        setInquiryProduct(null);
+        const targetNumber = (siteSettings?.whatsapp_number || '+917020676423').replace(/[^\d]/g, '');
+        window.open(`https://wa.me/${targetNumber}?text=${encodeURIComponent(message)}`, '_blank');
+        closeWhatsAppInquiry();
     };
 
     const updateCartQty = (productId, delta) => {
@@ -191,13 +412,25 @@ export default function App() {
         }, 3000);
     };
 
-    // 9. KwikPass Modal State
-    const [isKwikPassOpen, setIsKwikPassOpen] = useState(false);
-    const [kwikPhone, setKwikPhone] = useState('');
+    // 9. KwikPass Modal Handlers
+    const openKwikPass = () => {
+        if (typeof window !== 'undefined') {
+            window.history.pushState({ ...window.history.state, modal: 'kwikpass' }, '', window.location.href);
+        }
+        setIsKwikPassOpen(true);
+    };
+
+    const closeKwikPass = () => {
+        if (typeof window !== 'undefined' && window.history.state?.modal === 'kwikpass') {
+            window.history.back();
+        } else {
+            setIsKwikPassOpen(false);
+        }
+    };
 
     const handleKwikPassSubmit = (e) => {
         e?.preventDefault();
-        setIsKwikPassOpen(false);
+        closeKwikPass();
         showToast(kwikPhone.length === 10 ? `OTP sent to +91 ${kwikPhone}` : 'OTP sent! Welcome to Amol Marble Murti Bhandar.');
         setKwikPhone('');
     };
@@ -266,8 +499,32 @@ export default function App() {
         enabled: currentPage === 'home' && !showIntro
     });
 
-    // Navigation Handler
-    const navigateTo = (pageKey, deity = null) => {
+    // Navigation Handler (Synchronized with browser URL history)
+    const navigateTo = (pageKey, deity = null, pushToHistory = true) => {
+        if (pageKey === 'admin') {
+            if (pushToHistory && typeof window !== 'undefined') {
+                window.history.pushState({ page: 'admin' }, '', '/admin');
+            }
+            setCurrentPage('admin');
+            return;
+        }
+
+        let targetUrl = '/';
+        if (pageKey !== 'home' || deity) {
+            const params = new URLSearchParams();
+            if (pageKey !== 'home') params.set('page', pageKey);
+            if (deity) params.set('category', deity);
+            targetUrl = `/?${params.toString()}`;
+        }
+
+        if (pushToHistory && typeof window !== 'undefined') {
+            const curState = window.history.state;
+            const isAlreadyHere = curState?.page === pageKey && curState?.deity === deity;
+            if (!isAlreadyHere) {
+                window.history.pushState({ page: pageKey, deity }, '', targetUrl);
+            }
+        }
+
         setCurrentPage(pageKey);
         setActiveDeityFilter(deity);
         setFilterPlacement('all');
@@ -280,10 +537,24 @@ export default function App() {
         scrollTo(0);
     };
 
-    // Dedicated Product Page Opener
-    const openProductPage = (product) => {
+    // Dedicated Product Page Opener (Synchronized with browser history)
+    const openProductPage = (product, pushToHistory = true) => {
         if (!product) return;
-        setSelectedProduct(product);
+        const fullProduct = (liveProducts && liveProducts.length > 0)
+            ? (liveProducts.find(p => p.id === product.id || String(p.id) === String(product.id) || (product.legacy_id && p.legacy_id === product.legacy_id) || p.legacy_id === product.id) || product)
+            : product;
+        const prodId = fullProduct.id || fullProduct.legacy_id;
+
+        if (pushToHistory && typeof window !== 'undefined') {
+            const targetUrl = `/?product=${encodeURIComponent(prodId)}`;
+            window.history.pushState(
+                { page: 'product', productId: prodId, prevPage: currentPage, prevDeity: activeDeityFilter },
+                '',
+                targetUrl
+            );
+        }
+
+        setSelectedProduct(fullProduct);
         setCurrentPage('product');
         setIsSearchOpen(false);
         setIsCartOpen(false);
@@ -292,17 +563,150 @@ export default function App() {
     };
 
     const handleBackFromProduct = () => {
-        setSelectedProduct(null);
-        setCurrentPage('shop-all');
-        scrollTo(0);
+        if (typeof window !== 'undefined' && window.history.length > 1) {
+            window.history.back();
+        } else {
+            navigateTo('shop-all');
+        }
+    };
+
+    // Modal Helpers with Back-Button and History State Protection
+    const openCartDrawer = () => {
+        if (typeof window !== 'undefined') {
+            window.history.pushState({ ...window.history.state, modal: 'cart' }, '', window.location.href);
+        }
+        setIsCartOpen(true);
+    };
+
+    const closeCartDrawer = () => {
+        if (typeof window !== 'undefined' && window.history.state?.modal === 'cart') {
+            window.history.back();
+        } else {
+            setIsCartOpen(false);
+        }
+    };
+
+    const openCheckoutModal = () => {
+        setIsCartOpen(false);
+        if (typeof window !== 'undefined') {
+            window.history.pushState({ ...window.history.state, modal: 'checkout' }, '', window.location.href);
+        }
+        setIsCheckoutOpen(true);
+    };
+
+    const closeCheckoutModal = () => {
+        if (typeof window !== 'undefined' && window.history.state?.modal === 'checkout') {
+            window.history.back();
+        } else {
+            setIsCheckoutOpen(false);
+        }
+    };
+
+    const openTrackingModal = (orderId = '') => {
+        if (orderId) setTrackingOrderId(orderId);
+        if (typeof window !== 'undefined') {
+            window.history.pushState({ ...window.history.state, modal: 'tracking' }, '', window.location.href);
+        }
+        setIsTrackingModalOpen(true);
+    };
+
+    const closeTrackingModal = () => {
+        if (typeof window !== 'undefined' && window.history.state?.modal === 'tracking') {
+            window.history.back();
+        } else {
+            setIsTrackingModalOpen(false);
+        }
+    };
+
+    const openFilterDrawer = () => {
+        if (typeof window !== 'undefined') {
+            window.history.pushState({ ...window.history.state, modal: 'filter' }, '', window.location.href);
+        }
+        setIsFilterDrawerOpen(true);
+    };
+
+    const closeFilterDrawer = () => {
+        if (typeof window !== 'undefined' && window.history.state?.modal === 'filter') {
+            window.history.back();
+        } else {
+            setIsFilterDrawerOpen(false);
+        }
+    };
+
+    const openWhatsAppInquiry = (product) => {
+        if (typeof window !== 'undefined') {
+            window.history.pushState({ ...window.history.state, modal: 'inquiry' }, '', window.location.href);
+        }
+        setInquiryProduct(product);
+    };
+
+    const closeWhatsAppInquiry = () => {
+        if (typeof window !== 'undefined' && window.history.state?.modal === 'inquiry') {
+            window.history.back();
+        } else {
+            setInquiryProduct(null);
+        }
+    };
+
+    const openBulkQuoteModal = () => {
+        if (typeof window !== 'undefined') {
+            window.history.pushState({ ...window.history.state, modal: 'bulk' }, '', window.location.href);
+        }
+        setIsBulkQuoteOpen(true);
+    };
+
+    const closeBulkQuoteModal = () => {
+        if (typeof window !== 'undefined' && window.history.state?.modal === 'bulk') {
+            window.history.back();
+        } else {
+            setIsBulkQuoteOpen(false);
+        }
+    };
+
+    const openInfoModal = (key) => {
+        if (typeof window !== 'undefined') {
+            window.history.pushState({ ...window.history.state, modal: 'info' }, '', window.location.href);
+        }
+        setInfoModalKey(key);
+    };
+
+    const closeInfoModal = () => {
+        if (typeof window !== 'undefined' && window.history.state?.modal === 'info') {
+            window.history.back();
+        } else {
+            setInfoModalKey(null);
+        }
+    };
+
+    const toggleMobileMenu = () => {
+        if (!isMobileMenuOpen) {
+            if (typeof window !== 'undefined') {
+                window.history.pushState({ ...window.history.state, modal: 'menu' }, '', window.location.href);
+            }
+            setIsMobileMenuOpen(true);
+        } else {
+            if (typeof window !== 'undefined' && window.history.state?.modal === 'menu') {
+                window.history.back();
+            } else {
+                setIsMobileMenuOpen(false);
+            }
+        }
     };
 
     // Collection Items Computation with multi-filters
     const getFilteredCollectionItems = () => {
-        let items = [...catalog];
+        let items = [...liveProducts];
         if (currentPage !== 'home' && currentPage !== 'shop-all') {
-            const meta = pageMeta[currentPage];
-            if (meta) items = meta.getItems();
+            if (currentPage === 'navratri') {
+                items = liveProducts.filter(p => p.group === 'navratri' || p.group_tag === 'navratri' || p.deity?.toLowerCase().includes('durga'));
+            } else if (currentPage === 'sacred') {
+                items = liveProducts.filter(p => p.group === 'sacred' || p.group_tag === 'sacred');
+            } else if (currentPage === 'baal-roop') {
+                items = liveProducts.filter(p => p.group === 'baal-roop' || p.group_tag === 'baal-roop');
+            } else {
+                const meta = pageMeta[currentPage];
+                if (meta && typeof meta.getItems === 'function') items = meta.getItems();
+            }
         }
 
         if (isWishlistFilterActive) {
@@ -354,6 +758,22 @@ export default function App() {
             el.scrollBy({ left: delta, behavior: 'smooth' });
         }
     };
+
+    // =========================================================================
+    // DEDICATED STANDALONE ADMIN PAGE ROUTE (/admin or #admin)
+    // Completely isolated from customer storefront header, footer, & modals
+    // =========================================================================
+    if (currentPage === 'admin') {
+        return (
+            <AdminPage
+                onReturnToStore={() => {
+                    window.history.pushState(null, '', '/');
+                    navigateTo('home');
+                }}
+                onDataChanged={loadBackendData}
+            />
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#FDFBF5] text-[#161616] pb-24 lg:pb-0">
@@ -433,7 +853,7 @@ export default function App() {
                         {/* Account Login Button (Desktop & Tablet) */}
                         <button
                             type="button"
-                            onClick={() => setIsKwikPassOpen(true)}
+                            onClick={openKwikPass}
                             className="hidden md:flex w-auto px-3 h-10 items-center justify-center gap-1.5 rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition text-xs font-semibold"
                             aria-label="Account Login"
                         >
@@ -470,7 +890,7 @@ export default function App() {
                         {/* Cart Button with Live Counter Badge */}
                         <button
                             type="button"
-                            onClick={() => setIsCartOpen(true)}
+                            onClick={openCartDrawer}
                             className="relative w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition tap-target-44"
                             aria-label={`Shopping Cart, ${cartCount} items`}
                             title="Shopping Cart"
@@ -486,7 +906,7 @@ export default function App() {
                         {/* Mobile Menu Hamburger Button */}
                         <button
                             type="button"
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            onClick={toggleMobileMenu}
                             className="mobile-hamburger-btn lg:hidden w-10 h-10 flex items-center justify-center rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition tap-target-44"
                             aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
                         >
@@ -650,7 +1070,7 @@ export default function App() {
                                 <div className="pt-2 border-t border-stone-100">
                                     <p className="text-[11px] font-semibold text-stone-500 mb-2">Matching Idols:</p>
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-h-56 overflow-y-auto pr-1">
-                                        {catalog.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.deity.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 4).map(p => (
+                                        {liveProducts.filter(p => p.title?.toLowerCase().includes(searchQuery.toLowerCase()) || p.deity?.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 4).map(p => (
                                             <div
                                                 key={p.id}
                                                 onClick={() => openProductPage(p)}
@@ -680,7 +1100,7 @@ export default function App() {
                     <section id="deity-category-bar" className="bg-[#FAF5E8]/60 py-4 sm:py-5 lg:py-6 border-b border-[#E8DEC8]">
                         <div className="w-full px-4 sm:px-8 lg:px-10 xl:px-12 2xl:px-16">
                             <div className="flex items-start justify-start lg:justify-between w-full overflow-x-auto no-scrollbar scroll-smooth py-1">
-                                {deityCategories.map(item => {
+                                {liveCategories.filter(c => c.is_active !== false).map(item => {
                                     const isSelected = Boolean(
                                         (activeDeityFilter && item.deity && activeDeityFilter.toLowerCase() === item.deity.toLowerCase()) ||
                                         (item.route === 'navratri' && currentPage === 'navratri') ||
@@ -720,7 +1140,7 @@ export default function App() {
                                                 alt="Shri Ram Darbar - Pure White Makrana Marble"
                                                 className="relative max-h-full max-w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:scale-105 transition duration-500 cursor-pointer"
                                                 onClick={() => {
-                                                    const ramItem = catalog.find(i => i.id === 1);
+                                                    const ramItem = liveProducts.find(i => i.id === 1 || i.legacy_id === 1 || String(i.id).includes('1')) || liveProducts[0];
                                                     if (ramItem) openProductPage(ramItem);
                                                 }}
                                             />
@@ -761,7 +1181,7 @@ export default function App() {
                                             <button
                                                 type="button"
                                                 onClick={() => {
-                                                    const ramItem = catalog.find(i => i.id === 1);
+                                                    const ramItem = liveProducts.find(i => i.id === 1 || i.legacy_id === 1 || String(i.id).includes('1')) || liveProducts[0];
                                                     if (ramItem) openProductPage(ramItem);
                                                 }}
                                                 className="flex-1 sm:flex-none min-h-[46px] sm:min-h-[48px] px-6 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-[#F7C600] hover:bg-[#E2B400] text-[#161616] text-xs font-black tracking-widest uppercase transition shadow-md hover:scale-102 active:scale-95 flex items-center justify-center gap-2"
@@ -1017,7 +1437,10 @@ export default function App() {
                                 </button>
 
                                 <div id="most-loved-track" className="continuous-marquee-track flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar pb-3 sm:pb-4 px-1 sm:px-2">
-                                    {[...catalog.slice(0, 6), ...catalog.slice(0, 6), ...catalog.slice(0, 6)].map((p, idx) => (
+                                    {(() => {
+                                        const mostLoved = liveProducts.filter(p => p.group === 'most-loved' || p.group_tag === 'most-loved');
+                                        const itemsToShow = mostLoved.length > 0 ? mostLoved : liveProducts.slice(0, 6);
+                                        return [...itemsToShow, ...itemsToShow, ...itemsToShow].map((p, idx) => (
                                         <div key={`${p.id}-${idx}`} className="w-[230px] sm:w-[272px] flex-shrink-0 flex flex-col justify-between group bg-white p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-sm hover:shadow-md transition">
                                             <div>
                                                 <div 
@@ -1085,8 +1508,9 @@ export default function App() {
                                                 </button>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
+                                    ));
+                                })()}
+                            </div>
 
                                 <button
                                     onClick={() => scrollTrack('most-loved-track', 320)}
@@ -1118,19 +1542,19 @@ export default function App() {
                                     <div className="relative z-10">
                                         <div className="flex items-center justify-between mb-1.5 sm:mb-3.5">
                                             <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-bold tracking-[0.22em] uppercase text-[#9E781E]">
-                                                <span>✦</span> <span>FESTIVE EDIT</span>
+                                                <span>✦</span> <span>{activeFestivalSection?.announcement_tag || 'FESTIVE EDIT'}</span>
                                             </div>
                                             <span className="text-[9.5px] sm:text-[11px] font-bold text-[#8E5B00] bg-[#FAF2DE] px-2 py-0.5 rounded-full border border-[#DFC48D] shadow-2xs">
-                                                Navratri 2026 Special
+                                                {activeFestivalSection?.badge_text || 'Navratri 2026 Special'}
                                             </span>
                                         </div>
 
                                         <h2 className="font-serif text-lg min-[360px]:text-xl sm:text-3xl lg:text-[40px] font-normal text-[#161616] leading-[1.15]">
-                                            Navratri<br className="hidden sm:inline" /> Collection
+                                            {activeFestivalSection?.title || 'Navratri Collection'}
                                         </h2>
 
                                         <p className="text-[11px] sm:text-xs text-stone-600 mt-1.5 sm:mt-3 leading-relaxed">
-                                            A Meaningful Gift. A Blessing That Stays. Consecrated Sherawali Maa Durga, Lakshmi & Parvati in pristine white Makrana marble with 24K gold foil detailing.
+                                            {activeFestivalSection?.subtitle || 'A Meaningful Gift. A Blessing That Stays. Consecrated Sherawali Maa Durga, Lakshmi & Parvati in pristine white Makrana marble with 24K gold foil detailing.'}
                                         </p>
 
                                         {/* Sacred Quality Trust Points */}
@@ -1209,7 +1633,27 @@ export default function App() {
                                         id="festive-track"
                                         className="continuous-marquee-track flex gap-3 sm:gap-4 lg:gap-5 overflow-x-auto no-scrollbar pb-3 sm:pb-4 px-1"
                                     >
-                                        {[...catalog.slice(6, 10), ...catalog.slice(6, 10), ...catalog.slice(6, 10)].map((p, idx) => (
+                                        {(() => {
+                                            let festiveItems = [];
+                                            if (activeFestivalSection?.items && activeFestivalSection.items.length > 0) {
+                                                festiveItems = activeFestivalSection.items.map(item => {
+                                                    const baseProd = liveProducts.find(p => p.id === item.murti_id || p.legacy_id === item.murti_id || String(p.id) === String(item.murti_id)) || {};
+                                                    return {
+                                                        ...baseProd,
+                                                        id: item.murti_id || baseProd.id,
+                                                        title: item.murti_title || baseProd.title,
+                                                        price: item.festival_price || baseProd.price,
+                                                        oldPrice: item.original_price || baseProd.oldPrice || baseProd.price,
+                                                        off: item.custom_tag || baseProd.off || 'Festive Offer',
+                                                        img: item.murti_image || baseProd.img || baseProd.primary_catalog_image
+                                                    };
+                                                });
+                                            }
+                                            if (festiveItems.length === 0) {
+                                                const matching = liveProducts.filter(p => p.group === 'navratri' || p.group_tag === 'navratri');
+                                                festiveItems = matching.length > 0 ? matching : liveProducts.slice(6, 10);
+                                            }
+                                            return [...festiveItems, ...festiveItems, ...festiveItems].map((p, idx) => (
                                             <div
                                                 key={`${p.id}-${idx}`}
                                                 className="w-[230px] sm:w-[260px] lg:w-[270px] flex-shrink-0 bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/60 transition-all duration-300 flex flex-col justify-between group p-3 sm:p-4"
@@ -1304,8 +1748,9 @@ export default function App() {
                                                     </button>
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
+                                        ));
+                                    })()}
+                                </div>
 
                                     {/* Bottom View All Link */}
                                     <div className="text-center mt-5 sm:mt-7">
@@ -1786,16 +2231,20 @@ export default function App() {
             {/* ========================================================================= */}
             {/*                     DEDICATED SEPARATE PRODUCT PAGE                       */}
             {/* ========================================================================= */}
-            {currentPage === 'product' && selectedProduct && (
-                <ProductDetailPage
-                    product={selectedProduct}
-                    onBack={handleBackFromProduct}
-                    onAddToCart={addToCart}
-                    onBuyNow={(prod) => buyOnWhatsApp(prod)}
-                    isWishlisted={wishlist.includes(selectedProduct?.id)}
-                    onToggleWishlist={toggleWishlist}
-                    onSelectProduct={openProductPage}
-                />
+            {currentPage === 'product' && (
+                <ErrorBoundary onReset={handleBackFromProduct}>
+                    <ProductDetailPage
+                        product={selectedProduct || liveProducts[0]}
+                        onBack={handleBackFromProduct}
+                        onAddToCart={addToCart}
+                        onBuyNow={(prod) => buyOnWhatsApp(prod)}
+                        isWishlisted={wishlist.includes((selectedProduct || liveProducts[0])?.id)}
+                        onToggleWishlist={toggleWishlist}
+                        onSelectProduct={openProductPage}
+                        globalRatingMode={siteSettings?.global_rating_mode || 'enabled'}
+                        masterSizes={masterSizes}
+                    />
+                </ErrorBoundary>
             )}
 
             {/* ========================================================================= */}
@@ -1803,28 +2252,39 @@ export default function App() {
             {/* ========================================================================= */}
             {currentPage !== 'home' && currentPage !== 'product' && (
                 <div className="min-h-screen bg-white">
-                    <div className="bg-jaali-gold py-5 sm:py-10 px-4 text-center border-b border-[#E6D6B8]">
-                        <div className="max-w-3xl mx-auto space-y-1.5 sm:space-y-3">
-                            <h1 className="font-serif text-2xl sm:text-4xl md:text-5xl text-[#161616]">
-                                {activeDeityFilter ? `${activeDeityFilter} Collection` : (pageMeta[currentPage]?.title || 'Products')}
-                            </h1>
-                            {!activeDeityFilter && pageMeta[currentPage]?.subtitle && (
-                                <p className="font-serif text-xs sm:text-lg md:text-xl font-semibold text-stone-800">
-                                    {pageMeta[currentPage].subtitle}
-                                </p>
-                            )}
-                            {!activeDeityFilter && pageMeta[currentPage]?.desc && (
-                                <p className="hidden sm:block text-xs sm:text-sm text-stone-600 leading-relaxed max-w-2xl mx-auto">
-                                    {pageMeta[currentPage].desc}
-                                </p>
-                            )}
-                        </div>
-                    </div>
+                    {(() => {
+                        const activeCat = activeDeityFilter
+                            ? liveCategories.find(c => (c.deity && c.deity.toLowerCase() === activeDeityFilter.toLowerCase()) || c.name.toLowerCase() === activeDeityFilter.toLowerCase())
+                            : null;
+                        const hasBanner = Boolean(activeCat?.banner_image_url);
+                        return (
+                            <div 
+                                className={`py-6 sm:py-12 px-4 text-center border-b border-[#E6D6B8] ${hasBanner ? 'bg-cover bg-center text-white relative' : 'bg-jaali-gold text-[#161616]'}`}
+                                style={hasBanner ? { backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.65)), url(${activeCat.banner_image_url})` } : {}}
+                            >
+                                <div className="max-w-3xl mx-auto space-y-1.5 sm:space-y-3 relative z-10">
+                                    <h1 className={`font-serif text-2xl sm:text-4xl md:text-5xl ${hasBanner ? 'text-white' : 'text-[#161616]'}`}>
+                                        {activeDeityFilter ? `${activeDeityFilter} Collection` : (pageMeta[currentPage]?.title || 'Products')}
+                                    </h1>
+                                    {!activeDeityFilter && pageMeta[currentPage]?.subtitle && (
+                                        <p className={`font-serif text-xs sm:text-lg md:text-xl font-semibold ${hasBanner ? 'text-stone-200' : 'text-stone-800'}`}>
+                                            {pageMeta[currentPage].subtitle}
+                                        </p>
+                                    )}
+                                    {!activeDeityFilter && pageMeta[currentPage]?.desc && (
+                                        <p className={`hidden sm:block text-xs sm:text-sm leading-relaxed max-w-2xl mx-auto ${hasBanner ? 'text-stone-300' : 'text-stone-600'}`}>
+                                            {pageMeta[currentPage].desc}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-5 border-b border-stone-200 flex items-center gap-4">
                         <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-stone-500 whitespace-nowrap">RELEVANT COLLECTIONS</span>
                         <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar scroll-smooth flex-1 py-1">
-                            {deityCategories.map(cat => {
+                            {liveCategories.filter(c => c.is_active !== false).map(cat => {
                                 const isCatActive = Boolean(
                                     (cat.deity && activeDeityFilter && cat.deity.toLowerCase() === activeDeityFilter.toLowerCase()) ||
                                     (!cat.deity && cat.route === currentPage)
@@ -1873,7 +2333,7 @@ export default function App() {
                                 </select>
                             </div>
                             <button
-                                onClick={() => setIsFilterDrawerOpen(true)}
+                                onClick={openFilterDrawer}
                                 className="flex items-center gap-1.5 pl-2.5 sm:pl-4 border-l border-stone-200 hover:text-[#C69722] font-semibold text-stone-800 transition py-1"
                             >
                                 <SlidersHorizontal className="w-3.5 h-3.5 text-[#C69722]" />
@@ -2059,6 +2519,7 @@ export default function App() {
                             <li><button onClick={() => setIsBulkQuoteOpen(true)} className="hover:text-black">Bulk & Corporate Orders</button></li>
                             <li><button onClick={() => setIsTrackingModalOpen(true)} className="hover:text-black font-semibold text-[#161616]">Track Your Order</button></li>
                             <li><button onClick={() => setInfoModalKey('privacy')} className="hover:text-black">Your Privacy Choices</button></li>
+                            <li><button onClick={() => navigateTo('admin')} className="text-stone-400 hover:text-[#C69722] flex items-center gap-1 text-[11px] pt-1">🔒 Staff / Admin Portal</button></li>
                         </ul>
                     </div>
 
@@ -2114,18 +2575,24 @@ export default function App() {
                     </form>
                 </div>
 
-                <div className="max-w-[1320px] mx-auto px-4 sm:px-8 pt-6 border-t border-[#E6D6B8] text-center">
+                <div className="max-w-[1320px] mx-auto px-4 sm:px-8 pt-6 border-t border-[#E6D6B8] flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
                     <p className="text-[11px] text-stone-500">© 2026 अमोल मार्बल मूर्ती भंडार (Amol Marble Murti Bhandar). All rights reserved. Sanctified Marble Idols.</p>
+                    <button onClick={() => navigateTo('admin')} className="text-[10.5px] text-stone-400 hover:text-stone-700 underline underline-offset-2 transition">
+                        Staff / Admin Login (/admin)
+                    </button>
                 </div>
             </footer>
 
             {/* ================= 16. KWIKPASS LOGIN MODAL ================= */}
             {isKwikPassOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
+                    onClick={(e) => { if (e.target === e.currentTarget) closeKwikPass(); }}
+                >
                     <div className="bg-white rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl grid sm:grid-cols-12 relative animate-in fade-in zoom-in duration-200">
                         <button
                             type="button"
-                            onClick={() => setIsKwikPassOpen(false)}
+                            onClick={closeKwikPass}
                             className="absolute top-3 right-3 w-11 h-11 rounded-full text-stone-500 hover:text-black flex items-center justify-center text-lg active:scale-95"
                             aria-label="Close login modal"
                         >
@@ -2185,7 +2652,7 @@ export default function App() {
             {/* ================= 17. SLIDE-OUT CART DRAWER ================= */}
             {isCartOpen && (
                 <div className="fixed inset-0 z-50">
-                    <div onClick={() => setIsCartOpen(false)} className="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
+                    <div onClick={closeCartDrawer} className="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
                     <div className="absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col justify-between">
                         <div className="p-4 sm:p-5 border-b border-stone-200 flex items-center justify-between bg-[#FAF5E8]">
                             <div className="flex items-center gap-2">
@@ -2193,7 +2660,7 @@ export default function App() {
                                 <h3 className="font-serif text-lg sm:text-xl text-[#161616] font-semibold">Your Sacred Cart ({cartCount})</h3>
                             </div>
                             <button
-                                onClick={() => setIsCartOpen(false)}
+                                onClick={closeCartDrawer}
                                 className="w-11 h-11 flex items-center justify-center rounded-full text-stone-500 hover:text-black hover:bg-stone-200/60 active:scale-95 text-lg transition tap-target-44"
                                 aria-label="Close cart drawer"
                             >
@@ -2222,7 +2689,7 @@ export default function App() {
                                     <p className="font-serif text-lg text-stone-700">Your sacred cart is empty</p>
                                     <p className="text-xs text-stone-500 max-w-xs">Explore our sanctified Makrana marble collection and bring divine blessings home.</p>
                                     <button
-                                        onClick={() => { setIsCartOpen(false); navigateTo('shop-all'); }}
+                                        onClick={() => { closeCartDrawer(); navigateTo('shop-all'); }}
                                         className="mt-3 px-6 py-2.5 rounded-full bg-[#161616] hover:bg-[#C69722] text-white text-xs font-semibold tracking-wider uppercase transition"
                                     >
                                         Explore All Murtis
@@ -2353,7 +2820,7 @@ export default function App() {
 
                                  <button
                                      type="button"
-                                     onClick={() => { setIsCartOpen(false); setIsCheckoutOpen(true); }}
+                                     onClick={openCheckoutModal}
                                      className="w-full py-4 min-h-[48px] rounded-xl bg-[#161616] hover:bg-[#C69722] text-white text-xs font-bold tracking-wider uppercase transition shadow-lg flex items-center justify-center gap-2 active:scale-98"
                                  >
                                      <span>PROCEED TO SECURE CHECKOUT</span>
@@ -2416,7 +2883,7 @@ export default function App() {
              {/* ================= 20. MULTI-STEP CHECKOUT MODAL ================= */}
              <CheckoutModal
                  isOpen={isCheckoutOpen}
-                 onClose={() => setIsCheckoutOpen(false)}
+                 onClose={closeCheckoutModal}
                  cart={cart}
                  cartTotal={cartTotal}
                  onOrderPlaced={(order) => {
@@ -2427,23 +2894,21 @@ export default function App() {
                  appliedCoupon={appliedCoupon}
                  onApplyCoupon={applyCoupon}
                  onRemoveCoupon={removeCoupon}
-                 onOpenTracking={(id) => {
-                     setTrackingOrderId(id);
-                     setIsTrackingModalOpen(true);
-                 }}
+                 onOpenTracking={(id) => openTrackingModal(id)}
              />
 
              {/* ================= 21. REAL-TIME ORDER TRACKING MODAL ================= */}
              <OrderTrackingModal
                  isOpen={isTrackingModalOpen}
-                 onClose={() => setIsTrackingModalOpen(false)}
+                 onClose={closeTrackingModal}
                  initialOrderId={trackingOrderId}
+                 whatsappNumber={siteSettings?.whatsapp_number}
              />
 
              {/* ================= 22. CORPORATE & BULK QUOTE MODAL ================= */}
              <BulkQuoteModal
                  isOpen={isBulkQuoteOpen}
-                 onClose={() => setIsBulkQuoteOpen(false)}
+                 onClose={closeBulkQuoteModal}
                  onQuoteSubmitted={(data) => {
                      showToast(`Bulk inquiry received for ${data.company || 'your team'}! We will contact you shortly.`);
                  }}
@@ -2452,20 +2917,20 @@ export default function App() {
              {/* ================= 23. WHATSAPP BUY NOW INQUIRY MODAL ================= */}
              <InquiryModal
                  product={inquiryProduct}
-                 onClose={() => setInquiryProduct(null)}
+                 onClose={closeWhatsAppInquiry}
                  onSubmit={(customer) => submitWhatsAppInquiry(inquiryProduct, customer)}
              />
 
              {/* ================= 24. SHOPPING POLICIES & CONCIERGE MODAL ================= */}
              <InfoModal
                  contentKey={infoModalKey}
-                 onClose={() => setInfoModalKey(null)}
+                 onClose={closeInfoModal}
              />
 
              {/* ================= 25. MULTI-ATTRIBUTE FILTER DRAWER ================= */}
              <FilterDrawer
                  isOpen={isFilterDrawerOpen}
-                 onClose={() => setIsFilterDrawerOpen(false)}
+                 onClose={closeFilterDrawer}
                  activeDeity={activeDeityFilter}
                  onSelectDeity={setActiveDeityFilter}
                  priceRange={filterPriceRange}

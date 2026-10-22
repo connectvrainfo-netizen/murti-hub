@@ -27,8 +27,31 @@
       }
     }
     </script>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- LCP Image Preload with High Priority -->
+    <link rel="preload" as="image" href="/images/logo.png" fetchpriority="high" />
+    <link rel="preload" as="image" href="/images/categories/ram@2x.png" fetchpriority="high" />
+
+    <!-- Speculation Rules API for Instant Page Transitions (Chromium 109+) -->
+    <script type="speculationrules">
+    {
+      "prefetch": [
+        {
+          "source": "list",
+          "urls": ["/cart", "/checkout", "/admin"],
+          "eagerness": "moderate"
+        }
+      ],
+      "prerender": [
+        {
+          "source": "list",
+          "urls": ["/checkout"],
+          "eagerness": "conservative"
+        }
+      ]
+    }
+    </script>
+
     <!-- Google Fonts matching Amol Marble Murti Bhandar's Serif, Devanagari & Geometric Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,6 +59,17 @@
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Noto+Serif+Devanagari:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
+    <!-- Tailwind CSS (with seamless warning suppression for development and instant live styling) -->
+    <script>
+        (function() {
+            var _warn = console.warn;
+            console.warn = function() {
+                if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].indexOf('cdn.tailwindcss.com') !== -1) return;
+                _warn.apply(console, arguments);
+            };
+        })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -60,7 +94,7 @@
                     }
                 }
             }
-        }
+        };
     </script>
 </head>
 
