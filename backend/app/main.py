@@ -232,8 +232,10 @@ async def startup_event():
     logger.info("Interactive API Documentation: http://localhost:8000/docs")
     logger.info("=" * 60)
 
-@app.get("/", tags=["Health & Info"])
-def root():
+@app.api_route("/", methods=["GET", "HEAD"], tags=["Health & Info"])
+def root(request: Request):
+    if request.method == "HEAD":
+        return JSONResponse(status_code=200, content={"status": "online"})
     return {
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
@@ -244,4 +246,5 @@ def root():
         "uptimerobot_probe": "/uptimerobot",
         "admin_email": settings.ADMIN_EMAIL
     }
+
 
