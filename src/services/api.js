@@ -50,24 +50,114 @@ function formatApiErrorMessage(data, status, defaultStatusText) {
     return defaultStatusText || `Request failed with status ${status}`;
 }
 
-const API_BASE = '/api';
-
 class ApiService {
     constructor() {
-        this.token = localStorage.getItem('murti_admin_token') || null;
+        this.token = typeof localStorage !== 'undefined' ? (localStorage.getItem('murti_admin_token') || null) : null;
+        this.customBaseUrl = typeof localStorage !== 'undefined' ? (localStorage.getItem('murti_backend_url') || '') : '';
+    }
+
+    /**
+     * Get the active backend base URL.
+     * Order of precedence:
+     * 1. localStorage override ('murti_backend_url') - set dynamically from Admin UI
+     * 2. VITE_API_URL or VITE_BACKEND_URL (set in Vercel environment variables)
+     * 3. Fallback to '' (relative paths for local Vite dev proxy or same-domain proxy)
+     */
+    getBaseUrl() {
+        if (this.customBaseUrl && typeof this.customBaseUrl === 'string' && this.customBaseUrl.trim()) {
+            return this.customBaseUrl.trim().replace(/\/+$/, '');
+        }
+        const envUrl = import.meta.env?.VITE_API_URL || import.meta.env?.VITE_BACKEND_URL;
+        if (envUrl && typeof envUrl === 'string' && envUrl.trim()) {
+            return envUrl.trim().replace(/\/+$/, '');
+        }
+        return '';
+    }
+
+    /**
+     * Set or clear the custom backend base URL (saved to localStorage).
+     */
+    setBaseUrl(url) {
+        const clean = (url || '').trim().replace(/\/+$/, '');
+        this.customBaseUrl = clean;
+        if (typeof localStorage !== 'undefined') {
+            if (clean) {
+                localStorage.setItem('murti_backend_url', clean);
+            } else {
+                localStorage.removeItem('murti_backend_url');
+            }
+        }
+    }
+
+    /**
+     * Build the full API URL for a given endpoint.
+     */
+    getApiEndpoint(endpoint) {
+        const base = this.getBaseUrl();
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+        return base ? `${base}/api${cleanEndpoint}` : `/api${cleanEndpoint}`;
+    }
+
+    /**
+     * Helper to resolve media/image URLs (handles relative /uploads/ from backend).
+     */
+    getImageUrl(path) {
+        if (!path) return '';
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        if (path.startsWith('/uploads/')) {
+            const base = this.getBaseUrl();
+            return base ? `${base}${path}` : path;
+        }
+        return path;
+    }
+
+    /**
+     * Test live connectivity to backend /health endpoint.
+     */
+    async testBackendHealth(customUrl) {
+        const target = (customUrl !== undefined ? customUrl : this.getBaseUrl()).trim().replace(/\/+$/, '');
+        const healthUrl = target ? `${target}/health` : '/health';
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            const res = await fetch(healthUrl, {
+                signal: controller.signal,
+                headers: { 'Accept': 'application/json' }
+            });
+            clearTimeout(timeoutId);
+            const contentType = res.headers.get('content-type') || '';
+            if (contentType.includes('text/html')) {
+                return {
+                    success: false,
+                    error: `Received HTML from ${healthUrl}. Point to your Render backend URL (e.g. https://your-backend.onrender.com).`
+                };
+            }
+            if (!res.ok) {
+                return { success: false, error: `Server responded with HTTP ${res.status}` };
+            }
+            const data = await res.json().catch(() => ({}));
+            return { success: true, data, url: healthUrl };
+        } catch (err) {
+            return {
+                success: false,
+                error: err.name === 'AbortError' ? 'Connection timed out (6s)' : (err.message || 'Network error')
+            };
+        }
     }
 
     setToken(token) {
         this.token = token;
-        if (token) {
-            localStorage.setItem('murti_admin_token', token);
-        } else {
-            localStorage.removeItem('murti_admin_token');
+        if (typeof localStorage !== 'undefined') {
+            if (token) {
+                localStorage.setItem('murti_admin_token', token);
+            } else {
+                localStorage.removeItem('murti_admin_token');
+            }
         }
     }
 
     getToken() {
-        return this.token || localStorage.getItem('murti_admin_token');
+        return this.token || (typeof localStorage !== 'undefined' ? localStorage.getItem('murti_admin_token') : null);
     }
 
     getHeaders(isMultipart = false) {
@@ -83,12 +173,12 @@ class ApiService {
     }
 
     async request(endpoint, options = {}, isRetry = false, retryCount = 0) {
-        const url = `${API_BASE}${endpoint}`;
+        const url = this.getApiEndpoint(endpoint);
         const isMultipart = options.body instanceof FormData;
         
         // Timeout handling via AbortController (Checklist Section 2 & 3: Configure per-request timeouts)
         const controller = new AbortController();
-        const timeoutMs = options.timeoutMs || 12000;
+        const timeoutMs = options.timeoutMs || 15000;
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
         const config = {
@@ -103,7 +193,29 @@ class ApiService {
         try {
             const res = await fetch(url, config);
             clearTimeout(timeoutId);
-            const data = await res.json().catch(() => ({}));
+
+            // Guard against Vercel/SPA serving index.html for API requests
+            const contentType = res.headers.get('content-type') || '';
+            let data = {};
+
+            if (contentType.includes('application/json')) {
+                data = await res.json().catch(() => ({}));
+            } else {
+                const text = await res.text().catch(() => '');
+                if (text.trim().startsWith('<!DOCTYPE') || text.includes('<html')) {
+                    throw new ApiError({
+                        message: `Frontend called ${url} and received HTML instead of JSON. Ensure your Render backend URL is configured (VITE_API_URL or via Admin login settings).`,
+                        status: res.status,
+                        errorCode: 'HTML_RESPONSE_MISMATCH',
+                        data: null
+                    });
+                }
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = { message: text };
+                }
+            }
 
             if (!res.ok) {
                 // If token is invalid or expired and this is not a retry or login request, auto re-authenticate
@@ -150,7 +262,7 @@ class ApiService {
             // Handle AbortController Timeout (Checklist Section 2 & 3: Handle timeouts)
             if (err.name === 'AbortError') {
                 const timeoutError = new ApiError({
-                    message: `Request to ${endpoint} timed out after ${timeoutMs / 1000}s. Please verify server connection and try again.`,
+                    message: `Request to ${url} timed out after ${timeoutMs / 1000}s. Please verify your Render backend server is awake and try again.`,
                     status: 408,
                     errorCode: 'REQUEST_TIMEOUT'
                 });
@@ -160,9 +272,12 @@ class ApiService {
 
             // Handle network / offline / connection errors cleanly
             const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+            const currentBase = this.getBaseUrl();
             const netMsg = isOffline
                 ? 'You appear to be offline. Please verify your internet connection.'
-                : 'Unable to connect to the backend server. Please verify that the API server is running on port 8000.';
+                : currentBase
+                    ? `Unable to connect to backend at ${currentBase}. If on Render free tier, it may be waking up (wait ~30s).`
+                    : 'Unable to connect to the backend server. Configure your Render backend URL in Admin settings.';
 
             const networkError = new ApiError({
                 message: netMsg,
@@ -183,10 +298,16 @@ class ApiService {
             method: 'POST',
             body: JSON.stringify({ email, password })
         });
-        if (res.data?.access_token) {
-            this.setToken(res.data.access_token);
+        const token = res?.data?.access_token || res?.access_token;
+        if (token) {
+            this.setToken(token);
+            return res.data || res;
         }
-        return res.data;
+        throw new ApiError({
+            message: res?.message || 'Authentication succeeded but no access token was returned.',
+            status: 401,
+            errorCode: 'INVALID_AUTH_RESPONSE'
+        });
     }
 
     async getMe() {

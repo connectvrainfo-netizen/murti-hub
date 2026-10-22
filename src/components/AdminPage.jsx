@@ -69,6 +69,10 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [authLoading, setAuthLoading] = useState(false);
     const [authError, setAuthError] = useState('');
     const [loginForm, setLoginForm] = useState({ email: 'admin@amolmurtibhandar.com', password: 'admin123' });
+    const [backendUrlInput, setBackendUrlInput] = useState(api.getBaseUrl() || '');
+    const [isConfiguringServer, setIsConfiguringServer] = useState(Boolean(!api.getBaseUrl() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost')));
+    const [testingConnection, setTestingConnection] = useState(false);
+    const [serverStatus, setServerStatus] = useState(null);
 
     // Core Data States - Pre-seeded with existing catalog data
     const [loading, setLoading] = useState(false);
@@ -233,6 +237,36 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const handleLogout = () => {
         api.logout();
         setIsAuthenticated(false);
+    };
+
+    const handleTestAndSaveBackend = async (e) => {
+        if (e) e.preventDefault();
+        setTestingConnection(true);
+        setServerStatus({ type: 'info', message: 'Testing backend connection to /health...' });
+        const res = await api.testBackendHealth(backendUrlInput);
+        setTestingConnection(false);
+        if (res.success) {
+            api.setBaseUrl(backendUrlInput);
+            setServerStatus({
+                type: 'success',
+                message: `Connected successfully! (Backend v${res.data?.version || '2.0.0'}, status: ${res.data?.status || 'healthy'})`
+            });
+            showToast('Backend connected successfully!');
+            setAuthError('');
+            // Attempt auto-login with connected backend
+            try {
+                await api.login(loginForm.email, loginForm.password);
+                setIsAuthenticated(true);
+                refreshAllData();
+            } catch (err) {
+                console.log('Login ready for manual sign-in:', err.message);
+            }
+        } else {
+            setServerStatus({
+                type: 'error',
+                message: `Connection failed: ${res.error}. Ensure your Render web service is awake and URL starts with https://`
+            });
+        }
     };
 
     // =========================================================================
@@ -709,6 +743,59 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             {authLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                             <span>SIGN IN TO ADMIN PORTAL</span>
                         </button>
+
+                        {/* Backend Server Configuration for Render / Vercel Deployments */}
+                        <div className="pt-3 border-t border-stone-800/80">
+                            <div className="flex items-center justify-between text-[11px] text-stone-400">
+                                <span className="flex items-center gap-1.5 truncate">
+                                    <span className={`w-2 h-2 rounded-full shrink-0 ${api.getBaseUrl() ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`}></span>
+                                    <span className="shrink-0 text-stone-400">Server:</span>
+                                    <span className="text-[#F7C600] font-mono truncate max-w-[160px]">
+                                        {api.getBaseUrl() || 'Relative (/api)'}
+                                    </span>
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsConfiguringServer(!isConfiguringServer)}
+                                    className="text-[11px] text-[#F7C600] hover:underline font-semibold shrink-0 ml-2"
+                                >
+                                    {isConfiguringServer ? 'Hide' : 'Configure Server'}
+                                </button>
+                            </div>
+
+                            {isConfiguringServer && (
+                                <div className="mt-3 p-3.5 rounded-2xl bg-stone-900/90 border border-stone-700/80 space-y-2.5 animate-in fade-in duration-200">
+                                    <label className="text-[10px] font-bold text-stone-300 uppercase tracking-wider block">
+                                        Render Backend URL
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="url"
+                                            placeholder="https://your-backend.onrender.com"
+                                            value={backendUrlInput}
+                                            onChange={(e) => setBackendUrlInput(e.target.value)}
+                                            className="flex-1 px-3 py-2 text-xs rounded-lg border border-stone-700 bg-stone-950 text-white focus:border-[#F7C600] focus:outline-none"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleTestAndSaveBackend}
+                                            disabled={testingConnection || !backendUrlInput.trim()}
+                                            className="px-3 py-2 bg-[#F7C600] text-[#161616] rounded-lg font-bold text-xs hover:bg-[#E5B500] transition disabled:opacity-50 shrink-0"
+                                        >
+                                            {testingConnection ? 'Testing...' : 'Connect'}
+                                        </button>
+                                    </div>
+                                    {serverStatus && (
+                                        <div className={`p-2 rounded-lg text-[10.5px] leading-tight ${serverStatus.type === 'success' ? 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-300' : serverStatus.type === 'error' ? 'bg-rose-950/60 border border-rose-500/40 text-rose-300' : 'bg-stone-800 text-stone-300'}`}>
+                                            {serverStatus.message}
+                                        </div>
+                                    )}
+                                    <p className="text-[10px] text-stone-400 leading-normal">
+                                        Enter your Render backend URL (e.g. <code className="text-[#F7C600]">https://murti-hub.onrender.com</code>). Saved automatically in your browser.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
                     </form>
                 </div>
 
