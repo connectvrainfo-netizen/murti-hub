@@ -74,12 +74,48 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 - Open Swagger API Docs: **[http://localhost:8000/docs](http://localhost:8000/docs)**
 - Health Check: **[http://localhost:8000/health](http://localhost:8000/health)**
+- Dedicated UptimeRobot Probe: **[http://localhost:8000/uptimerobot](http://localhost:8000/uptimerobot)**
 
-### 4. Run Automated Test Suite
+### 4. Run Automated Test Suites
 ```bash
+# Test all 7 admin operations, auth & catalog
 .\.venv\Scripts\python.exe test_api.py
+
+# Test UptimeRobot health check, HEAD/GET methods, anti-caching & diagnostics
+.\.venv\Scripts\python.exe test_health_check.py
+
+# Test robust error handling architecture
+.\.venv\Scripts\python.exe test_error_handling.py
 ```
-This tests all 7 admin operations, auth, WhatsApp update, rating mode enforcement, and size creation.
+
+---
+
+## 🤖 UptimeRobot Monitoring Setup
+
+The API includes a dedicated, zero-downtime health check route engineered specifically for **UptimeRobot**, BetterStack, Pingdom, and cloud container probes:
+
+### 1. Available Endpoints
+- `GET /health` or `HEAD /health` (Standard monitoring)
+- `GET /uptimerobot` or `HEAD /uptimerobot` (Dedicated UptimeRobot route)
+- `GET /api/health` or `GET /api/uptimerobot` (For setups behind reverse proxies / Vercel rewrites)
+- `GET /ping` or `GET /healthz` (Kubernetes / container liveness probes)
+- `GET /health?format=text` (Returns plain text `OK`)
+- `GET /health?deep=true` (Verifies database connectivity with roundtrip latency)
+
+### 2. How to Configure UptimeRobot
+1. Log in to [UptimeRobot](https://uptimerobot.com).
+2. Click **+ Add New Monitor**.
+3. Fill in the monitor settings:
+   - **Monitor Type**: `HTTP(s)` or `Keyword`
+   - **Friendly Name**: `Amol Murti Bhandar Backend`
+   - **URL (or IP)**: `https://your-domain.com/health` (or `/uptimerobot`)
+   - **Monitoring Interval**: `5 minutes` (free tier) or `1 minute` (pro)
+   - **HTTP Method** (under *Advanced Settings*): `HEAD` (recommended to save bandwidth) or `GET`
+   - If using **Keyword Monitor**:
+     - **Keyword**: `healthy` (or `OK` / `UP`)
+     - **Alert When**: `Keyword Not Exists`
+4. Click **Create Monitor**. All requests automatically receive `Cache-Control: no-cache, no-store, must-revalidate` to prevent stale CDN cache hits.
+
 
 ---
 

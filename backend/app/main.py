@@ -17,7 +17,8 @@ from app.errors import (
 )
 from app.routers import (
     auth, settings as settings_router, sizes, categories,
-    products, festivals, reviews, upload, dashboard, orders
+    products, festivals, reviews, upload, dashboard, orders,
+    health
 )
 
 app = FastAPI(
@@ -208,6 +209,7 @@ async def handle_unhandled_exception(request: Request, exc: Exception):
 os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
+app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(settings_router.router)
 app.include_router(sizes.router)
@@ -238,12 +240,8 @@ def root():
         "status": "online",
         "database": "supabase" if is_supabase_connected() else "in-memory (pre-seeded)",
         "docs_url": "/docs",
+        "health_check": "/health",
+        "uptimerobot_probe": "/uptimerobot",
         "admin_email": settings.ADMIN_EMAIL
     }
 
-@app.get("/health", tags=["Health & Info"])
-def health_check():
-    return {
-        "status": "healthy",
-        "supabase_connected": is_supabase_connected()
-    }
