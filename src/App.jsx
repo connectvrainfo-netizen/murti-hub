@@ -27,12 +27,13 @@ import { useGsapScrollAnimations } from './hooks/useGsapScrollAnimations';
 import { useContinuousScroll } from './hooks/useContinuousScroll';
 
 // Helper to determine if current URL is the dedicated admin page
-// Helper to determine if current URL is the dedicated admin page
 const checkIsAdminPath = () => {
     if (typeof window === 'undefined') return false;
-    const path = window.location.pathname.toLowerCase();
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
     const hash = window.location.hash.toLowerCase();
-    return path === '/admin' || path.startsWith('/admin') || hash === '#admin';
+    const search = window.location.search.toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    return path === '/admin' || path.startsWith('/admin') || hash === '#admin' || hash.startsWith('#admin') || params.get('page') === 'admin' || search.includes('admin');
 };
 
 // Helper to determine initial page, product, and category from URL parameters
@@ -84,7 +85,7 @@ export default function App() {
         api.getProducts({ include_inactive: false }).then(res => {
             const items = res?.items || (Array.isArray(res) ? res : null);
             if (items && items.length > 0) {
-                setLiveProducts(items.map(p => ({
+                const mappedProducts = items.map(p => ({
                     ...p,
                     id: p.id,
                     legacy_id: p.legacy_id,
@@ -107,14 +108,15 @@ export default function App() {
                     static_rating_value: p.static_rating_value ?? 4.9,
                     catalog_images: p.catalog_images || [],
                     variants: p.variants || []
-                })));
+                }));
+                setLiveProducts(mappedProducts);
 
                 // If user loaded on direct ?product=ID URL, sync the live product
                 if (typeof window !== 'undefined') {
                     const params = new URLSearchParams(window.location.search);
                     const prodParam = params.get('product');
                     if (prodParam) {
-                        const found = mapped.find(p => String(p.id) === String(prodParam) || String(p.legacy_id) === String(prodParam));
+                        const found = mappedProducts.find(p => String(p.id) === String(prodParam) || String(p.legacy_id) === String(prodParam));
                         if (found) setSelectedProduct(found);
                     }
                 }
@@ -990,6 +992,13 @@ export default function App() {
                                 className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-white border border-stone-200 text-stone-700 font-semibold text-center flex items-center justify-center active:scale-98 transition shadow-xs"
                             >
                                 Track My Order
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setIsMobileMenuOpen(false); navigateTo('admin'); }}
+                                className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-[#FAF5E8] border border-[#E8DEC8] text-[#8E5B00] font-bold text-center flex items-center justify-center gap-1.5 active:scale-98 transition shadow-xs"
+                            >
+                                <span>🔒 Staff / Admin Console</span>
                             </button>
                         </div>
                     </div>
@@ -2644,6 +2653,15 @@ export default function App() {
                                 <span>I agree to Amol Marble Murti Bhandar & GoKwik using my data for login & offers. <u className="text-stone-700">Read details</u></span>
                             </label>
                             <p className="text-[10px] text-center text-stone-400 pt-1">Powered by <strong className="text-black">Kwik⚡Pass</strong></p>
+                            <div className="pt-2 text-center border-t border-stone-200">
+                                <button
+                                    type="button"
+                                    onClick={() => { closeKwikPass(); navigateTo('admin'); }}
+                                    className="text-[11px] text-[#8E5B00] hover:underline font-semibold"
+                                >
+                                    🔒 Staff / Store Admin Portal →
+                                </button>
+                            </div>
                         </form>
                     </div>
                 </div>

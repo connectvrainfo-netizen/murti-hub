@@ -274,17 +274,53 @@
       "slug": "anime",
       "deity": null,
       "route": "/anime",
-      "img": "/images/categories/ram.png",
+      "img": "/uploads/categories_43572b79185c.png",
       "banner_url": "",
       "description": null,
       "sort_order": 11,
       "is_active": true,
       "id": "75eda166-5953-43d4-8222-f79ffb9e5440",
       "created_at": "2026-10-21T16:17:27.094052+00:00",
-      "updated_at": "2026-10-21T16:17:27.094052+00:00"
+      "updated_at": "2026-10-22T11:57:02.276455+00:00"
     }
   ],
   "murtis": [
+    {
+      "title": "suraj",
+      "slug": "suraj-f2c1a5",
+      "legacy_id": null,
+      "category_id": null,
+      "deity": "Ram",
+      "group_tag": "most-loved",
+      "price": 1499.0,
+      "old_price": 2499.0,
+      "off_text": "40% off",
+      "material": "Pure White Makrana Marble",
+      "description": "2345678sdfghjk",
+      "dimensions": "12 Inches (H) x 8 Inches (W) x 4 Inches (D)",
+      "weight": "1.8 kg",
+      "pran_pratishtha_ready": true,
+      "gold_leaf_karigari": true,
+      "primary_catalog_image": "/uploads/catalog_2d741ef7e3bd.png",
+      "catalog_images": [
+        {
+          "url": "/uploads/catalog_9fec036583fc.jpg",
+          "caption": "Angle 1 - Sacred Detail",
+          "sort_order": 1
+        }
+      ],
+      "rating_mode": "enabled",
+      "static_rating_value": 5.0,
+      "static_reviews_count": 48,
+      "stock_status": "in_stock",
+      "is_featured": false,
+      "is_active": true,
+      "sort_order": 0,
+      "id": "f2c1a5c3-9467-4e82-8a31-6df23cef11bc",
+      "created_at": "2026-10-22T11:55:14.888275+00:00",
+      "updated_at": "2026-10-22T11:55:14.888275+00:00",
+      "variants": []
+    },
     {
       "title": "gdfjhntjhur",
       "slug": "gdfjhntjhur-6e474e",

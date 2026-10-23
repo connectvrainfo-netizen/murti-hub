@@ -119,7 +119,7 @@ class ApiService {
         const healthUrl = target ? `${target}/health` : '/health';
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            const timeoutId = setTimeout(() => controller.abort(), 25000);
             const res = await fetch(healthUrl, {
                 signal: controller.signal,
                 headers: { 'Accept': 'application/json' }
@@ -140,7 +140,7 @@ class ApiService {
         } catch (err) {
             return {
                 success: false,
-                error: err.name === 'AbortError' ? 'Connection timed out (6s)' : (err.message || 'Network error')
+                error: err.name === 'AbortError' ? 'Connection timed out (Render free tier may still be waking up, please retry in 15s)' : (err.message || 'Network error')
             };
         }
     }

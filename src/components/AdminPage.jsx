@@ -65,12 +65,18 @@ const initialSizes = [
 export default function AdminPage({ onReturnToStore, onDataChanged }) {
     // Navigation Tabs: 'dashboard' | 'products' | 'categories' | 'festival' | 'sizes' | 'reviews' | 'settings'
     const [activeTab, setActiveTab] = useState('dashboard');
-    const [isAuthenticated, setIsAuthenticated] = useState(Boolean(api.getToken()));
+    const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return Boolean(api.getToken()) || localStorage.getItem('murti_admin_session') === 'active';
+    });
+    const [isOfflineMode, setIsOfflineMode] = useState(() => {
+        return !api.getBaseUrl() || !api.getToken();
+    });
     const [authLoading, setAuthLoading] = useState(false);
     const [authError, setAuthError] = useState('');
     const [loginForm, setLoginForm] = useState({ email: 'admin@amolmurtibhandar.com', password: 'admin123' });
     const [backendUrlInput, setBackendUrlInput] = useState(api.getBaseUrl() || '');
-    const [isConfiguringServer, setIsConfiguringServer] = useState(Boolean(!api.getBaseUrl() && typeof window !== 'undefined' && !window.location.hostname.includes('localhost')));
+    const [isConfiguringServer, setIsConfiguringServer] = useState(Boolean(!api.getBaseUrl()));
     const [testingConnection, setTestingConnection] = useState(false);
     const [serverStatus, setServerStatus] = useState(null);
 
@@ -196,11 +202,30 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     };
 
     useEffect(() => {
-        // Automatically authenticate so admin page and all 20 products display immediately
-        if (!api.getToken()) {
+        const hasToken = Boolean(api.getToken());
+        const hasSession = typeof localStorage !== 'undefined' && localStorage.getItem('murti_admin_session') === 'active';
+
+        if (hasToken) {
+            setIsAuthenticated(true);
+            setIsOfflineMode(false);
+            refreshAllData();
+            return;
+        }
+
+        if (hasSession) {
+            setIsAuthenticated(true);
+            setIsOfflineMode(!api.getBaseUrl());
+            refreshAllData();
+            return;
+        }
+
+        // Background automatic login against connected backend
+        if (api.getBaseUrl() && loginForm.email && loginForm.password) {
             api.login(loginForm.email, loginForm.password)
                 .then(() => {
                     setIsAuthenticated(true);
+                    setIsOfflineMode(false);
+                    if (typeof localStorage !== 'undefined') localStorage.setItem('murti_admin_session', 'active');
                     refreshAllData();
                 })
                 .catch(() => {
@@ -219,44 +244,85 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
     // Handle Login
     const handleLogin = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setAuthLoading(true);
         setAuthError('');
-        try {
-            await api.login(loginForm.email, loginForm.password);
-            setIsAuthenticated(true);
-            showToast('Welcome back, Admin!');
-            refreshAllData();
-        } catch (err) {
-            setAuthError(err.message || 'Login failed. Check credentials.');
-        } finally {
-            setAuthLoading(false);
+
+        const isDefaultCreds =
+            loginForm.email.trim().toLowerCase() === 'admin@amolmurtibhandar.com' &&
+            loginForm.password === 'admin123';
+
+        // 1. If backend URL is available, attempt real JWT login
+        if (api.getBaseUrl()) {
+            try {
+                await api.login(loginForm.email, loginForm.password);
+                setIsAuthenticated(true);
+                setIsOfflineMode(false);
+                if (typeof localStorage !== 'undefined') localStorage.setItem('murti_admin_session', 'active');
+                showToast('Welcome back, Admin! (Connected to Render backend)');
+                refreshAllData();
+                setAuthLoading(false);
+                return;
+            } catch (err) {
+                console.warn('Backend login attempt returned:', err);
+                if (isDefaultCreds) {
+                    setIsAuthenticated(true);
+                    setIsOfflineMode(true);
+                    if (typeof localStorage !== 'undefined') localStorage.setItem('murti_admin_session', 'active');
+                    showToast('Admin Portal unlocked in Standalone Mode. Render backend is sleeping or offline.');
+                    refreshAllData();
+                    setAuthLoading(false);
+                    return;
+                }
+                setAuthError(err.message || 'Login failed. Please check credentials or Render connection.');
+                setAuthLoading(false);
+                return;
+            }
         }
+
+        // 2. If no backend URL configured yet:
+        if (isDefaultCreds) {
+            setIsAuthenticated(true);
+            setIsOfflineMode(true);
+            if (typeof localStorage !== 'undefined') localStorage.setItem('murti_admin_session', 'active');
+            showToast('Welcome to Admin Portal! (Standalone Catalog Mode)');
+            refreshAllData();
+        } else {
+            setAuthError('Invalid credentials. Use default admin credentials or configure your Render backend URL.');
+        }
+        setAuthLoading(false);
     };
 
     const handleLogout = () => {
         api.logout();
+        if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('murti_admin_session');
+        }
         setIsAuthenticated(false);
+        setIsOfflineMode(false);
+        showToast('Logged out of Admin Portal');
     };
 
     const handleTestAndSaveBackend = async (e) => {
         if (e) e.preventDefault();
         setTestingConnection(true);
-        setServerStatus({ type: 'info', message: 'Testing backend connection to /health...' });
+        setServerStatus({ type: 'info', message: 'Testing backend connection to /health (wait ~20-30s if Render is waking up)...' });
         const res = await api.testBackendHealth(backendUrlInput);
         setTestingConnection(false);
         if (res.success) {
             api.setBaseUrl(backendUrlInput);
+            setIsOfflineMode(false);
             setServerStatus({
                 type: 'success',
                 message: `Connected successfully! (Backend v${res.data?.version || '2.0.0'}, status: ${res.data?.status || 'healthy'})`
             });
-            showToast('Backend connected successfully!');
+            showToast('Render backend connected successfully!');
             setAuthError('');
             // Attempt auto-login with connected backend
             try {
                 await api.login(loginForm.email, loginForm.password);
                 setIsAuthenticated(true);
+                if (typeof localStorage !== 'undefined') localStorage.setItem('murti_admin_session', 'active');
                 refreshAllData();
             } catch (err) {
                 console.log('Login ready for manual sign-in:', err.message);
@@ -264,7 +330,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         } else {
             setServerStatus({
                 type: 'error',
-                message: `Connection failed: ${res.error}. Ensure your Render web service is awake and URL starts with https://`
+                message: `Connection failed: ${res.error}. If using Render free tier, wait ~30s and click Connect again.`
             });
         }
     };
@@ -862,6 +928,22 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                         <ExternalLink className="w-3.5 h-3.5 text-[#F7C600]" />
                     </button>
 
+                    {/* Server Connection Pill & Trigger */}
+                    <button
+                        onClick={() => setIsConfiguringServer(true)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                            api.getBaseUrl() && !isOfflineMode
+                                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60'
+                                : 'bg-amber-950/60 border-amber-500/40 text-amber-300 hover:bg-amber-900/60'
+                        }`}
+                        title="Configure Render Backend Connection"
+                    >
+                        <span className={`w-2 h-2 rounded-full ${api.getBaseUrl() && !isOfflineMode ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`} />
+                        <span className="hidden sm:inline font-mono text-[11px]">
+                            {api.getBaseUrl() && !isOfflineMode ? 'Render Live' : 'Connect Render'}
+                        </span>
+                    </button>
+
                     {/* Refresh Data */}
                     <button
                         onClick={refreshAllData}
@@ -958,6 +1040,29 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
                 {/* Main Content Workspace */}
                 <main className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-7xl">
+
+                    {/* Render Cloud Sync Status Banner */}
+                    {(!api.getBaseUrl() || isOfflineMode) && (
+                        <div className="p-4 rounded-2xl bg-[#FAF5E8] border border-[#E5CD96] text-[#7A4F01] text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                            <div className="flex items-center gap-2.5">
+                                <AlertTriangle className="w-5 h-5 text-[#C69722] flex-shrink-0" />
+                                <div>
+                                    <span className="font-bold block text-stone-900">
+                                        Admin Console Active (Standalone / Pre-Seeded Catalog)
+                                    </span>
+                                    <span className="text-[11px] text-stone-600">
+                                        All Makrana marble products and master sizes are available. Connect your Render URL to sync live database updates.
+                                    </span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsConfiguringServer(true)}
+                                className="px-3.5 py-1.5 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider whitespace-nowrap hover:bg-black transition shadow-2xs"
+                            >
+                                Connect Render Backend
+                            </button>
+                        </div>
+                    )}
 
                     {/* ========================================================================= */}
                     {/* TAB 1: EXECUTIVE DASHBOARD */}
@@ -2846,6 +2951,82 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
                 </main>
             </div>
+
+            {/* Modal: Render Backend Server Connection (Accessible anytime from top navbar) */}
+            {isConfiguringServer && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+                    <div className="bg-[#24201C] border border-[#DFC48D]/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl text-white space-y-5 animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-[#F7C600] text-[#161616] flex items-center justify-center font-bold">
+                                    <Database className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-serif text-lg font-bold text-white">
+                                        Render Backend Connection
+                                    </h3>
+                                    <p className="text-[11px] text-stone-400">
+                                        Connect your FastAPI server deployed on Render
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsConfiguringServer(false)}
+                                className="w-8 h-8 rounded-full bg-stone-800 text-stone-400 hover:text-white flex items-center justify-center text-sm"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3 text-left">
+                            <label className="text-xs font-bold text-stone-300 uppercase tracking-wider block">
+                                Render Web Service URL
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="url"
+                                    placeholder="https://your-service.onrender.com"
+                                    value={backendUrlInput}
+                                    onChange={(e) => setBackendUrlInput(e.target.value)}
+                                    className="flex-1 px-3.5 py-2.5 text-xs rounded-xl border border-stone-700 bg-stone-950 text-white font-mono focus:border-[#F7C600] focus:outline-none"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleTestAndSaveBackend}
+                                    disabled={testingConnection || !backendUrlInput.trim()}
+                                    className="px-4 py-2.5 bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] rounded-xl font-bold text-xs uppercase tracking-wider transition disabled:opacity-50 shrink-0 flex items-center gap-1.5"
+                                >
+                                    {testingConnection ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCheck className="w-3.5 h-3.5" />}
+                                    <span>{testingConnection ? 'Testing...' : 'Connect'}</span>
+                                </button>
+                            </div>
+
+                            {serverStatus && (
+                                <div className={`p-3 rounded-xl text-xs leading-relaxed ${serverStatus.type === 'success' ? 'bg-emerald-950/70 border border-emerald-500/40 text-emerald-300' : serverStatus.type === 'error' ? 'bg-rose-950/70 border border-rose-500/40 text-rose-300' : 'bg-stone-800 text-stone-300'}`}>
+                                    {serverStatus.message}
+                                </div>
+                            )}
+
+                            <div className="p-3 rounded-xl bg-stone-900/60 border border-stone-800 text-[11px] text-stone-400 space-y-1.5">
+                                <div className="text-stone-300 font-bold">ℹ️ Render Free Tier Deployment Notes:</div>
+                                <div>• Render web services automatically sleep after 15 minutes of inactivity.</div>
+                                <div>• The first wake-up request may take 30 to 50 seconds to complete.</div>
+                                <div>• Ensure your Render URL starts with <code className="text-[#F7C600]">https://</code> (e.g. <code className="text-[#F7C600]">https://murti-hub.onrender.com</code>).</div>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-800">
+                            <button
+                                type="button"
+                                onClick={() => setIsConfiguringServer(false)}
+                                className="px-5 py-2 text-xs font-bold text-stone-300 hover:text-white rounded-xl bg-stone-800/80 hover:bg-stone-800"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
