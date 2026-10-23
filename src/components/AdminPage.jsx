@@ -299,6 +299,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
     // Editing Modals / Drawers
     const [editingProduct, setEditingProduct] = useState(null);
+    const [isCustomDeity, setIsCustomDeity] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
     const [editingSize, setEditingSize] = useState(null);
     const [customSizeInput, setCustomSizeInput] = useState('');
@@ -863,6 +864,72 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
     // Extract unique deity list for filter pills
     const uniqueDeities = ['All', ...new Set(products.map(p => p.deity).filter(Boolean))];
+
+    // Consolidated Category & Deity options for product management dropdown
+    const categoryDropdownOptions = React.useMemo(() => {
+        const list = [];
+        const seen = new Set();
+
+        // 1. From live categories state (configured in Categories tab)
+        (categories || []).forEach(c => {
+            const name = (c.name || '').trim();
+            const deity = (c.deity || name).trim();
+            const key = (deity || name).toLowerCase();
+            if (key && !seen.has(key)) {
+                seen.add(key);
+                list.push({
+                    value: deity || name,
+                    label: name && deity && name.toLowerCase() !== deity.toLowerCase() ? `${name} (${deity})` : (name || deity),
+                    category_id: c.id
+                });
+            }
+        });
+
+        // 2. Standard revered Sanatan Dharma deities & sacred themes
+        const standardDeities = [
+            { value: 'Ganesha', label: 'Ganesha / Ganpati' },
+            { value: 'Ram', label: 'Lord Ram / Ram Darbar' },
+            { value: 'Shiva', label: 'Lord Shiva / Mahadev' },
+            { value: 'Durga', label: 'Maa Durga & Shakti' },
+            { value: 'Krishna', label: 'Radha Krishna / Kanha' },
+            { value: 'Hanuman', label: 'Veer Hanuman Ji' },
+            { value: 'Gajanan Maharaj', label: 'Shri Gajanan Maharaj' },
+            { value: 'Sai Baba', label: 'Shirdi Sai Baba' },
+            { value: 'Dattatreya', label: 'Bhagwan Dattatreya' },
+            { value: 'Murugan', label: 'Lord Murugan / Kartikeya' },
+            { value: 'Saraswati', label: 'Maa Saraswati' },
+            { value: 'Lakshmi', label: 'Maa Lakshmi' },
+            { value: 'Vishnu', label: 'Lord Vishnu / Narayana' },
+            { value: 'Kalash / Brass', label: 'Temple Shikhar Kalash & Brass' }
+        ];
+
+        standardDeities.forEach(d => {
+            const key = d.value.toLowerCase();
+            if (!seen.has(key)) {
+                seen.add(key);
+                list.push({ value: d.value, label: d.label });
+            }
+        });
+
+        // 3. Any additional unique deity present on existing products in catalog
+        (products || []).forEach(p => {
+            const d = (p.deity || '').trim();
+            if (d && !seen.has(d.toLowerCase())) {
+                seen.add(d.toLowerCase());
+                list.push({ value: d, label: d });
+            }
+        });
+
+        // 4. Ensure current product's deity is included if already set
+        if (editingProduct?.deity) {
+            const cur = editingProduct.deity.trim();
+            if (cur && !seen.has(cur.toLowerCase())) {
+                list.push({ value: cur, label: cur });
+            }
+        }
+
+        return list;
+    }, [categories, products, editingProduct?.deity]);
 
     // Filtered Products
     const filteredProducts = products.filter(p => {
@@ -2523,14 +2590,66 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
                                         <label className="text-xs font-bold text-stone-700 block mb-1">DEITY / CATEGORY *</label>
-                                        <input
-                                            type="text"
+                                        <select
+                                            id="product-deity-category-select"
                                             required
-                                            value={editingProduct.deity || ''}
-                                            onChange={(e) => setEditingProduct({ ...editingProduct, deity: e.target.value })}
-                                            placeholder="e.g. Ram, Shiva, Ganesha"
-                                            className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
-                                        />
+                                            value={isCustomDeity ? '__custom__' : (editingProduct.deity || '')}
+                                            onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === '__custom__') {
+                                                    setIsCustomDeity(true);
+                                                    setEditingProduct({ ...editingProduct, deity: '' });
+                                                } else {
+                                                    setIsCustomDeity(false);
+                                                    const matchedCat = (categories || []).find(c =>
+                                                        (c.name || '').toLowerCase() === val.toLowerCase() ||
+                                                        (c.deity || '').toLowerCase() === val.toLowerCase() ||
+                                                        (c.slug || '').toLowerCase() === val.toLowerCase()
+                                                    );
+                                                    setEditingProduct({
+                                                        ...editingProduct,
+                                                        deity: val,
+                                                        category_id: matchedCat?.id || editingProduct.category_id || ''
+                                                    });
+                                                }
+                                            }}
+                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black font-semibold cursor-pointer shadow-2xs"
+                                        >
+                                            <option value="" disabled>-- Select Deity / Category --</option>
+                                            {categoryDropdownOptions.map(opt => (
+                                                <option key={opt.value} value={opt.value}>
+                                                    {opt.label}
+                                                </option>
+                                            ))}
+                                            <option value="__custom__">+ Enter Custom Category...</option>
+                                        </select>
+
+                                        {isCustomDeity && (
+                                            <div className="mt-2 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    autoFocus
+                                                    value={editingProduct.deity || ''}
+                                                    onChange={(e) => setEditingProduct({ ...editingProduct, deity: e.target.value })}
+                                                    placeholder="Type custom deity/category name..."
+                                                    className="flex-1 px-3 py-1.5 border rounded-xl text-xs focus:outline-none focus:border-black font-semibold"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsCustomDeity(false);
+                                                        if (!editingProduct.deity) {
+                                                            setEditingProduct({ ...editingProduct, deity: categoryDropdownOptions[0]?.value || 'Ganesha' });
+                                                        }
+                                                    }}
+                                                    className="px-2.5 py-1.5 text-[11px] font-bold text-stone-500 hover:text-black rounded-lg hover:bg-stone-100 transition"
+                                                    title="Back to dropdown"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="text-xs font-bold text-stone-700 block mb-1">STOREFRONT SECTION</label>
