@@ -485,6 +485,13 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                                     className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs text-stone-900 focus:outline-[#C69722]"
                                 />
                             </div>
+
+                            <div className="p-2.5 rounded-xl bg-stone-100 border border-stone-200 text-[11px] text-stone-600 space-y-0.5">
+                                <div className="text-stone-800 font-bold">Default Credentials:</div>
+                                <div>Email: <code className="text-[#C69722] font-semibold">admin@amolmurtibhandar.com</code></div>
+                                <div>Password: <code className="text-[#C69722] font-semibold">admin123</code></div>
+                            </div>
+
                             <button
                                 type="submit"
                                 disabled={authLoading}
