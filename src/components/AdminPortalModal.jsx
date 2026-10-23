@@ -391,14 +391,16 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                 )}
 
                 {/* Top Header Bar */}
-                <div className="px-5 sm:px-8 py-4 bg-gradient-to-r from-[#1E1B18] via-[#2A241E] to-[#1E1B18] text-white flex items-center justify-between border-b border-[#DFC48D]/30">
+                <div className="px-5 sm:px-8 py-3.5 bg-gradient-to-r from-[#1E1B18] via-[#2A241E] to-[#1E1B18] text-white flex items-center justify-between border-b border-[#DFC48D]/30 flex-shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#F7C600] to-[#E5B500] text-[#161616] flex items-center justify-center font-black shadow-md">
-                            <Shield className="w-5 h-5" />
-                        </div>
+                        <img
+                            src="/images/logo.png"
+                            alt="अमोल मार्बल मूर्ती भंडार"
+                            className="h-10 sm:h-12 w-auto object-contain"
+                        />
                         <div>
                             <div className="flex items-center gap-2">
-                                <h2 className="font-serif text-base sm:text-lg font-bold text-[#F7C600] tracking-wide">
+                                <h2 className="font-serif text-base sm:text-lg font-bold text-[#F7C600] tracking-wide leading-tight">
                                     Murti Hub Admin Console
                                 </h2>
                                 <span className="text-[10px] bg-white/10 text-stone-300 px-2 py-0.5 rounded-full font-mono">
@@ -443,9 +445,11 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                 {/* Login View if not authenticated */}
                 {!isAuthenticated ? (
                     <div className="flex-1 p-6 sm:p-12 flex flex-col items-center justify-center text-center overflow-y-auto">
-                        <div className="w-14 h-14 rounded-2xl bg-[#FAF2DE] border border-[#DFC48D] flex items-center justify-center mb-4 text-[#C69722] shadow-sm">
-                            <Lock className="w-7 h-7" />
-                        </div>
+                        <img
+                            src="/images/logo.png"
+                            alt="अमोल मार्बल मूर्ती भंडार"
+                            className="h-20 sm:h-24 w-auto object-contain mx-auto mb-4 drop-shadow-md"
+                        />
                         <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#161616]">
                             Admin Portal Authentication
                         </h3>
@@ -504,10 +508,10 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                     </div>
                 ) : (
                     /* Authenticated Admin Dashboard Layout */
-                    <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                    <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
                         
-                        {/* Sidebar Navigation */}
-                        <div className="w-full md:w-72 lg:w-80 bg-[#FAF6EE] border-r border-[#E8DFD0] p-4 flex md:flex-col gap-1.5 overflow-x-auto no-scrollbar flex-shrink-0">
+                        {/* Sidebar Navigation - Fixed & Sticky, does not move while scrolling */}
+                        <div className="w-full md:w-72 lg:w-80 bg-[#FAF6EE] border-r border-[#E8DFD0] p-4 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-y-auto no-scrollbar flex-shrink-0 md:h-full md:sticky md:top-0">
                             {/* Clean Section Header */}
                             <div className="flex items-center justify-between px-2 pt-1 pb-2 hidden md:flex">
                                 <span className="text-[11px] font-black uppercase tracking-wider text-stone-500">
@@ -577,7 +581,7 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                         </div>
 
                         {/* Main Tab Content Area */}
-                        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+                        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-6">
 
                             {/* ========================================================================= */}
                             {/* TAB 1: OVERVIEW DASHBOARD */}

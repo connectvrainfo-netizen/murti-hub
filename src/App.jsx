@@ -895,8 +895,8 @@ export default function App() {
                             src="/images/logo.png"
                             alt="Amol Marble Murti Bhandar Shegaon - Authentic Marble Idols & Murtis"
                             width="220"
-                            height="56"
-                            className="h-11 sm:h-13 md:h-14 w-auto object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
+                            height="64"
+                            className="h-12 sm:h-14 md:h-16 w-auto object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
                         />
                     </button>
 

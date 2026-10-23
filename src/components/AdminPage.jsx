@@ -971,15 +971,17 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                 </div>
 
                 <div className="max-w-md mx-auto w-full bg-[#24201C] rounded-3xl p-7 sm:p-9 border border-[#DFC48D]/30 shadow-2xl space-y-6">
-                    <div className="text-center space-y-2">
-                        <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-[#F7C600] to-[#E5B500] text-[#161616] flex items-center justify-center font-black shadow-lg">
-                            <Shield className="w-7 h-7" />
-                        </div>
+                    <div className="text-center space-y-3">
+                        <img
+                            src="/images/logo.png"
+                            alt="अमोल मार्बल मूर्ती भंडार"
+                            className="h-20 sm:h-24 w-auto object-contain mx-auto drop-shadow-md"
+                        />
                         <h1 className="font-serif text-2xl font-bold text-white tracking-wide">
                             Admin Portal
                         </h1>
                         <p className="text-xs text-stone-400">
-                            Separate administration console for Amol Marble Murti Bhandar
+                            Amol Marble Murti Bhandar Management Console
                         </p>
                     </div>
 
@@ -1061,7 +1063,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     // DEDICATED FULL-SCREEN ADMIN PAGE (AUTHENTICATED)
     // =========================================================================
     return (
-        <div className="min-h-screen w-full bg-[#FAF8F5] text-stone-900 flex flex-col font-sans selection:bg-[#F7C600] selection:text-[#161616]">
+        <div className="h-screen w-full bg-[#FAF8F5] text-stone-900 flex flex-col font-sans selection:bg-[#F7C600] selection:text-[#161616] overflow-hidden">
 
             {/* Toast Notification */}
             {toastMessage && (
@@ -1072,24 +1074,32 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             )}
 
             {/* Dedicated Admin Page Top Navbar */}
-            <header className="sticky top-0 z-40 bg-[#1A1815] text-white border-b border-[#DFC48D]/30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+            <header className="flex-shrink-0 z-40 bg-[#1A1815] text-white border-b border-[#DFC48D]/30 px-4 sm:px-8 py-2.5 sm:py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#F7C600] to-[#E5B500] text-[#161616] flex items-center justify-center font-black shadow-md">
-                        <Shield className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="font-serif text-base sm:text-lg font-bold text-[#F7C600] tracking-wide">
-                                Amol Murti Bhandar
-                            </h1>
-                            <span className="text-[10px] bg-[#2E2822] text-[#F7C600] border border-[#DFC48D]/40 px-2 py-0.5 rounded-md font-mono font-bold">
-                                Control Console
-                            </span>
+                    <button
+                        onClick={onReturnToStore}
+                        className="flex items-center gap-3 focus:outline-none hover:opacity-90 transition group text-left"
+                        title="Return to Storefront"
+                    >
+                        <img
+                            src="/images/logo.png"
+                            alt="अमोल मार्बल मूर्ती भंडार"
+                            className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform"
+                        />
+                        <div className="hidden sm:block">
+                            <div className="flex items-center gap-2">
+                                <h1 className="font-serif text-base sm:text-lg font-bold text-[#F7C600] tracking-wide leading-tight">
+                                    Amol Murti Bhandar
+                                </h1>
+                                <span className="text-[10px] bg-[#2E2822] text-[#F7C600] border border-[#DFC48D]/40 px-2 py-0.5 rounded-md font-mono font-bold">
+                                    Control Console
+                                </span>
+                            </div>
+                            <p className="text-[11px] text-stone-400">
+                                E-Commerce Management Platform
+                            </p>
                         </div>
-                        <p className="text-[11px] text-stone-400 hidden sm:block">
-                            E-Commerce Management Platform
-                        </p>
-                    </div>
+                    </button>
                 </div>
 
                 <div className="flex items-center gap-2.5 sm:gap-4">
@@ -1135,10 +1145,10 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             </header>
 
             {/* Standalone Admin Layout: Sidebar + Main Workspace */}
-            <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
 
-                {/* Left Sidebar Menu */}
-                <aside className="w-full md:w-72 lg:w-80 bg-[#FAF6EE] border-r border-[#E8DFD0] p-4 flex md:flex-col gap-1.5 overflow-x-auto no-scrollbar flex-shrink-0">
+                {/* Left Sidebar Menu - Fixed & Sticky, does NOT move while scrolling main content */}
+                <aside className="w-full md:w-72 lg:w-80 bg-[#FAF6EE] border-r border-[#E8DFD0] p-4 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-y-auto no-scrollbar flex-shrink-0 md:h-full md:sticky md:top-0">
                     {/* Clean Section Header */}
                     <div className="flex items-center justify-between px-2 pt-1 pb-2 hidden md:flex">
                         <span className="text-[11px] font-black uppercase tracking-wider text-stone-500">
@@ -1208,7 +1218,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                 </aside>
 
                 {/* Main Content Workspace */}
-                <main className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-7xl">
+                <main className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-7xl">
 
                     {/* Render Cloud Sync Status Banner */}
                     {(!api.getBaseUrl() || isOfflineMode) && (
