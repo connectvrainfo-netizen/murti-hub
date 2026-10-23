@@ -185,14 +185,14 @@ export default function ProductDetailPage({
             id: `cat-${idx}`,
             title: item.caption || `Catalog Angle ${idx + 1}`,
             caption: item.caption || `Catalog Angle • Hand-Carved Makrana Marble`,
-            img: item.url || product.primary_catalog_image || product.img,
+            img: api.getImageUrl(item.url || product.primary_catalog_image || product.img),
             desc: item.caption || 'Authentic hand-carved Makrana marble sculpture from our atelier.',
             zoomClass: 'scale-100 object-contain'
         }))
         : null;
 
     // Multi-Angle Thumbnail Gallery Views
-    const baseProductImg = product.primary_catalog_image || product.img || '/images/products/ram-darbar.png';
+    const baseProductImg = api.getImageUrl(product.primary_catalog_image || product.img || '/images/products/ram-darbar.png');
     const galleryViews = customCatalogImages || [
         {
             id: 'front',
@@ -219,12 +219,12 @@ export default function ProductDetailPage({
             zoomClass: 'scale-135 object-cover object-top'
         },
         {
-            id: 'detail2',
-            title: 'Mandir Altar Placement',
-            caption: 'Home Mandir Placement • Consecrated for Daily Pooja',
+            id: 'altar',
+            title: 'Mandir Altar Lighting',
+            caption: 'Mandir Placement • Natural Glow in Pooja Room Light',
             img: baseProductImg,
-            desc: 'Visualized in a serene home mandir setting with brass lamps and marigold garlands.',
-            zoomClass: 'scale-100 brightness-105 object-contain'
+            desc: 'How the pure Makrana crystalline structure reflects brass diya and incense glow.',
+            zoomClass: 'scale-110 object-contain'
         }
     ];
 
@@ -380,7 +380,11 @@ export default function ProductDetailPage({
                                     >
                                         <img
                                             src={view.img}
-                                            alt={view.title}
+                                            alt={`Handcrafted White Marble ${product.title} - View ${view.title} - Amol Marble Murti Bhandar Shegaon`}
+                                            width="80"
+                                            height="80"
+                                            loading="lazy"
+                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = baseProductImg || '/images/products/ram-darbar.png'; }}
                                             className={`w-full h-full object-contain p-1.5 img-studio-contrast group-hover:scale-105 transition duration-300 ${view.id === 'detail' ? 'scale-125 object-top' : ''}`}
                                         />
                                         {/* Active Indicator Label */}
@@ -400,7 +404,11 @@ export default function ProductDetailPage({
                                 <img
                                     key={safeActiveIdx}
                                     src={currentView.img}
-                                    alt={currentView.title}
+                                    alt={`Handcrafted White Marble ${product.title} at Amol Marble Murti Bhandar Shegaon`}
+                                    width="600"
+                                    height="600"
+                                    fetchpriority="high"
+                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = baseProductImg || '/images/products/ram-darbar.png'; }}
                                     className={`w-full h-full object-contain p-4 sm:p-8 img-studio-contrast transition-all duration-500 transform ${currentView.zoomClass || ''} group-hover:scale-105 animate-in fade-in`}
                                 />
 
@@ -530,22 +538,31 @@ export default function ProductDetailPage({
                                 {product.dimensions && (
                                     <div className="pt-1 flex items-center gap-2 text-xs font-bold text-[#8E5B00]">
                                         <Tag className="w-3.5 h-3.5 text-[#C69722]" />
-                                        <span>Size & Dimensions: {product.dimensions}</span>
+                                        <span>
+                                            Size & Dimensions: {product.dimensions}
+                                            {product.measurement_unit ? ` (${product.measurement_unit})` : ''}
+                                        </span>
                                     </div>
                                 )}
                             </div>
                         )}
 
-                        {/* Variation 1: Size Selector (Req #7: Dynamic Master Sizes) */}
+                        {/* Variation 1: Size Selector (Req #7: Dynamic Master Sizes & Available Sizes) */}
                         <div className="space-y-2.5">
                             <label className="flex items-center justify-between text-xs font-bold text-stone-800 uppercase tracking-wider">
                                 <span>SELECT IDOL SIZE:</span>
                                 <span className="text-[#C69722] text-[11px] font-medium lowercase">
-                                    {selectedSize.includes('9 cm') ? 'ideal for travel & office desk' : 'ideal for grand home mandir'}
+                                    {product.measurement_unit ? `unit: ${product.measurement_unit}` : (selectedSize.includes('9 cm') ? 'ideal for travel & office desk' : 'ideal for grand home mandir')}
                                 </span>
                             </label>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                {(product.variants && product.variants.length > 0
+                                {(Array.isArray(product.available_sizes) && product.available_sizes.length > 0
+                                    ? product.available_sizes.map((sz, idx) => ({
+                                        label: sz,
+                                        desc: idx === 0 ? 'Standard Size' : 'Available Size',
+                                        extra: 0
+                                    }))
+                                    : (product.variants && product.variants.length > 0)
                                     ? product.variants.map(v => ({
                                         label: v.variant_name || `${v.size?.label || 'Custom Size'}`,
                                         desc: v.discount_price ? `₹${v.price}` : `Standard`,
@@ -563,7 +580,7 @@ export default function ProductDetailPage({
                                         { label: '24 cm (Grand Temple)', desc: '+₹1,500', extra: 1500 }
                                     ]
                                 ).map(size => {
-                                    const isSelected = selectedSize.includes(size.label.split(' ')[0]);
+                                    const isSelected = selectedSize === size.label || selectedSize.includes(size.label.split(' ')[0]);
                                     return (
                                         <button
                                             key={size.label}
@@ -574,7 +591,7 @@ export default function ProductDetailPage({
                                                     : 'border-stone-200 bg-white text-stone-700 hover:border-black'
                                             }`}
                                         >
-                                            <span className="text-xs font-bold">{size.label.split(' ')[0]} {size.label.split(' ')[1] || ''}</span>
+                                            <span className="text-xs font-bold">{size.label}</span>
                                             <span className={`text-[10px] mt-1 ${isSelected ? 'text-[#F7C600]' : 'text-stone-500'}`}>{size.desc}</span>
                                         </button>
                                     );
@@ -696,7 +713,7 @@ export default function ProductDetailPage({
                                 </div>
                                 <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-1">
                                     <p className="font-semibold text-stone-400 uppercase text-[10px]">ARTISAN PROVENANCE</p>
-                                    <p className="font-bold text-stone-900 text-sm">Jaipur Heritage Atelier</p>
+                                    <p className="font-bold text-stone-900 text-sm">Amol Marble Atelier (Shegaon Showroom)</p>
                                     <p className="text-stone-500 text-[11px]">Carved following strict Shilpa Shastra proportions by master sculptors.</p>
                                 </div>
                             </div>
@@ -1125,7 +1142,10 @@ export default function ProductDetailPage({
                                         >
                                             <img
                                                 src={item.img}
-                                                alt={item.title}
+                                                alt={`Handcrafted White Marble ${item.title} at Amol Marble Murti Bhandar Shegaon`}
+                                                width="280"
+                                                height="280"
+                                                loading="lazy"
                                                 className="w-full h-full object-cover img-studio-contrast group-hover:scale-105 transition duration-300"
                                             />
                                             {item.off && (

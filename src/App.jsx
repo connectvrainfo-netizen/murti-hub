@@ -1165,11 +1165,12 @@ export default function App() {
                                         <div className="relative w-40 h-40 min-[360px]:w-48 min-[360px]:h-48 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
                                             <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#F7C600]/30 via-[#E8DEC8]/50 to-transparent blur-2xl transform scale-100"></div>
                                             <img
-                                                src="/images/products/ram-darbar.png"
-                                                alt="Handcrafted White Marble Ram Darbar Murti at Amol Marble Murti Bhandar Shegaon"
+                                                src={api.getImageUrl(siteSettings?.collection_image_url || "/images/products/ram-darbar.png")}
+                                                alt={`Handcrafted White Marble ${siteSettings?.collection_title || 'Ram Darbar'} at Amol Marble Murti Bhandar Shegaon`}
                                                 width="384"
                                                 height="384"
                                                 fetchpriority="high"
+                                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
                                                 className="relative max-h-full max-w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:scale-105 transition duration-500 cursor-pointer"
                                                 onClick={() => {
                                                     const ramItem = liveProducts.find(i => i.id === 1 || i.legacy_id === 1 || String(i.id).includes('1')) || liveProducts[0];
@@ -1177,7 +1178,7 @@ export default function App() {
                                                 }}
                                             />
                                             <span className="absolute -bottom-1 sm:bottom-2 right-1 sm:right-4 bg-white/95 backdrop-blur-xs text-[#8E5B00] border border-[#E6D6B8] text-[9.5px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-xs">
-                                                ✦ Hand-Carved Makrana Marble
+                                                {siteSettings?.collection_tag || '✦ Hand-Carved Makrana Marble'}
                                             </span>
                                         </div>
                                     </div>
@@ -1186,26 +1187,36 @@ export default function App() {
                                     <div className="w-full sm:w-1/2 text-center sm:text-left space-y-1.5 sm:space-y-3.5 order-2 sm:order-2 pb-6 sm:pb-0">
                                         <div className="inline-flex items-center gap-1.5 text-[9px] min-[360px]:text-[10px] sm:text-xs font-bold tracking-[0.16em] uppercase text-[#8E5B00] bg-[#FAF2DE] border border-[#E6D6B8] px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-2xs">
                                             <Sparkles className="w-3 h-3 text-[#C69722]" />
-                                            <span>SANCTIFIED SACRED COLLECTION 2026</span>
+                                            <span>{siteSettings?.collection_badge || 'SANCTIFIED SACRED COLLECTION 2026'}</span>
                                         </div>
 
                                         <h2 className="font-serif text-2xl min-[360px]:text-3xl sm:text-4xl lg:text-5xl font-bold text-[#161616] leading-tight">
-                                            Shri Ram Darbar<br />
-                                            <span className="italic text-[#8E5B00] font-normal text-base min-[360px]:text-lg sm:text-3xl lg:text-3xl">Pure Makrana White Marble</span>
+                                            {siteSettings?.collection_title || 'Shri Ram Darbar'}<br />
+                                            <span className="italic text-[#8E5B00] font-normal text-base min-[360px]:text-lg sm:text-3xl lg:text-3xl">
+                                                {siteSettings?.collection_subtitle || 'Pure Makrana White Marble'}
+                                            </span>
                                         </h2>
 
                                         <p className="hidden min-[400px]:block text-xs sm:text-sm text-stone-600 leading-relaxed max-w-md mx-auto sm:mx-0 line-clamp-2 sm:line-clamp-none">
-                                            Lord Ram, Mata Sita, Laxman & Hanuman hand-chiseled with 24K gold foil embellishments. Consecrated for home mandir altars and daily pooja.
+                                            {siteSettings?.collection_description || 'Lord Ram, Mata Sita, Laxman & Hanuman hand-chiseled with 24K gold foil embellishments. Consecrated for home mandir altars and daily pooja.'}
                                         </p>
 
-                                        {/* Price Callout (From ₹1,499) */}
+                                        {/* Price Callout */}
                                         <div className="flex items-baseline justify-center sm:justify-start gap-2 pt-0.5">
                                             <span className="text-xs font-semibold text-stone-500 uppercase tracking-wider">From</span>
-                                            <span className="font-serif text-2xl sm:text-3xl font-black text-[#8E5B00]">₹1,499</span>
-                                            <span className="text-xs text-stone-400 line-through">₹2,599</span>
-                                            <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-full">
-                                                Save 42%
+                                            <span className="font-serif text-2xl sm:text-3xl font-black text-[#8E5B00]">
+                                                ₹{siteSettings?.collection_price_from || '1,499'}
                                             </span>
+                                            {siteSettings?.collection_old_price && (
+                                                <span className="text-xs text-stone-400 line-through">
+                                                    ₹{siteSettings.collection_old_price}
+                                                </span>
+                                            )}
+                                            {siteSettings?.collection_discount_text && (
+                                                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                                    {siteSettings.collection_discount_text}
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Primary CTA (Shop Now) */}
@@ -1679,15 +1690,24 @@ export default function App() {
                                             let festiveItems = [];
                                             if (activeFestivalSection?.items && activeFestivalSection.items.length > 0) {
                                                 festiveItems = activeFestivalSection.items.map(item => {
-                                                    const baseProd = liveProducts.find(p => p.id === item.murti_id || p.legacy_id === item.murti_id || String(p.id) === String(item.murti_id)) || {};
+                                                    const cleanId = String(item.murti_id || '').replace('legacy-', '');
+                                                    const baseProd = liveProducts.find(p => 
+                                                        String(p.id) === String(item.murti_id) || 
+                                                        String(p.legacy_id) === cleanId || 
+                                                        String(p.id) === cleanId ||
+                                                        (p.title && item.murti_title && p.title.toLowerCase() === item.murti_title.toLowerCase())
+                                                    ) || {};
                                                     return {
                                                         ...baseProd,
                                                         id: item.murti_id || baseProd.id,
+                                                        legacy_id: baseProd.legacy_id,
                                                         title: item.murti_title || baseProd.title,
                                                         price: item.festival_price || baseProd.price,
+                                                        festival_price: item.festival_price,
                                                         oldPrice: item.original_price || baseProd.oldPrice || baseProd.price,
                                                         off: item.custom_tag || baseProd.off || 'Festive Offer',
-                                                        img: item.murti_image || baseProd.img || baseProd.primary_catalog_image
+                                                        img: api.getImageUrl(item.murti_image || baseProd.img || baseProd.primary_catalog_image || '/images/products/ram-darbar.png'),
+                                                        deity: baseProd.deity || 'Festive Idol'
                                                     };
                                                 });
                                             }
@@ -1695,7 +1715,7 @@ export default function App() {
                                                 const matching = liveProducts.filter(p => p.group === 'navratri' || p.group_tag === 'navratri');
                                                 festiveItems = matching.length > 0 ? matching : liveProducts.slice(6, 10);
                                             }
-                                            return [...festiveItems, ...festiveItems, ...festiveItems].map((p, idx) => (
+                                            return festiveItems.map((p, idx) => (
                                             <article
                                                 key={`${p.id}-${idx}`}
                                                 className="w-[230px] sm:w-[260px] lg:w-[270px] flex-shrink-0 bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/60 transition-all duration-300 flex flex-col justify-between group p-3 sm:p-4"
@@ -1708,6 +1728,7 @@ export default function App() {
                                                     >
                                                         <img
                                                             src={p.img}
+                                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
                                                             alt={`Handcrafted White Marble ${p.title} at Amol Marble Murti Bhandar Shegaon`}
                                                             width="270"
                                                             height="320"

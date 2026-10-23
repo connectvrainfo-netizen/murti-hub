@@ -60,6 +60,9 @@ class MurtiBase(BaseModel):
     material: str = Field("Pure White Makrana Marble", description="Material specification")
     description: Optional[str] = None
     dimensions: Optional[str] = "9 cm x 6 cm x 4 cm"
+    measurement_unit: Optional[str] = Field("in", description="Measurement unit: 'in', 'ft', 'm', 'cm'")
+    size_id: Optional[str] = Field(None, description="Linked master catalog size ID")
+    available_sizes: Optional[List[str]] = Field(default_factory=list, description="Array of available size labels/IDs")
     weight: Optional[str] = "850 grams"
     pran_pratishtha_ready: bool = True
     gold_leaf_karigari: bool = True
@@ -100,6 +103,9 @@ class MurtiUpdate(BaseModel):
     material: Optional[str] = None
     description: Optional[str] = None
     dimensions: Optional[str] = None
+    measurement_unit: Optional[str] = None
+    size_id: Optional[str] = None
+    available_sizes: Optional[List[str]] = None
     weight: Optional[str] = None
     pran_pratishtha_ready: Optional[bool] = None
     gold_leaf_karigari: Optional[bool] = None

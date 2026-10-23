@@ -1,0 +1,16 @@
+# robots.txt for Amol Marble Murti Bhandar
+# Location: Shegaon, Buldhana District, Maharashtra, India
+# Official Website: https://amolmurtibhandar.com
+
+User-agent: *
+Allow: /
+
+# Disallow private management, internal APIs, and checkout flows
+Disallow: /admin
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout
+Disallow: /cart
+
+# Sitemap location
+Sitemap: https://amolmurtibhandar.com/sitemap.xml

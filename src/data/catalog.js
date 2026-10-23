@@ -113,19 +113,20 @@ export const blogPosts = [
 
 export const faqs = [
     {
-        question: "How are the murtis packaged to avoid breakage in transit?",
-        answer: "Every Amol Marble Murti Bhandar idol is nestled in precision laser-cut high-density EPE foam inside an impact-resistant box, wrapped in multi-layer corrugated shields. We offer a 100% Free Replacement Guarantee in case of any transit issue."
+        question: "Where can I buy authentic Gajanan Maharaj marble murtis in Shegaon?",
+        answer: "You can buy authentic, hand-carved Gajanan Maharaj marble murtis at Amol Marble Murti Bhandar, conveniently located on Bus Stand Road, near Murarka High School, Shegaon, Maharashtra (444203). We offer pure Makrana white marble idols crafted with devotion, Pran Pratishtha readiness, and exquisite finishing."
     },
     {
-        question: "Are the murtis consecrated and ready for pooja?",
-        answer: "Yes. Each idol is finished to be Pran Pratishtha ready — you can perform the consecration ritual at home or in your mandir, following the Vaastu placement guidance we include with every order."
+        question: "Do you offer custom marble statue carving and temple murti orders?",
+        answer: "Yes! Amol Marble Murti Bhandar specializes in custom marble murti carving and large temple statues. Our hereditary master sculptors craft custom-sized murtis of Lord Ganesha, Mahadev Shiva, Ram Darbar, Durga Mata, and Shri Gajanan Maharaj matching your home mandir or temple altar specifications."
     },
     {
-        question: "Do you ship pan-India and internationally?",
-        answer: "Yes! We provide Free Express Shipping across India (3-5 business days). International deliveries to the USA, UK, UAE, Canada, and Australia are processed with DHL Express in 6-10 days."
+        question: "What are the timings of Amol Marble Murti Bhandar on Bus Stand Road, Shegaon?",
+        answer: "Our Shegaon showroom is open every day (Monday through Sunday) from 08:00 AM to 08:00 PM IST. Devotees and pilgrims visiting Shri Sant Gajanan Maharaj Sansthan are warmly welcome to visit us on Bus Stand Road near Murarka High School."
     },
     {
-        question: "What material is used for the idols?",
-        answer: "Our artisans craft in pure Makrana white marble, cultured resin-bonded marble for fine intricate details, and solid cast temple brass for sacred kalash finials and trishuls."
+        question: "Do you provide safe packaging and delivery for marble idols outside Shegaon?",
+        answer: "Yes, we provide insured express delivery across Buldhana, Vidarbha, all Maharashtra districts, and pan-India. Every idol is packaged in our signature 7-layer cushioned wooden crate with a 100% Zero-Breakage Guarantee."
     }
 ];
+

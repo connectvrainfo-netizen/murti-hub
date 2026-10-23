@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, ArrowRight, X, Volume2, VolumeX } from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 
-export default function IntroAnimation({ onComplete, autoDismissMs = 4800 }) {
+export default function IntroAnimation({ onComplete, autoDismissMs = 5200 }) {
     const [phase, setPhase] = useState('initial'); // 'initial' | 'entering' | 'settled' | 'exiting'
     const [isExiting, setIsExiting] = useState(false);
 
@@ -9,14 +9,14 @@ export default function IntroAnimation({ onComplete, autoDismissMs = 4800 }) {
         // Trigger entrance immediately on mount
         const enterTimer = setTimeout(() => {
             setPhase('entering');
-        }, 100);
+        }, 80);
 
-        // Transition into settled floating state
+        // Transition into settled state
         const settleTimer = setTimeout(() => {
             setPhase('settled');
-        }, 1800);
+        }, 1200);
 
-        // Auto dismiss after specified time
+        // Auto dismiss after specified time (matches GIF full duration)
         const autoDismissTimer = setTimeout(() => {
             handleDismiss();
         }, autoDismissMs);
@@ -39,21 +39,22 @@ export default function IntroAnimation({ onComplete, autoDismissMs = 4800 }) {
 
     // Golden dust particles floating upwards
     const particles = [
-        { id: 1, left: '15%', delay: '0.2s', dur: '4s', size: 6 },
-        { id: 2, left: '25%', delay: '1.2s', dur: '5s', size: 8 },
-        { id: 3, left: '38%', delay: '0.6s', dur: '4.5s', size: 5 },
-        { id: 4, left: '50%', delay: '1.8s', dur: '6s', size: 9 },
-        { id: 5, left: '62%', delay: '0.4s', dur: '4.2s', size: 6 },
-        { id: 6, left: '74%', delay: '1.5s', dur: '5.2s', size: 7 },
-        { id: 7, left: '86%', delay: '0.9s', dur: '4.8s', size: 5 },
-        { id: 8, left: '45%', delay: '2.1s', dur: '5.5s', size: 8 },
-        { id: 9, left: '68%', delay: '2.4s', dur: '4.6s', size: 6 },
-        { id: 10, left: '30%', delay: '2.8s', dur: '5.1s', size: 7 },
+        { id: 1, left: '12%', delay: '0.2s', dur: '4s', size: 6 },
+        { id: 2, left: '22%', delay: '1.2s', dur: '5s', size: 8 },
+        { id: 3, left: '35%', delay: '0.6s', dur: '4.5s', size: 5 },
+        { id: 4, left: '48%', delay: '1.8s', dur: '6s', size: 9 },
+        { id: 5, left: '60%', delay: '0.4s', dur: '4.2s', size: 6 },
+        { id: 6, left: '72%', delay: '1.5s', dur: '5.2s', size: 7 },
+        { id: 7, left: '84%', delay: '0.9s', dur: '4.8s', size: 5 },
+        { id: 8, left: '42%', delay: '2.1s', dur: '5.5s', size: 8 },
+        { id: 9, left: '65%', delay: '2.4s', dur: '4.6s', size: 6 },
+        { id: 10, left: '28%', delay: '2.8s', dur: '5.1s', size: 7 },
     ];
 
     return (
         <div
-            className={`fixed inset-0 z-[120] h-[100dvh] min-h-[100dvh] overflow-hidden flex flex-col items-center justify-between transition-all duration-700 select-none pb-safe ${
+            onClick={handleDismiss}
+            className={`fixed inset-0 z-[120] h-[100dvh] min-h-[100dvh] overflow-hidden flex flex-col items-center justify-between transition-all duration-700 select-none cursor-pointer pb-safe ${
                 isExiting
                     ? 'opacity-0 scale-105 pointer-events-none'
                     : 'opacity-100 scale-100'
@@ -61,8 +62,9 @@ export default function IntroAnimation({ onComplete, autoDismissMs = 4800 }) {
             style={{
                 backgroundColor: '#1c0f06',
             }}
+            title="Click anywhere to enter store"
         >
-            {/* ================= 1. DIVINE BACKGROUND LAYER ================= */}
+            {/* ================= 1. DIVINE AMBIENT BACKGROUND LAYER ================= */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 {/* Primary Radiant Divine Aura Background Image */}
                 <img
@@ -79,13 +81,13 @@ export default function IntroAnimation({ onComplete, autoDismissMs = 4800 }) {
                 <div
                     className="absolute inset-0"
                     style={{
-                        background: 'radial-gradient(circle at 50% 50%, rgba(255, 170, 0, 0.15) 0%, rgba(180, 50, 0, 0.35) 60%, rgba(20, 5, 0, 0.85) 100%)',
+                        background: 'radial-gradient(circle at 50% 50%, rgba(255, 170, 0, 0.18) 0%, rgba(180, 50, 0, 0.35) 60%, rgba(20, 5, 0, 0.88) 100%)',
                     }}
                 />
 
                 {/* Rotating Sacred Golden Mandala in Background */}
                 <div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[540px] md:w-[680px] lg:w-[820px] aspect-square rounded-full pointer-events-none animate-mandala-rotate opacity-30"
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] sm:w-[540px] md:w-[680px] lg:w-[820px] aspect-square rounded-full pointer-events-none animate-mandala-rotate opacity-25"
                     style={{
                         background: 'radial-gradient(circle, rgba(255, 215, 0, 0.35) 0%, rgba(245, 158, 11, 0.15) 45%, transparent 70%)',
                         border: '1px dashed rgba(255, 215, 0, 0.35)',
@@ -120,12 +122,12 @@ export default function IntroAnimation({ onComplete, autoDismissMs = 4800 }) {
             </div>
 
             {/* Top Right Skip & Enter Button */}
-            <div className="absolute top-4 sm:top-6 right-4 sm:right-8 z-30">
+            <div className="absolute top-4 sm:top-6 right-4 sm:right-8 z-30" onClick={(e) => e.stopPropagation()}>
                 <button
                     type="button"
                     onClick={handleDismiss}
                     aria-label="Skip intro and enter store"
-                    className="group relative flex items-center gap-2 px-5 py-3 min-h-[48px] rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase text-amber-100 bg-black/50 hover:bg-black/70 border border-amber-400/60 hover:border-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.35)] backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95"
+                    className="group relative flex items-center gap-2 px-5 py-3 min-h-[48px] rounded-full text-xs sm:text-sm font-semibold tracking-wider uppercase text-amber-100 bg-black/60 hover:bg-black/80 border border-amber-400/60 hover:border-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.35)] backdrop-blur-md transition-all duration-300 hover:scale-105 active:scale-95"
                 >
                     <span className="text-amber-300 group-hover:rotate-12 transition-transform">
                         <Sparkles className="w-4 h-4" />
@@ -135,110 +137,48 @@ export default function IntroAnimation({ onComplete, autoDismissMs = 4800 }) {
                 </button>
             </div>
 
-            {/* ================= 2. TOP CENTER: 1ST IMAGE (Amol Marble Murti Bhandar Logo) ================= */}
-            <header className="relative z-20 w-full flex flex-col items-center pt-3 sm:pt-6 md:pt-8 px-4">
+            {/* Spacer for top padding */}
+            <div className="w-full pt-10 sm:pt-12 pointer-events-none" />
+
+            {/* ================= 2. CENTER: SACRED GAJANAN MAHARAJ DEVOTIONAL ANIMATED GIF ================= */}
+            <main className="relative z-10 flex-1 flex items-center justify-center w-full px-3 sm:px-6 my-auto min-h-0">
                 <div
-                    className={`transition-all duration-1000 ease-out flex flex-col items-center ${
+                    className={`relative max-w-full flex items-center justify-center transition-all duration-1000 ease-out ${
                         phase === 'initial'
-                            ? 'opacity-0 -translate-y-12 scale-90'
-                            : 'opacity-100 translate-y-0 scale-100'
+                            ? 'scale-90 opacity-0 blur-xs'
+                            : 'scale-100 opacity-100 blur-0'
                     }`}
                     style={{
-                        filter: 'drop-shadow(0 6px 20px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 25px rgba(245, 158, 11, 0.45))',
+                        filter: 'drop-shadow(0 20px 45px rgba(0, 0, 0, 0.75)) drop-shadow(0 0 35px rgba(245, 158, 11, 0.45))',
                     }}
                 >
-                    {/* 1st Image: Amol Marble Murti Bhandar Logo */}
                     <img
-                        src="/images/intro/amol-murti-logo.png"
-                        alt="अमोल मार्बल मूर्ती भंडार - Amol Marble Murti Bhandar"
-                        className="w-auto object-contain hover:scale-105 transition-transform duration-500"
-                        style={{ maxHeight: 'clamp(70px, 12vh, 195px)' }}
-                    />
-
-                    {/* Auspicious Subtitle Tagline */}
-                    <div className="mt-1 sm:mt-2 flex items-center gap-2 text-[10px] sm:text-xs tracking-[0.25em] uppercase text-amber-200/90 font-medium">
-                        <span className="w-6 sm:w-10 h-[1px] bg-gradient-to-r from-transparent to-amber-400" />
-                        <span>|| ॐ श्री गजाननाय नमः ||</span>
-                        <span className="w-6 sm:w-10 h-[1px] bg-gradient-to-l from-transparent to-amber-400" />
-                    </div>
-                </div>
-            </header>
-
-            {/* ================= 3. CENTER: 3RD IMAGE (Gajanan Maharaj with ZOOM-IN Effect) ================= */}
-            <main className="relative z-10 flex-1 flex items-center justify-center w-full px-4 my-auto min-h-0">
-                <div className="relative flex items-center justify-center max-w-full">
-                    {/* Golden Back Halo Rings */}
-                    <div
-                        className={`absolute w-[240px] sm:w-[340px] md:w-[440px] lg:w-[500px] aspect-square rounded-full transition-all duration-1000 ${
-                            phase === 'initial'
-                                ? 'scale-0 opacity-0'
-                                : 'scale-100 opacity-90'
-                        }`}
-                        style={{
-                            background: 'radial-gradient(circle, rgba(255, 220, 100, 0.6) 0%, rgba(245, 158, 11, 0.35) 45%, transparent 72%)',
-                            filter: 'blur(16px)',
+                        src="/images/intro/gajanan-intro.gif"
+                        onError={(e) => {
+                            // Fallback to original URL encoded filename if needed
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = encodeURI('/ॐ गजाननाय नमः (1).gif');
                         }}
+                        alt="|| ॐ श्री गजाननाय नमः || - अमोल मार्बल मूर्ती भंडार"
+                        className="w-auto h-auto max-h-[76vh] sm:max-h-[80vh] md:max-h-[82vh] max-w-[95vw] md:max-w-[90vw] object-contain rounded-2xl sm:rounded-3xl shadow-2xl transition-transform duration-500 hover:scale-[1.01]"
                     />
-
-                    {/* 3rd Image with Dramatic ZOOM-IN Animation & Gentle Floating */}
-                    <div
-                        className={`relative transition-all duration-1000 ease-out ${
-                            phase === 'initial'
-                                ? 'scale-[0.25] opacity-0 blur-md'
-                                : phase === 'entering'
-                                ? 'scale-100 opacity-100 blur-0 animate-intro-zoom'
-                                : 'scale-100 opacity-100 blur-0 animate-intro-float'
-                        }`}
-                        style={{
-                            filter: 'drop-shadow(0 15px 35px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 35px rgba(255, 190, 40, 0.65))',
-                        }}
-                    >
-                        <img
-                            src="/images/intro/gajanan-maharaj-cutout.png"
-                            onError={(e) => {
-                                // Fallback to original image if cutout is not supported
-                                e.currentTarget.src = '/images/intro/gajanan-maharaj-seated.jpg';
-                            }}
-                            alt="Sant Shiromani Shri Gajanan Maharaj"
-                            className="w-auto object-contain cursor-pointer transition-transform duration-300 hover:scale-105"
-                            style={{ maxHeight: 'clamp(160px, 42vh, 450px)' }}
-                            onClick={handleDismiss}
-                        />
-                    </div>
                 </div>
             </main>
 
-            {/* ================= 4. BOTTOM CENTER: 2ND IMAGE (|| ब्रम्हांडनायक || Banner) ================= */}
-            <footer className="relative z-20 w-full flex flex-col items-center pb-4 sm:pb-7 md:pb-8 px-4">
+            {/* ================= 3. BOTTOM: TAP TO ENTER HINT ================= */}
+            <footer className="relative z-20 w-full flex flex-col items-center pb-4 sm:pb-6 px-4">
                 <div
                     className={`transition-all duration-1000 ease-out delay-200 flex flex-col items-center ${
                         phase === 'initial'
-                            ? 'opacity-0 translate-y-12 scale-90'
-                            : 'opacity-100 translate-y-0 scale-100'
+                            ? 'opacity-0 translate-y-6'
+                            : 'opacity-100 translate-y-0'
                     }`}
                 >
-                    {/* 2nd Image: Brahmandnayak Saffron Banner */}
-                    <div
-                        className="relative rounded-xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.7)] border-2 border-amber-400/60 p-1 bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 animate-pulse"
-                        style={{
-                            animationDuration: '4s',
-                            filter: 'drop-shadow(0 0 25px rgba(245, 158, 11, 0.55))',
-                        }}
-                    >
-                        <img
-                            src="/images/intro/brahmandnayak-banner.png"
-                            alt="|| ब्रम्हांडनायक ||"
-                            className="w-auto object-contain rounded-lg"
-                            style={{ maxHeight: 'clamp(36px, 7vh, 90px)' }}
-                        />
-                    </div>
-
-                    {/* Tap to enter hint */}
                     <button
                         type="button"
                         onClick={handleDismiss}
                         aria-label="Click anywhere to enter store"
-                        className="mt-3 text-xs text-amber-200/90 hover:text-amber-100 transition tracking-widest uppercase flex items-center justify-center gap-1.5 px-4 py-3 min-h-[48px] rounded-full active:scale-95"
+                        className="text-xs text-amber-200/90 hover:text-amber-100 transition tracking-widest uppercase flex items-center justify-center gap-1.5 px-4 py-2 min-h-[44px] rounded-full active:scale-95 animate-pulse"
                     >
                         <span>क्लिक करा • Click anywhere to enter</span>
                     </button>

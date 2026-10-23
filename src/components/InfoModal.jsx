@@ -23,7 +23,7 @@ export default function InfoModal({ contentKey, onClose }) {
                         </ul>
                     </div>
                     <p>
-                        Shipping is 100% complimentary across all 19,000+ Indian PIN codes. You will receive an SMS and WhatsApp message with live tracking as soon as your wooden crate departs our Jaipur atelier.
+                        Shipping is 100% complimentary across all 19,000+ Indian PIN codes. You will receive an SMS and WhatsApp message with live tracking as soon as your wooden crate departs our Shegaon showroom atelier.
                     </p>
                 </div>
             )
@@ -40,7 +40,7 @@ export default function InfoModal({ contentKey, onClose }) {
                     <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-2">
                         <h4 className="font-bold text-[#161616]">Easy Exchange Process:</h4>
                         <ol className="list-decimal pl-4 space-y-1">
-                            <li>Message our concierge on WhatsApp (+91 98765 43210) or email support@amolmurtibhandar.com with a photo of the idol and packaging.</li>
+                            <li>Message our concierge on WhatsApp (+91 98765 43210) or email care@amolmurtibhandar.com with a photo of the idol and packaging.</li>
                             <li>Our team will arrange complimentary reverse pickup from your doorstep within 24 hours.</li>
                             <li>A brand new consecrated replacement or instant refund to your original payment method will be issued upon pickup.</li>
                         </ol>
@@ -51,32 +51,40 @@ export default function InfoModal({ contentKey, onClose }) {
         'contact': {
             title: 'Contact Amol Murti Concierge',
             icon: Phone,
-            tag: 'JAIPUR SHOWROOM & SUPPORT',
+            tag: 'SHEGAON SHOWROOM & SUPPORT',
             body: (
                 <div className="space-y-4 text-xs sm:text-sm text-stone-600 leading-relaxed">
                     <p>
-                        Our temple art curators and customer support advisors are available 7 days a week (9:00 AM – 9:00 PM IST) to assist with idol selections, custom temple carvings, and order inquiries.
+                        Our temple art curators and customer support advisors are available 7 days a week (8:00 AM – 8:00 PM IST) to assist with idol selections, custom temple carvings, and order inquiries.
                     </p>
                     <div className="space-y-3 pt-2">
                         <div className="p-3.5 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center gap-3">
                             <Phone className="w-5 h-5 text-[#C69722]" />
                             <div>
-                                <span className="text-[11px] text-stone-500 block">Phone Support</span>
-                                <strong className="text-black">+91 98765 43210 / +91 141 2893450</strong>
+                                <span className="text-[11px] text-stone-500 block">Phone & WhatsApp Support</span>
+                                <strong className="text-black">+91 98765 43210</strong>
                             </div>
                         </div>
                         <div className="p-3.5 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center gap-3">
                             <Mail className="w-5 h-5 text-[#C69722]" />
                             <div>
                                 <span className="text-[11px] text-stone-500 block">Email Support</span>
-                                <strong className="text-black">care@amolmurtibhandar.com / concierge@amolmurtibhandar.com</strong>
+                                <strong className="text-black">care@amolmurtibhandar.com</strong>
                             </div>
                         </div>
                         <div className="p-3.5 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center gap-3">
                             <MapPin className="w-5 h-5 text-[#C69722]" />
                             <div>
-                                <span className="text-[11px] text-stone-500 block">Flagship Atelier & Showroom</span>
-                                <strong className="text-black">Amol Marble Murti Bhandar Heritage Studio, MI Road, Opp. Temple Gate, Jaipur, Rajasthan 302001</strong>
+                                <span className="text-[11px] text-stone-500 block">Flagship Showroom & Studio</span>
+                                <strong className="text-black">Amol Marble Murti Bhandar, Bus Stand Road, Near Murarka High School, Shegaon, Buldhana District, Maharashtra 444203</strong>
+                                <a 
+                                    href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="block mt-1 text-xs text-[#8E5B00] hover:underline font-bold"
+                                >
+                                    📍 View on Google Maps (4.9★ Rated) →
+                                </a>
                             </div>
                         </div>
                     </div>

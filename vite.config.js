@@ -19,6 +19,7 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',
     port: 3000,
     open: false,
     proxy: {
@@ -27,6 +28,22 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/uploads': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/health': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/uptimerobot': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/ping': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+      '/healthz': {
         target: 'http://127.0.0.1:8000',
         changeOrigin: true,
       },

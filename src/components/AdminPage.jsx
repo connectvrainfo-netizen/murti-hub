@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Shield, Phone, Image as ImageIcon, Package, Tag,
     Sparkles, Star, Plus, Trash2, Edit3, Check, RefreshCw,
@@ -54,13 +54,200 @@ const initialCategories = defaultCategories.map((c, idx) => ({
 }));
 
 const initialSizes = [
-    { id: 'size-1', label: '6 Inches (Pooja Altar)', height_inches: 6.0, description: 'Compact altar and car dashboard size', sort_order: 1, is_active: true },
-    { id: 'size-2', label: '9 Inches (Home Mandir)', height_inches: 9.0, description: 'Standard home temple size', sort_order: 2, is_active: true },
-    { id: 'size-3', label: '12 Inches (Classic Mandir)', height_inches: 12.0, description: 'Most popular home sanctum idol size', sort_order: 3, is_active: true },
-    { id: 'size-4', label: '15 Inches (Grand Mandir)', height_inches: 15.0, description: 'Spacious dedicated pooja room size', sort_order: 4, is_active: true },
-    { id: 'size-5', label: '18 Inches (Temple Sanctum)', height_inches: 18.0, description: 'Large sanctified temple & hall idol', sort_order: 5, is_active: true },
-    { id: 'size-6', label: '24 Inches (Grand Heritage)', height_inches: 24.0, description: 'Life-presence heritage temple idol', sort_order: 6, is_active: true }
+    { id: 'size-1', label: '6 Inches (Pooja Altar)', height_inches: 6.0, unit: 'in', size_value: 6.0, description: 'Compact altar and car dashboard size', sort_order: 1, is_active: true },
+    { id: 'size-2', label: '9 Inches (Home Mandir)', height_inches: 9.0, unit: 'in', size_value: 9.0, description: 'Standard home temple size', sort_order: 2, is_active: true },
+    { id: 'size-3', label: '12 Inches (Classic Mandir)', height_inches: 12.0, unit: 'in', size_value: 12.0, description: 'Most popular home sanctum idol size', sort_order: 3, is_active: true },
+    { id: 'size-4', label: '15 Inches (Grand Mandir)', height_inches: 15.0, unit: 'in', size_value: 15.0, description: 'Spacious dedicated pooja room size', sort_order: 4, is_active: true },
+    { id: 'size-5', label: '18 Inches (Temple Sanctum)', height_inches: 18.0, unit: 'in', size_value: 18.0, description: 'Large sanctified temple & hall idol', sort_order: 5, is_active: true },
+    { id: 'size-6', label: '24 Inches (Grand Heritage)', height_inches: 24.0, unit: 'in', size_value: 24.0, description: 'Life-presence heritage temple idol', sort_order: 6, is_active: true }
 ];
+
+// Searchable Product Select with Thumbnails (Req 3.2 & 2.2)
+function ProductSelect({ products = [], value, onChange, placeholder = "-- Choose Product --" }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const dropdownRef = useRef(null);
+
+    const selectedProduct = products.find(p => p.id === value || String(p.id) === String(value));
+
+    const filtered = products.filter(p => {
+        if (!search.trim()) return true;
+        const q = search.toLowerCase();
+        return (p.title || '').toLowerCase().includes(q) || (p.deity || '').toLowerCase().includes(q);
+    });
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+        <div className="relative w-full" ref={dropdownRef}>
+            <button
+                type="button"
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full px-3 py-2 border rounded-xl text-xs bg-white flex items-center justify-between gap-2 hover:border-black transition text-left shadow-2xs"
+            >
+                {selectedProduct ? (
+                    <div className="flex items-center gap-2.5 truncate">
+                        <img
+                            src={api.getImageUrl(selectedProduct.primary_catalog_image || selectedProduct.img || '/images/products/ram-darbar.png')}
+                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
+                            alt=""
+                            className="w-6 h-6 object-contain rounded bg-stone-50 border flex-shrink-0"
+                        />
+                        <span className="font-semibold text-stone-900 truncate">{selectedProduct.title}</span>
+                        <span className="text-[10px] text-stone-500 font-mono flex-shrink-0">₹{selectedProduct.price}</span>
+                    </div>
+                ) : (
+                    <span className="text-stone-400">{placeholder}</span>
+                )}
+                <span className="text-stone-400 text-[10px]">▼</span>
+            </button>
+
+            {isOpen && (
+                <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-stone-200 rounded-xl shadow-xl z-50 max-h-60 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-2 border-b bg-stone-50">
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Type to search idols..."
+                            autoFocus
+                            className="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white focus:outline-none focus:border-black"
+                        />
+                    </div>
+                    <div className="overflow-y-auto p-1 max-h-48 divide-y divide-stone-100">
+                        {filtered.length === 0 ? (
+                            <div className="p-3 text-center text-xs text-stone-400">No products found</div>
+                        ) : (
+                            filtered.map(p => (
+                                <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(p.id);
+                                        setIsOpen(false);
+                                        setSearch('');
+                                    }}
+                                    className={`w-full p-2 flex items-center gap-2.5 text-left rounded-lg transition hover:bg-[#FAF5E8] ${selectedProduct?.id === p.id ? 'bg-[#FAF5E8] font-bold' : ''}`}
+                                >
+                                    <img
+                                        src={api.getImageUrl(p.primary_catalog_image || p.img || '/images/products/ram-darbar.png')}
+                                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
+                                        alt=""
+                                        className="w-7 h-7 object-contain rounded bg-stone-50 border flex-shrink-0"
+                                    />
+                                    <div className="flex-1 truncate">
+                                        <div className="text-xs text-stone-900 truncate">{p.title}</div>
+                                        <div className="text-[10px] text-stone-400">{p.deity || 'Idol'} • ₹{p.price}</div>
+                                    </div>
+                                    {selectedProduct?.id === p.id && (
+                                        <Check className="w-3.5 h-3.5 text-[#C69722] flex-shrink-0" />
+                                    )}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Drag-and-Drop Image Uploader (Req 1.6)
+function ImageDropzone({ onUpload, label = "Upload Image", sublabel = "PNG, JPG, WEBP up to 15MB", isUploading = false, multiple = false }) {
+    const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef(null);
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        const files = Array.from(e.dataTransfer?.files || []);
+        if (files.length > 0) {
+            if (multiple) {
+                for (const file of files) {
+                    await onUpload(file);
+                }
+            } else {
+                await onUpload(files[0]);
+            }
+        }
+    };
+
+    const handleFileChange = async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            if (multiple) {
+                for (const file of files) {
+                    await onUpload(file);
+                }
+            } else {
+                await onUpload(files[0]);
+            }
+            e.target.value = '';
+        }
+    };
+
+    return (
+        <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={`border-2 border-dashed rounded-2xl p-4 sm:p-5 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-1.5 ${
+                isDragging
+                    ? 'border-[#C69722] bg-[#FAF5E8] scale-[1.01]'
+                    : 'border-stone-300 bg-stone-50/70 hover:bg-[#FAF8F5] hover:border-[#DFC48D]'
+            }`}
+        >
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple={multiple}
+                disabled={isUploading}
+                className="hidden"
+                onChange={handleFileChange}
+            />
+            {isUploading ? (
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#8E5B00]">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Uploading photo...</span>
+                </div>
+            ) : (
+                <>
+                    <div className="w-9 h-9 rounded-full bg-white border border-stone-200 shadow-2xs flex items-center justify-center text-[#8E5B00]">
+                        <Upload className="w-4 h-4" />
+                    </div>
+                    <div className="text-xs font-bold text-stone-800">{label}</div>
+                    <div className="text-[11px] text-stone-500">
+                        Drag and drop file here, or <span className="text-[#8E5B00] font-semibold underline">browse</span>
+                    </div>
+                    {sublabel && <div className="text-[10px] text-stone-400">{sublabel}</div>}
+                </>
+            )}
+        </div>
+    );
+}
 
 export default function AdminPage({ onReturnToStore, onDataChanged }) {
     // Navigation Tabs: 'dashboard' | 'products' | 'categories' | 'festival' | 'sizes' | 'reviews' | 'settings'
@@ -85,7 +272,16 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [settings, setSettings] = useState({
         whatsapp_number: '+919876543210',
         whatsapp_default_message: 'Namaste! I want to inquire about a Murti on Murti Hub.',
-        global_rating_mode: 'enabled'
+        global_rating_mode: 'enabled',
+        collection_badge: 'HASTASHILP HERITAGE 2026',
+        collection_title: 'SANCTIFIED SACRED COLLECTION 2026',
+        collection_subtitle: 'DIVINE BLESSINGS FOR YOUR SACRED SANCTUM',
+        collection_description: 'Hand-sculpted in Makrana white marble by fourth-generation Jaipur sthapatis. Adorned with pure 24K gold foil (swarna varakh), suitable for consecrated home mandir installation.',
+        collection_price_from: '1,499',
+        collection_old_price: '2,499',
+        collection_discount_text: '40% OFF',
+        collection_tag: 'CONSECRATED',
+        collection_image_url: '/images/products/ram-darbar.png'
     });
     const [categories, setCategories] = useState(initialCategories);
     const [products, setProducts] = useState(initialProducts);
@@ -105,7 +301,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [editingProduct, setEditingProduct] = useState(null);
     const [editingCategory, setEditingCategory] = useState(null);
     const [editingSize, setEditingSize] = useState(null);
-    const [newSizeForm, setNewSizeForm] = useState({ label: '', height_inches: 12.0, description: '', sort_order: 1, is_active: true });
+    const [customSizeInput, setCustomSizeInput] = useState('');
+    const [newSizeForm, setNewSizeForm] = useState({ label: '', height_inches: 12.0, unit: 'in', size_value: 12.0, description: '', sort_order: 1, is_active: true });
     
     // Festival Linking State
     const [linkingMurtiId, setLinkingMurtiId] = useState('');
@@ -122,6 +319,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [uploadingCatIcon, setUploadingCatIcon] = useState(false);
     const [uploadingCatBanner, setUploadingCatBanner] = useState(false);
     const [uploadingFestBanner, setUploadingFestBanner] = useState(false);
+    const [uploadingCollectionBanner, setUploadingCollectionBanner] = useState(false);
 
     // Lock body scroll & pause Lenis smooth scrolling when any modal is open
     useEffect(() => {
@@ -395,6 +593,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             group_tag: 'most-loved',
             material: 'Pure White Makrana Marble',
             description: 'Exquisitely handcrafted Makrana white marble idol sculpted by heritage artisans of Jaipur with pure 24K gold foil (swarna varakh) detailing.',
+            measurement_unit: 'in',
+            available_sizes: ['12 Inches (Classic Mandir)'],
+            size_id: sizes[0]?.id || '',
             dimensions: '12 Inches (H) x 8 Inches (W) x 4 Inches (D)',
             weight: '1.8 kg',
             primary_catalog_image: '',
@@ -501,7 +702,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         const optimisticSize = { ...newSizeForm, id: tempId };
         setSizes(prev => [...prev, optimisticSize]);
         showToast(`Size "${newSizeForm.label}" created!`);
-        setNewSizeForm({ label: '', height_inches: 12.0, description: '', sort_order: sizes.length + 1, is_active: true });
+        setNewSizeForm({ label: '', height_inches: 12.0, unit: 'in', size_value: 12.0, description: '', sort_order: sizes.length + 1, is_active: true });
 
         try {
             const res = await api.createSize(newSizeForm);
@@ -855,7 +1056,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </span>
                         </div>
                         <p className="text-[11px] text-stone-400 hidden sm:block">
-                            E-Commerce Management Platform • Jaipur Heritage Craft
+                            E-Commerce Management Platform
                         </p>
                     </div>
                 </div>
@@ -879,22 +1080,6 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     >
                         <span>Live Store</span>
                         <ExternalLink className="w-3.5 h-3.5 text-[#F7C600]" />
-                    </button>
-
-                    {/* Server Connection Pill & Trigger */}
-                    <button
-                        onClick={() => setIsConfiguringServer(true)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                            api.getBaseUrl() && !isOfflineMode
-                                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/60'
-                                : 'bg-amber-950/60 border-amber-500/40 text-amber-300 hover:bg-amber-900/60'
-                        }`}
-                        title="Configure Render Backend Connection"
-                    >
-                        <span className={`w-2 h-2 rounded-full ${api.getBaseUrl() && !isOfflineMode ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`} />
-                        <span className="hidden sm:inline font-mono text-[11px]">
-                            {api.getBaseUrl() && !isOfflineMode ? 'Render Live' : 'Connect Render'}
-                        </span>
                     </button>
 
                     {/* Refresh Data */}
@@ -1216,7 +1401,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     {p.is_active ? 'Active' : 'Draft'}
                                                 </button>
                                                 <button
-                                                    onClick={() => { setActiveTab('products'); setEditingProduct({ ...p, variants: p.variants || [], catalog_images: p.catalog_images || [] }); }}
+                                                    onClick={() => { setActiveTab('products'); setEditingProduct({ ...p, variants: p.variants || [], catalog_images: p.catalog_images || [], available_sizes: p.available_sizes || [], measurement_unit: p.measurement_unit || 'in' }); }}
                                                     className="p-1.5 text-stone-500 hover:text-black rounded-lg hover:bg-stone-100"
                                                     title="Edit product"
                                                 >
@@ -1395,7 +1580,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                         </td>
                                                         <td className="p-3.5 text-right whitespace-nowrap">
                                                             <button
-                                                                onClick={() => setEditingProduct({ ...p, variants: p.variants || [], catalog_images: p.catalog_images || [] })}
+                                                                onClick={() => setEditingProduct({ ...p, variants: p.variants || [], catalog_images: p.catalog_images || [], available_sizes: p.available_sizes || [], measurement_unit: p.measurement_unit || 'in' })}
                                                                 className="px-3.5 py-1.5 rounded-lg bg-stone-100 hover:bg-[#161616] hover:text-white text-stone-800 text-xs font-bold transition mr-1.5"
                                                             >
                                                                 Edit
@@ -1415,590 +1600,6 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     </table>
                                 </div>
                             </div>
-
-                            {/* Comprehensive Edit / Add Product Modal */}
-                            {editingProduct && (
-                                <div 
-                                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
-                                    data-lenis-prevent="true"
-                                    onClick={(e) => { if (e.target === e.currentTarget) setEditingProduct(null); }}
-                                >
-                                    <div 
-                                        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-2xl max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200 relative"
-                                        data-lenis-prevent="true"
-                                    >
-                                        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-[#FAF8F5] flex-shrink-0">
-                                            <div>
-                                                <h3 className="font-serif text-lg font-bold text-[#161616]">
-                                                    {editingProduct.id ? 'Edit Product & Catalog Images' : 'Add New Product to Catalog'}
-                                                </h3>
-                                                <p className="text-[11px] text-stone-500">
-                                                    Manage name, description, size variations, and direct image uploads
-                                                </p>
-                                            </div>
-                                            <button 
-                                                type="button" 
-                                                onClick={() => setEditingProduct(null)} 
-                                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition"
-                                                title="Close modal"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-
-                                        <form 
-                                            id="admin-product-edit-form"
-                                            onSubmit={handleSaveProduct} 
-                                            className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-4 overscroll-contain"
-                                            data-lenis-prevent="true"
-                                        >
-
-                                        {/* 1. PRODUCT NAME / TITLE */}
-                                        <div>
-                                            <label className="text-xs font-bold text-stone-700 block mb-1">
-                                                PRODUCT NAME / TITLE *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={editingProduct.title || ''}
-                                                onChange={(e) => setEditingProduct({ ...editingProduct, title: e.target.value })}
-                                                placeholder="e.g. Ram Darbar - Divine Blessings | Ram, Sita, Laxman & Hanuman"
-                                                className="w-full px-3.5 py-2.5 border rounded-xl text-xs font-semibold focus:outline-none focus:border-black"
-                                            />
-                                        </div>
-
-                                        {/* 2. PRODUCT DESCRIPTION */}
-                                        <div>
-                                            <label className="text-xs font-bold text-stone-700 block mb-1">
-                                                PRODUCT DESCRIPTION *
-                                            </label>
-                                            <textarea
-                                                rows={3}
-                                                value={editingProduct.description || ''}
-                                                onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
-                                                placeholder="Exquisitely hand-sculpted in Makrana white marble by heritage artisans of Jaipur. Finished with pure 24K gold foil (swarna varakh), suitable for consecrated home mandir and sacred altars..."
-                                                className="w-full px-3.5 py-2.5 border rounded-xl text-xs leading-relaxed focus:outline-none focus:border-black"
-                                            />
-                                        </div>
-
-                                        {/* 3. PRODUCT SIZE & MASTER SIZES */}
-                                        <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <Tag className="w-3.5 h-3.5 text-[#C69722]" />
-                                                    <span>Product Size & Dimensions</span>
-                                                </label>
-                                                <span className="text-[10.5px] text-stone-500">Master Sizes & Physical Measurements</span>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="text-[11px] font-bold text-stone-600 block mb-1">
-                                                        LINKED MASTER SIZE TAG
-                                                    </label>
-                                                    <select
-                                                        value={editingProduct.size_id || ''}
-                                                        onChange={(e) => {
-                                                            const selectedSize = sizes.find(s => s.id === e.target.value);
-                                                            setEditingProduct({
-                                                                ...editingProduct,
-                                                                size_id: e.target.value,
-                                                                dimensions: selectedSize ? `${selectedSize.height_inches} Inches Height • ${selectedSize.label}` : editingProduct.dimensions
-                                                            });
-                                                        }}
-                                                        className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
-                                                    >
-                                                        <option value="">-- Choose Master Size (Optional) --</option>
-                                                        {sizes.map(s => (
-                                                            <option key={s.id} value={s.id}>
-                                                                {s.label} ({s.height_inches}" height)
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-
-                                                <div>
-                                                    <label className="text-[11px] font-bold text-stone-600 block mb-1">
-                                                        PHYSICAL MEASUREMENTS (TEXT)
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={editingProduct.dimensions || ''}
-                                                        onChange={(e) => setEditingProduct({ ...editingProduct, dimensions: e.target.value })}
-                                                        placeholder="e.g. 12 Inches (H) x 8 Inches (W) x 4 Inches (D)"
-                                                        className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="text-[11px] font-bold text-stone-600 block mb-1">
-                                                        WEIGHT ESTIMATE
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={editingProduct.weight || ''}
-                                                        onChange={(e) => setEditingProduct({ ...editingProduct, weight: e.target.value })}
-                                                        placeholder="e.g. 1.8 kg / 850 grams"
-                                                        className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[11px] font-bold text-stone-600 block mb-1">
-                                                        MATERIAL SPECIFICATION
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={editingProduct.material || 'Pure White Makrana Marble'}
-                                                        onChange={(e) => setEditingProduct({ ...editingProduct, material: e.target.value })}
-                                                        placeholder="e.g. Pure White Makrana Marble"
-                                                        className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* 3b. PRODUCT VARIANTS (REQ #7: Size Variants with Custom Pricing) */}
-                                        <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
-                                                        Size Variants & Dynamic Pricing
-                                                    </label>
-                                                    <span className="text-[10.5px] text-stone-500">
-                                                        Offer multiple idol sizes with customized pricing on the customer product page
-                                                    </span>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        const currentVariants = Array.isArray(editingProduct.variants) ? [...editingProduct.variants] : [];
-                                                        const defaultLabel = sizes[0] ? `${sizes[0].height_inches}" (${sizes[0].label})` : '15 cm (Home Mandir)';
-                                                        setEditingProduct({
-                                                            ...editingProduct,
-                                                            variants: [
-                                                                ...currentVariants,
-                                                                {
-                                                                    variant_name: defaultLabel,
-                                                                    size_id: sizes[0]?.id || '',
-                                                                    price: (editingProduct.price || 1499) + 600,
-                                                                    discount_price: (editingProduct.old_price || 2499) + 600,
-                                                                    is_available: true
-                                                                }
-                                                            ]
-                                                        });
-                                                    }}
-                                                    className="px-3 py-1.5 rounded-xl bg-[#161616] text-[#F7C600] hover:bg-[#C69722] hover:text-[#161616] text-xs font-bold transition flex items-center gap-1 shadow-2xs"
-                                                >
-                                                    <Plus className="w-3.5 h-3.5" />
-                                                    <span>Add Size Variant</span>
-                                                </button>
-                                            </div>
-
-                                            {Array.isArray(editingProduct.variants) && editingProduct.variants.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    {editingProduct.variants.map((variant, vIdx) => (
-                                                        <div key={vIdx} className="p-3 bg-white rounded-xl border border-stone-200 flex flex-col sm:flex-row items-center gap-3">
-                                                            <div className="flex-1 w-full sm:w-auto">
-                                                                <label className="text-[10px] font-bold text-stone-500 block mb-0.5">SIZE VARIANT NAME / LABEL</label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={variant.variant_name || ''}
-                                                                    onChange={(e) => {
-                                                                        const updated = [...editingProduct.variants];
-                                                                        updated[vIdx] = { ...updated[vIdx], variant_name: e.target.value };
-                                                                        setEditingProduct({ ...editingProduct, variants: updated });
-                                                                    }}
-                                                                    placeholder="e.g. 15 cm (Home Mandir)"
-                                                                    className="w-full px-2.5 py-1.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-black"
-                                                                />
-                                                            </div>
-                                                            <div className="w-full sm:w-28">
-                                                                <label className="text-[10px] font-bold text-stone-500 block mb-0.5">PRICE (₹)</label>
-                                                                <input
-                                                                    type="number"
-                                                                    value={variant.price || ''}
-                                                                    onChange={(e) => {
-                                                                        const updated = [...editingProduct.variants];
-                                                                        updated[vIdx] = { ...updated[vIdx], price: parseFloat(e.target.value) || 0 };
-                                                                        setEditingProduct({ ...editingProduct, variants: updated });
-                                                                    }}
-                                                                    className="w-full px-2.5 py-1.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-black"
-                                                                />
-                                                            </div>
-                                                            <div className="w-full sm:w-28">
-                                                                <label className="text-[10px] font-bold text-stone-500 block mb-0.5">OLD PRICE (₹)</label>
-                                                                <input
-                                                                    type="number"
-                                                                    value={variant.discount_price || ''}
-                                                                    onChange={(e) => {
-                                                                        const updated = [...editingProduct.variants];
-                                                                        updated[vIdx] = { ...updated[vIdx], discount_price: parseFloat(e.target.value) || 0 };
-                                                                        setEditingProduct({ ...editingProduct, variants: updated });
-                                                                    }}
-                                                                    className="w-full px-2.5 py-1.5 border rounded-lg text-xs text-stone-600 focus:outline-none focus:border-black"
-                                                                />
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const updated = editingProduct.variants.filter((_, idx) => idx !== vIdx);
-                                                                    setEditingProduct({ ...editingProduct, variants: updated });
-                                                                }}
-                                                                className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition self-end sm:self-center"
-                                                                title="Remove variant"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <div className="text-center py-2 text-stone-400 text-xs italic">
-                                                    No custom size variants added yet (standard single-size product).
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Price, Old Price, Discount */}
-                                        <div className="grid grid-cols-3 gap-3">
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">PRICE (₹) *</label>
-                                                <input
-                                                    type="number"
-                                                    required
-                                                    value={editingProduct.price}
-                                                    onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">OLD PRICE (₹)</label>
-                                                <input
-                                                    type="number"
-                                                    value={editingProduct.old_price || ''}
-                                                    onChange={(e) => setEditingProduct({ ...editingProduct, old_price: parseFloat(e.target.value) || 0 })}
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">DISCOUNT TEXT</label>
-                                                <input
-                                                    type="text"
-                                                    value={editingProduct.off_text || ''}
-                                                    onChange={(e) => setEditingProduct({ ...editingProduct, off_text: e.target.value })}
-                                                    placeholder="e.g. 42% off"
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Deity, Section, and Stock Status */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">DEITY / CATEGORY *</label>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    value={editingProduct.deity || ''}
-                                                    onChange={(e) => setEditingProduct({ ...editingProduct, deity: e.target.value })}
-                                                    placeholder="e.g. Ram, Shiva, Ganesha, Hanuman"
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">STOREFRONT SECTION</label>
-                                                <select
-                                                    value={editingProduct.group_tag || 'most-loved'}
-                                                    onChange={(e) => setEditingProduct({ ...editingProduct, group_tag: e.target.value })}
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
-                                                >
-                                                    <option value="most-loved">Most Loved Idols</option>
-                                                    <option value="navratri">Navratri Drop</option>
-                                                    <option value="sacred">Sacred Idols</option>
-                                                    <option value="baal-roop">Baal Roop Collection</option>
-                                                    <option value="similar">General Catalog</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">STOCK STATUS</label>
-                                                <select
-                                                    value={editingProduct.stock_status || 'in_stock'}
-                                                    onChange={(e) => setEditingProduct({ ...editingProduct, stock_status: e.target.value })}
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black font-semibold"
-                                                >
-                                                    <option value="in_stock">In Stock (Ready to Dispatch)</option>
-                                                    <option value="made_to_order">Made to Order (7-10 Days Karigari)</option>
-                                                    <option value="out_of_stock">Out of Stock</option>
-                                                </select>
-                                            </div>
-                                        </div>
-
-                                        {/* 4. PRIMARY CATALOG IMAGE WITH DIRECT UPLOAD BUTTON */}
-                                        <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-stone-200 space-y-2.5">
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
-                                                    PRIMARY HERO / THUMBNAIL IMAGE
-                                                </label>
-                                                <span className="text-[10px] text-stone-500">Direct Device Upload</span>
-                                            </div>
-
-                                            <div className="flex flex-col sm:flex-row items-center gap-3">
-                                                {editingProduct.primary_catalog_image ? (
-                                                    <div className="relative group w-20 h-20 rounded-xl overflow-hidden border border-stone-300 bg-white flex-shrink-0 flex items-center justify-center p-1 shadow-2xs">
-                                                        <img
-                                                            src={editingProduct.primary_catalog_image}
-                                                            alt="Primary Catalog"
-                                                            className="w-full h-full object-contain"
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-20 h-20 rounded-xl border-2 border-dashed border-stone-300 bg-white/70 flex flex-col items-center justify-center text-stone-400 text-[10px] flex-shrink-0">
-                                                        <ImageIcon className="w-6 h-6 stroke-1 mb-0.5 text-stone-400" />
-                                                        <span>No Image</span>
-                                                    </div>
-                                                )}
-
-                                                <div className="flex-1 w-full space-y-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <label className="cursor-pointer px-4 py-2 rounded-xl bg-[#161616] hover:bg-[#C69722] text-[#F7C600] hover:text-[#161616] text-xs font-bold transition flex items-center gap-2 shadow-xs active:scale-98">
-                                                            <Upload className="w-4 h-4" />
-                                                            <span>{uploadingPrimary ? 'Uploading...' : 'Upload Image Directly'}</span>
-                                                            <input
-                                                                type="file"
-                                                                accept="image/*"
-                                                                disabled={uploadingPrimary}
-                                                                className="hidden"
-                                                                onChange={async (e) => {
-                                                                    const file = e.target.files?.[0];
-                                                                    if (file) {
-                                                                        setUploadingPrimary(true);
-                                                                        const url = await handleFileUpload(file, 'catalog');
-                                                                        if (url) {
-                                                                            setEditingProduct({ ...editingProduct, primary_catalog_image: url });
-                                                                        }
-                                                                        setUploadingPrimary(false);
-                                                                        e.target.value = '';
-                                                                    }
-                                                                }}
-                                                            />
-                                                        </label>
-                                                        {editingProduct.primary_catalog_image && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setEditingProduct({ ...editingProduct, primary_catalog_image: '' })}
-                                                                className="text-stone-400 hover:text-rose-600 text-xs px-2 py-1"
-                                                            >
-                                                                Clear
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                    <input
-                                                        type="text"
-                                                        value={editingProduct.primary_catalog_image || ''}
-                                                        onChange={(e) => setEditingProduct({ ...editingProduct, primary_catalog_image: e.target.value })}
-                                                        placeholder="Or paste image URL path manually"
-                                                        className="w-full px-3 py-1.5 border rounded-lg text-xs font-mono text-stone-600 bg-white focus:outline-none focus:border-black"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* 5. MULTI-ANGLE CATALOG GALLERY WITH DIRECT UPLOADS */}
-                                        <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-stone-200 space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
-                                                        Multi-Angle Catalog Gallery
-                                                    </label>
-                                                    <span className="text-[10.5px] text-stone-500">
-                                                        Upload side, back, and close-up angles for customer product page
-                                                    </span>
-                                                </div>
-
-                                                <label className="cursor-pointer px-3.5 py-1.5 rounded-xl bg-[#161616] text-[#F7C600] hover:bg-[#C69722] hover:text-[#161616] text-xs font-bold flex items-center gap-1.5 transition shadow-xs active:scale-98">
-                                                    <Upload className="w-3.5 h-3.5" />
-                                                    <span>{uploadingCatalogAngle ? 'Uploading...' : '+ Upload Photo Angle'}</span>
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        disabled={uploadingCatalogAngle}
-                                                        className="hidden"
-                                                        onChange={async (e) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                setUploadingCatalogAngle(true);
-                                                                const url = await handleFileUpload(file, 'catalog');
-                                                                if (url) {
-                                                                    const currentImages = editingProduct.catalog_images || [];
-                                                                    setEditingProduct({
-                                                                        ...editingProduct,
-                                                                        catalog_images: [
-                                                                            ...currentImages,
-                                                                            {
-                                                                                url: url,
-                                                                                caption: `Angle ${currentImages.length + 1} - Sacred Detail`,
-                                                                                sort_order: currentImages.length + 1
-                                                                            }
-                                                                        ]
-                                                                    });
-                                                                }
-                                                                setUploadingCatalogAngle(false);
-                                                                e.target.value = '';
-                                                            }
-                                                        }}
-                                                    />
-                                                </label>
-                                            </div>
-
-                                            {(!editingProduct.catalog_images || editingProduct.catalog_images.length === 0) ? (
-                                                <div className="text-center py-5 text-xs text-stone-400 bg-white rounded-xl border border-dashed border-stone-300">
-                                                    No additional angles added yet. Click <strong>"+ Upload Photo Angle"</strong> to upload multi-angle photos directly!
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1" data-lenis-prevent="true">
-                                                    {editingProduct.catalog_images.map((img, idx) => (
-                                                        <div key={idx} className="flex flex-col sm:flex-row items-center gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-2xs">
-                                                            <img src={img.url} alt="" className="w-12 h-12 object-contain rounded-lg bg-stone-50 border flex-shrink-0" />
-                                                            <div className="flex-1 w-full space-y-1">
-                                                                <div className="flex items-center gap-2">
-                                                                    <input
-                                                                        type="text"
-                                                                        value={img.caption || ''}
-                                                                        onChange={(e) => {
-                                                                            const updated = [...editingProduct.catalog_images];
-                                                                            updated[idx].caption = e.target.value;
-                                                                            setEditingProduct({ ...editingProduct, catalog_images: updated });
-                                                                        }}
-                                                                        placeholder="Caption (e.g. Front Sacred View, 24K Gold Detailing)"
-                                                                        className="flex-1 px-2.5 py-1.5 border rounded-lg text-xs focus:outline-none focus:border-black"
-                                                                    />
-                                                                    <label className="cursor-pointer px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-bold flex items-center gap-1 transition flex-shrink-0">
-                                                                        <Upload className="w-3 h-3 text-stone-600" />
-                                                                        <span>Replace</span>
-                                                                        <input
-                                                                            type="file"
-                                                                            accept="image/*"
-                                                                            className="hidden"
-                                                                            onChange={async (e) => {
-                                                                                const file = e.target.files?.[0];
-                                                                                if (file) {
-                                                                                    const url = await handleFileUpload(file, 'catalog');
-                                                                                    if (url) {
-                                                                                        const updated = [...editingProduct.catalog_images];
-                                                                                        updated[idx].url = url;
-                                                                                        setEditingProduct({ ...editingProduct, catalog_images: updated });
-                                                                                    }
-                                                                                    e.target.value = '';
-                                                                                }
-                                                                            }}
-                                                                        />
-                                                                    </label>
-                                                                </div>
-                                                                <input
-                                                                    type="text"
-                                                                    value={img.url}
-                                                                    onChange={(e) => {
-                                                                        const updated = [...editingProduct.catalog_images];
-                                                                        updated[idx].url = e.target.value;
-                                                                        setEditingProduct({ ...editingProduct, catalog_images: updated });
-                                                                    }}
-                                                                    placeholder="Image URL"
-                                                                    className="w-full px-2.5 py-1 border rounded-lg text-[10.5px] font-mono text-stone-500"
-                                                                />
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRemoveCatalogImage(idx)}
-                                                                className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition"
-                                                                title="Delete this catalog angle"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Rating Mode & Static Score Override */}
-                                        <div className="grid grid-cols-2 gap-3 p-4 rounded-2xl bg-amber-50/50 border border-amber-200/60">
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-800 block mb-1">
-                                                    PRODUCT RATING MODE
-                                                </label>
-                                                <select
-                                                    value={editingProduct.rating_mode || 'enabled'}
-                                                    onChange={(e) => setEditingProduct({ ...editingProduct, rating_mode: e.target.value })}
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
-                                                >
-                                                    <option value="enabled">Enabled (View & Submit)</option>
-                                                    <option value="read_only">Static (Read-Only Mode)</option>
-                                                    <option value="hidden">Hidden (Turned Off)</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-800 block mb-1">
-                                                    STATIC RATING VALUE (1.0 - 5.0)
-                                                </label>
-                                                <input
-                                                    type="number"
-                                                    step="0.05"
-                                                    min="1"
-                                                    max="5"
-                                                    value={editingProduct.static_rating_value ?? 5.0}
-                                                    onChange={(e) => setEditingProduct({ ...editingProduct, static_rating_value: parseFloat(e.target.value) || 5.0 })}
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Feature Toggles */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-stone-50 rounded-xl border border-stone-200">
-                                            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={Boolean(editingProduct.is_active)}
-                                                    onChange={(e) => setEditingProduct({ ...editingProduct, is_active: e.target.checked })}
-                                                    className="w-4 h-4 accent-[#161616] rounded"
-                                                />
-                                                <span>Active on Store</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={Boolean(editingProduct.pran_pratishtha_ready)}
-                                                    onChange={(e) => setEditingProduct({ ...editingProduct, pran_pratishtha_ready: e.target.checked })}
-                                                    className="w-4 h-4 accent-[#161616] rounded"
-                                                />
-                                                <span>Pran Pratishtha Ready</span>
-                                            </label>
-                                        </div>
-
-                                        </form>
-
-                                        {/* Pinned Sticky Footer */}
-                                        <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t border-stone-200 bg-stone-50/95 backdrop-blur-xs flex-shrink-0">
-                                            <button
-                                                type="button"
-                                                onClick={() => setEditingProduct(null)}
-                                                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-200/70 transition"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button
-                                                type="submit"
-                                                form="admin-product-edit-form"
-                                                className="px-6 py-2.5 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider hover:bg-black transition shadow-sm active:scale-98"
-                                            >
-                                                {editingProduct.id ? 'Save Changes' : 'Create Product'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     )}
 
@@ -2078,170 +1679,6 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Add / Edit Category Modal */}
-                            {editingCategory && (
-                                <div 
-                                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
-                                    data-lenis-prevent="true"
-                                    onClick={(e) => { if (e.target === e.currentTarget) setEditingCategory(null); }}
-                                >
-                                    <div 
-                                        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
-                                        data-lenis-prevent="true"
-                                    >
-                                        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-[#FAF8F5] flex-shrink-0">
-                                            <h3 className="font-serif text-lg font-bold text-stone-900">
-                                                {editingCategory.id ? 'Edit Category Images & Details' : 'Add New Deity Category'}
-                                            </h3>
-                                            <button 
-                                                type="button" 
-                                                onClick={() => setEditingCategory(null)} 
-                                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition"
-                                                title="Close modal"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-
-                                        <form 
-                                            id="admin-category-edit-form"
-                                            onSubmit={handleSaveCategory} 
-                                            className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 overscroll-contain"
-                                            data-lenis-prevent="true"
-                                        >
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">DEITY / CATEGORY NAME *</label>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    value={editingCategory.name}
-                                                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                                                    placeholder="e.g. Ram Darbar, Radha Krishna, Lord Shiva"
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs font-semibold focus:outline-none focus:border-black"
-                                                />
-                                            </div>
-
-                                            {/* Icon Image with Direct Upload */}
-                                            <div>
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <label className="text-xs font-bold text-stone-700">
-                                                        CIRCLE ICON THUMBNAIL
-                                                    </label>
-                                                    <label className="cursor-pointer text-[11px] font-bold text-[#8E5B00] hover:text-black flex items-center gap-1">
-                                                        <Upload className="w-3 h-3" />
-                                                        <span>{uploadingCatIcon ? 'Uploading...' : 'Upload File Directly'}</span>
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            disabled={uploadingCatIcon}
-                                                            className="hidden"
-                                                            onChange={async (e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (file) {
-                                                                    setUploadingCatIcon(true);
-                                                                    const url = await handleFileUpload(file, 'categories');
-                                                                    if (url) setEditingCategory({ ...editingCategory, img: url });
-                                                                    setUploadingCatIcon(false);
-                                                                    e.target.value = '';
-                                                                }
-                                                            }}
-                                                        />
-                                                    </label>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {editingCategory.img && (
-                                                        <img src={editingCategory.img} alt="" className="w-10 h-10 rounded-full object-contain border bg-stone-50 flex-shrink-0 p-0.5" />
-                                                    )}
-                                                    <input
-                                                        type="text"
-                                                        value={editingCategory.img || ''}
-                                                        onChange={(e) => setEditingCategory({ ...editingCategory, img: e.target.value })}
-                                                        placeholder="URL or click Upload File Directly"
-                                                        className="w-full px-3 py-2 border rounded-xl text-xs font-mono"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {/* Banner URL with Direct Upload */}
-                                            <div>
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <label className="text-xs font-bold text-stone-700">
-                                                        HERO LANDING BANNER IMAGE
-                                                    </label>
-                                                    <label className="cursor-pointer text-[11px] font-bold text-[#8E5B00] hover:text-black flex items-center gap-1">
-                                                        <Upload className="w-3 h-3" />
-                                                        <span>{uploadingCatBanner ? 'Uploading...' : 'Upload Banner'}</span>
-                                                        <input
-                                                            type="file"
-                                                            accept="image/*"
-                                                            disabled={uploadingCatBanner}
-                                                            className="hidden"
-                                                            onChange={async (e) => {
-                                                                const file = e.target.files?.[0];
-                                                                if (file) {
-                                                                    setUploadingCatBanner(true);
-                                                                    const url = await handleFileUpload(file, 'banners');
-                                                                    if (url) setEditingCategory({ ...editingCategory, banner_url: url });
-                                                                    setUploadingCatBanner(false);
-                                                                    e.target.value = '';
-                                                                }
-                                                            }}
-                                                        />
-                                                    </label>
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    value={editingCategory.banner_url || ''}
-                                                    onChange={(e) => setEditingCategory({ ...editingCategory, banner_url: e.target.value })}
-                                                    placeholder="e.g. /images/categories/navratri-drop@2x.png or click Upload Banner"
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs font-mono"
-                                                />
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="text-xs font-bold text-stone-700 block mb-1">SORT ORDER</label>
-                                                    <input
-                                                        type="number"
-                                                        value={editingCategory.sort_order || 0}
-                                                        onChange={(e) => setEditingCategory({ ...editingCategory, sort_order: parseInt(e.target.value, 10) || 0 })}
-                                                        className="w-full px-3 py-2 border rounded-xl text-xs"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-xs font-bold text-stone-700 block mb-1">ACTIVE STATUS</label>
-                                                    <select
-                                                        value={editingCategory.is_active ? 'true' : 'false'}
-                                                        onChange={(e) => setEditingCategory({ ...editingCategory, is_active: e.target.value === 'true' })}
-                                                        className="w-full px-3 py-2 border rounded-xl text-xs"
-                                                    >
-                                                        <option value="true">Active on Store</option>
-                                                        <option value="false">Hidden / Draft</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </form>
-
-                                        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-stone-200 bg-stone-50/95 flex-shrink-0">
-                                            <button 
-                                                type="button" 
-                                                onClick={() => setEditingCategory(null)} 
-                                                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-200/70 transition"
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button 
-                                                type="submit" 
-                                                form="admin-category-edit-form"
-                                                className="px-5 py-2 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider hover:bg-black transition shadow-sm active:scale-98"
-                                            >
-                                                {editingCategory.id ? 'Save Category' : 'Create Category'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     )}
 
@@ -2378,26 +1815,18 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         <form onSubmit={handleLinkFestivalItem} className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-[#FAF8F5] p-4 rounded-xl border border-stone-200">
                                             <div className="sm:col-span-2">
                                                 <label className="text-[11px] font-bold text-stone-600 block mb-1">SELECT IDOL FROM CATALOG</label>
-                                                <select
+                                                <ProductSelect
+                                                    products={products}
                                                     value={linkingMurtiId}
-                                                    onChange={(e) => {
-                                                        const mId = e.target.value;
+                                                    onChange={(mId) => {
                                                         setLinkingMurtiId(mId);
-                                                        const p = products.find(prod => prod.id === mId);
+                                                        const p = products.find(prod => prod.id === mId || String(prod.id) === String(mId));
                                                         if (p && !linkingPrice) {
                                                             setLinkingPrice(Math.round(p.price * 0.85).toString());
                                                         }
                                                     }}
-                                                    required
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs bg-white"
-                                                >
-                                                    <option value="">-- Choose Product --</option>
-                                                    {products.map(p => (
-                                                        <option key={p.id} value={p.id}>
-                                                            {p.title} (Regular: ₹{p.price})
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                                    placeholder="-- Choose Product with Thumbnail --"
+                                                />
                                             </div>
 
                                             <div>
@@ -2432,7 +1861,12 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 (festival.items || []).map(item => (
                                                     <div key={item.id} className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-stone-200 hover:border-stone-300 transition">
                                                         <div className="flex items-center gap-3">
-                                                            <img src={item.murti_image || '/images/products/ram-darbar.png'} alt="" className="w-10 h-10 object-contain rounded-lg bg-stone-50 border p-1" />
+                                                            <img
+                                                                src={api.getImageUrl(item.murti_image || '/images/products/ram-darbar.png')}
+                                                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
+                                                                alt=""
+                                                                className="w-10 h-10 object-contain rounded-lg bg-stone-50 border p-1 flex-shrink-0"
+                                                            />
                                                             <div>
                                                                 <div className="font-bold text-stone-900 text-xs">{item.murti_title}</div>
                                                                 <div className="text-[10px] text-stone-400">Regular: ₹{item.original_price?.toLocaleString('en-IN')}</div>
@@ -2510,9 +1944,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 <h3 className="text-xs font-bold text-stone-800 uppercase tracking-wider">
                                     + Add New Master Size
                                 </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
                                     <div className="sm:col-span-2">
-                                        <label className="text-[11px] font-bold text-stone-600 block mb-1">LABEL *</label>
+                                        <label className="text-[11px] font-bold text-stone-600 block mb-1">SIZE LABEL *</label>
                                         <input
                                             type="text"
                                             required
@@ -2523,14 +1957,34 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         />
                                     </div>
                                     <div>
-                                        <label className="text-[11px] font-bold text-stone-600 block mb-1">HEIGHT (INCHES) *</label>
+                                        <label className="text-[11px] font-bold text-stone-600 block mb-1">UNIT *</label>
+                                        <select
+                                            value={newSizeForm.unit || 'in'}
+                                            onChange={(e) => setNewSizeForm({ ...newSizeForm, unit: e.target.value })}
+                                            className="w-full px-3 py-2.5 border rounded-xl text-xs bg-white font-semibold"
+                                        >
+                                            <option value="in">Inches (in)</option>
+                                            <option value="ft">Feet (ft)</option>
+                                            <option value="m">Meters (m)</option>
+                                            <option value="cm">Centimeters (cm)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] font-bold text-stone-600 block mb-1">NUMERIC VALUE *</label>
                                         <input
                                             type="number"
                                             step="0.1"
                                             required
-                                            placeholder="Height Inches"
-                                            value={newSizeForm.height_inches}
-                                            onChange={(e) => setNewSizeForm({ ...newSizeForm, height_inches: parseFloat(e.target.value) || 0 })}
+                                            placeholder="Value"
+                                            value={newSizeForm.size_value ?? newSizeForm.height_inches ?? 12.0}
+                                            onChange={(e) => {
+                                                const val = parseFloat(e.target.value) || 0;
+                                                setNewSizeForm({
+                                                    ...newSizeForm,
+                                                    size_value: val,
+                                                    height_inches: newSizeForm.unit === 'ft' ? val * 12 : newSizeForm.unit === 'cm' ? val / 2.54 : newSizeForm.unit === 'm' ? val * 39.37 : val
+                                                });
+                                            }}
                                             className="w-full px-3.5 py-2.5 border rounded-xl text-xs font-semibold"
                                         />
                                     </div>
@@ -2568,9 +2022,12 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 {sizes.map(size => (
                                     <div key={size.id} className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs flex items-center justify-between hover:border-stone-300 transition">
                                         <div className="min-w-0 pr-3">
-                                            <div className="font-bold text-stone-900 text-sm truncate">{size.label}</div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="font-bold text-stone-900 text-sm truncate">{size.label}</div>
+                                                <span className="px-1.5 py-0.5 rounded bg-amber-100 text-[#8E5B00] text-[10px] font-bold uppercase">{size.unit || 'in'}</span>
+                                            </div>
                                             <div className="text-xs text-stone-500 mt-1 font-mono">
-                                                {size.height_inches}" height • Order: {size.sort_order}
+                                                {size.height_inches}" height ({size.size_value ? `${size.size_value} ${size.unit || 'in'}` : `${size.height_inches} in`}) • Order: {size.sort_order}
                                             </div>
                                             {size.description && (
                                                 <div className="text-xs text-[#C69722] italic mt-1 line-clamp-1">{size.description}</div>
@@ -2578,7 +2035,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         </div>
                                         <div className="flex items-center gap-1.5 flex-shrink-0">
                                             <button
-                                                onClick={() => setEditingSize(size)}
+                                                onClick={() => setEditingSize({ ...size, unit: size.unit || 'in', size_value: size.size_value ?? size.height_inches ?? 12.0 })}
                                                 className="p-2 text-stone-500 hover:text-black hover:bg-stone-100 rounded-xl transition"
                                                 title="Edit size"
                                             >
@@ -2595,91 +2052,6 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Edit Size Modal */}
-                            {editingSize && (
-                                <div 
-                                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
-                                    data-lenis-prevent="true"
-                                    onClick={(e) => { if (e.target === e.currentTarget) setEditingSize(null); }}
-                                >
-                                    <div 
-                                        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-md shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
-                                        data-lenis-prevent="true"
-                                    >
-                                        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-[#FAF8F5]">
-                                            <h3 className="font-serif text-lg font-bold text-stone-900">Edit Master Size</h3>
-                                            <button 
-                                                type="button" 
-                                                onClick={() => setEditingSize(null)} 
-                                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition"
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-
-                                        <form onSubmit={handleSaveEditSize} className="p-5 space-y-4">
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">SIZE LABEL</label>
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    value={editingSize.label}
-                                                    onChange={(e) => setEditingSize({ ...editingSize, label: e.target.value })}
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs font-semibold"
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="text-xs font-bold text-stone-700 block mb-1">HEIGHT (INCHES)</label>
-                                                    <input
-                                                        type="number"
-                                                        step="0.1"
-                                                        required
-                                                        value={editingSize.height_inches}
-                                                        onChange={(e) => setEditingSize({ ...editingSize, height_inches: parseFloat(e.target.value) || 0 })}
-                                                        className="w-full px-3 py-2 border rounded-xl text-xs"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-xs font-bold text-stone-700 block mb-1">SORT ORDER</label>
-                                                    <input
-                                                        type="number"
-                                                        value={editingSize.sort_order}
-                                                        onChange={(e) => setEditingSize({ ...editingSize, sort_order: parseInt(e.target.value, 10) || 1 })}
-                                                        className="w-full px-3 py-2 border rounded-xl text-xs"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">DESCRIPTION</label>
-                                                <input
-                                                    type="text"
-                                                    value={editingSize.description || ''}
-                                                    onChange={(e) => setEditingSize({ ...editingSize, description: e.target.value })}
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs"
-                                                />
-                                            </div>
-
-                                            <div className="flex items-center justify-end gap-2 pt-2 border-t">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setEditingSize(null)}
-                                                    className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100"
-                                                >
-                                                    Cancel
-                                                </button>
-                                                <button
-                                                    type="submit"
-                                                    className="px-5 py-2 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase"
-                                                >
-                                                    Save Changes
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     )}
 
@@ -2891,6 +2263,142 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     </div>
                                 </div>
 
+                                {/* Featured Sacred Collection Settings (Req #2.1: Editable Collection Content) */}
+                                <div className="space-y-4 pt-4 border-t border-stone-200">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                                <Sparkles className="w-3.5 h-3.5 text-[#C69722]" />
+                                                <span>Featured Sacred Collection (Storefront Hero Showcase)</span>
+                                            </label>
+                                            <span className="text-[11px] text-stone-500">
+                                                Manage the dynamic headline, copy, and visual for "SANCTIFIED SACRED COLLECTION 2026"
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-[#FAF8F5] p-4 sm:p-5 rounded-2xl border border-[#DFC48D]/60">
+                                        <div className="sm:col-span-2">
+                                            <label className="text-[11px] font-bold text-stone-700 block mb-1">
+                                                HERO COLLECTION TITLE *
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={settings.collection_title || ''}
+                                                onChange={(e) => setSettings({ ...settings, collection_title: e.target.value })}
+                                                placeholder="e.g. SANCTIFIED SACRED COLLECTION 2026"
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-bold text-stone-900 focus:outline-none focus:border-black"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="text-[11px] font-bold text-stone-700 block mb-1">
+                                                TOP BADGE TEXT
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.collection_badge || ''}
+                                                onChange={(e) => setSettings({ ...settings, collection_badge: e.target.value })}
+                                                placeholder="e.g. HASTASHILP HERITAGE 2026"
+                                                className="w-full px-3 py-2 rounded-xl border border-stone-300 bg-white text-xs font-semibold focus:outline-none focus:border-black"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="text-[11px] font-bold text-stone-700 block mb-1">
+                                                SUBTITLE / HOOK
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.collection_subtitle || ''}
+                                                onChange={(e) => setSettings({ ...settings, collection_subtitle: e.target.value })}
+                                                placeholder="e.g. DIVINE BLESSINGS FOR YOUR SACRED SANCTUM"
+                                                className="w-full px-3 py-2 rounded-xl border border-stone-300 bg-white text-xs font-semibold focus:outline-none focus:border-black"
+                                            />
+                                        </div>
+
+                                        <div className="sm:col-span-2">
+                                            <label className="text-[11px] font-bold text-stone-700 block mb-1">
+                                                COLLECTION STORY & DESCRIPTION
+                                            </label>
+                                            <textarea
+                                                rows={2}
+                                                value={settings.collection_description || ''}
+                                                onChange={(e) => setSettings({ ...settings, collection_description: e.target.value })}
+                                                placeholder="Hand-sculpted in Makrana white marble by fourth-generation Jaipur sthapatis..."
+                                                className="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white text-xs leading-relaxed focus:outline-none focus:border-black"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-2 sm:col-span-2">
+                                            <div>
+                                                <label className="text-[10px] font-bold text-stone-600 block mb-0.5">PRICE FROM (₹)</label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.collection_price_from || ''}
+                                                    onChange={(e) => setSettings({ ...settings, collection_price_from: e.target.value })}
+                                                    placeholder="1,499"
+                                                    className="w-full px-2.5 py-1.5 rounded-lg border text-xs bg-white font-bold text-stone-900"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold text-stone-600 block mb-0.5">OLD PRICE (₹)</label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.collection_old_price || ''}
+                                                    onChange={(e) => setSettings({ ...settings, collection_old_price: e.target.value })}
+                                                    placeholder="2,499"
+                                                    className="w-full px-2.5 py-1.5 rounded-lg border text-xs bg-white text-stone-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold text-stone-600 block mb-0.5">DISCOUNT BADGE</label>
+                                                <input
+                                                    type="text"
+                                                    value={settings.collection_discount_text || ''}
+                                                    onChange={(e) => setSettings({ ...settings, collection_discount_text: e.target.value })}
+                                                    placeholder="40% OFF"
+                                                    className="w-full px-2.5 py-1.5 rounded-lg border text-xs bg-white font-bold text-emerald-700"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="sm:col-span-2 space-y-2 pt-1">
+                                            <label className="text-[11px] font-bold text-stone-700 block">
+                                                HERO SHOWCASE IMAGE
+                                            </label>
+                                            <div className="flex flex-col sm:flex-row items-center gap-3">
+                                                {settings.collection_image_url ? (
+                                                    <div className="w-24 h-24 rounded-xl border border-stone-300 bg-white p-1 flex-shrink-0 flex items-center justify-center">
+                                                        <img
+                                                            src={api.getImageUrl(settings.collection_image_url)}
+                                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
+                                                            alt="Hero Preview"
+                                                            className="w-full h-full object-contain"
+                                                        />
+                                                    </div>
+                                                ) : null}
+                                                <div className="flex-1 w-full">
+                                                    <ImageDropzone
+                                                        label="Upload Hero Collection Showcase Image"
+                                                        sublabel="Drag & drop new banner image or click to browse"
+                                                        isUploading={uploadingCollectionBanner}
+                                                        onUpload={async (file) => {
+                                                            setUploadingCollectionBanner(true);
+                                                            const url = await handleFileUpload(file, 'banners');
+                                                            if (url) {
+                                                                setSettings(prev => ({ ...prev, collection_image_url: url }));
+                                                            }
+                                                            setUploadingCollectionBanner(false);
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <button
                                     type="submit"
                                     className="px-6 py-3 rounded-xl bg-[#161616] hover:bg-[#C69722] text-white font-bold text-xs uppercase tracking-wider transition shadow-md flex items-center gap-2"
@@ -2905,7 +2413,1021 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                 </main>
             </div>
 
-            {/* Modal: Render Backend Server Connection (Accessible anytime from top navbar) */}
+            
+            {/* ========================================================================= */}
+            {/* GLOBAL HOISTED MODALS: PRODUCT, CATEGORY, MASTER SIZE                     */}
+            {/* ========================================================================= */}
+
+            {/* Comprehensive Edit / Add Product Modal (Req #1.2, #1.3, #1.5, #1.6, #3.4, #3.6) */}
+            {editingProduct && (
+                <div 
+                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setEditingProduct(null); }}
+                >
+                    <div 
+                        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200 relative"
+                        data-lenis-prevent="true"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-[#FAF8F5] flex-shrink-0">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-serif text-lg font-bold text-[#161616]">
+                                        {editingProduct.id ? 'Edit Product & Catalog Images' : 'Add New Product to Catalog'}
+                                    </h3>
+                                    {editingProduct.id && (
+                                        <span className="px-2 py-0.5 rounded-md bg-stone-200 text-stone-700 text-[10px] font-mono font-bold">
+                                            {String(editingProduct.id).startsWith('prod-') ? 'CUSTOM IDOL' : 'CATALOG'}
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="text-[11px] text-stone-500 mt-0.5">
+                                    Organized 6-section product editor with live drag & drop, dimension units, and available sizes
+                                </p>
+                            </div>
+                            <button 
+                                type="button" 
+                                onClick={() => setEditingProduct(null)} 
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition"
+                                title="Close modal"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form 
+                            id="admin-product-edit-form"
+                            onSubmit={handleSaveProduct} 
+                            className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 overscroll-contain"
+                            data-lenis-prevent="true"
+                        >
+                            {/* SECTION 1: BASIC PRODUCT INFORMATION */}
+                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3">
+                                <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
+                                    <Package className="w-4 h-4 text-[#C69722]" />
+                                    <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
+                                        1. Basic Product Information
+                                    </h4>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">
+                                        PRODUCT NAME / TITLE *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={editingProduct.title || ''}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, title: e.target.value })}
+                                        placeholder="e.g. Ram Darbar - Divine Blessings | Ram, Sita, Laxman & Hanuman"
+                                        className="w-full px-3.5 py-2.5 border rounded-xl text-xs font-semibold focus:outline-none focus:border-black"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">
+                                        PRODUCT DESCRIPTION *
+                                    </label>
+                                    <textarea
+                                        rows={3}
+                                        required
+                                        value={editingProduct.description || ''}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                                        placeholder="Exquisitely hand-sculpted in Makrana white marble by heritage artisans of Jaipur. Finished with pure 24K gold foil (swarna varakh), suitable for consecrated home mandir and sacred altars..."
+                                        className="w-full px-3.5 py-2.5 border rounded-xl text-xs leading-relaxed focus:outline-none focus:border-black"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-[11px] font-bold text-stone-600 block mb-1">
+                                            MATERIAL SPECIFICATION
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editingProduct.material || 'Pure White Makrana Marble'}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, material: e.target.value })}
+                                            placeholder="e.g. Pure White Makrana Marble"
+                                            className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] font-bold text-stone-600 block mb-1">
+                                            WEIGHT ESTIMATE
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editingProduct.weight || ''}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, weight: e.target.value })}
+                                            placeholder="e.g. 1.8 kg / 850 grams"
+                                            className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SECTION 2: CATEGORY & CATALOG DETAILS */}
+                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3">
+                                <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
+                                    <Layers className="w-4 h-4 text-[#C69722]" />
+                                    <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
+                                        2. Category & Catalog Details
+                                    </h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-700 block mb-1">DEITY / CATEGORY *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={editingProduct.deity || ''}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, deity: e.target.value })}
+                                            placeholder="e.g. Ram, Shiva, Ganesha"
+                                            className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-700 block mb-1">STOREFRONT SECTION</label>
+                                        <select
+                                            value={editingProduct.group_tag || 'most-loved'}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, group_tag: e.target.value })}
+                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
+                                        >
+                                            <option value="most-loved">Most Loved Idols</option>
+                                            <option value="navratri">Navratri Drop</option>
+                                            <option value="sacred">Sacred Idols</option>
+                                            <option value="baal-roop">Baal Roop Collection</option>
+                                            <option value="similar">General Catalog</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-700 block mb-1">STOCK STATUS</label>
+                                        <select
+                                            value={editingProduct.stock_status || 'in_stock'}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, stock_status: e.target.value })}
+                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black font-semibold"
+                                        >
+                                            <option value="in_stock">In Stock (Ready to Dispatch)</option>
+                                            <option value="made_to_order">Made to Order (7-10 Days Karigari)</option>
+                                            <option value="out_of_stock">Out of Stock</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-stone-50 rounded-xl border border-stone-200">
+                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(editingProduct.is_active)}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, is_active: e.target.checked })}
+                                            className="w-4 h-4 accent-[#161616] rounded"
+                                        />
+                                        <span>Active on Store</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(editingProduct.pran_pratishtha_ready)}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, pran_pratishtha_ready: e.target.checked })}
+                                            className="w-4 h-4 accent-[#161616] rounded"
+                                        />
+                                        <span>Pran Pratishtha Ready</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+                                        <input
+                                            type="checkbox"
+                                            checked={Boolean(editingProduct.gold_leaf_karigari)}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, gold_leaf_karigari: e.target.checked })}
+                                            className="w-4 h-4 accent-[#161616] rounded"
+                                        />
+                                        <span>24K Gold Karigari</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* SECTION 3: SIZES & MEASUREMENTS (Req #1.2, #1.3, #1.5) */}
+                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3.5">
+                                <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                                    <div className="flex items-center gap-2">
+                                        <Tag className="w-4 h-4 text-[#C69722]" />
+                                        <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
+                                            3. Sizes & Measurements
+                                        </h4>
+                                    </div>
+                                    <span className="text-[10px] text-stone-400">Req 1.2, 1.3 & 1.5</span>
+                                </div>
+
+                                {/* Measurement Units & Master Sizes Grid */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="text-[11px] font-bold text-stone-700 block mb-1">
+                                            MEASUREMENT UNIT * (Req 1.5)
+                                        </label>
+                                        <select
+                                            value={editingProduct.measurement_unit || 'in'}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, measurement_unit: e.target.value })}
+                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white font-bold text-[#8E5B00] focus:outline-none focus:border-black"
+                                        >
+                                            <option value="in">Inches (in)</option>
+                                            <option value="ft">Feet (ft)</option>
+                                            <option value="m">Meters (m)</option>
+                                            <option value="cm">Centimeters (cm)</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[11px] font-bold text-stone-600 block mb-1">
+                                            LINKED MASTER SIZE TAG (Req 1.2)
+                                        </label>
+                                        <select
+                                            value={editingProduct.size_id || ''}
+                                            onChange={(e) => {
+                                                const selectedSize = sizes.find(s => s.id === e.target.value);
+                                                setEditingProduct({
+                                                    ...editingProduct,
+                                                    size_id: e.target.value,
+                                                    dimensions: selectedSize ? `${selectedSize.height_inches} ${editingProduct.measurement_unit || selectedSize.unit || 'in'} Height • ${selectedSize.label}` : editingProduct.dimensions
+                                                });
+                                            }}
+                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
+                                        >
+                                            <option value="">-- Choose Master Size --</option>
+                                            {sizes.map(s => (
+                                                <option key={s.id} value={s.id}>
+                                                    {s.label} ({s.height_inches} {editingProduct.measurement_unit || s.unit || 'in'})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[11px] font-bold text-stone-600 block mb-1">
+                                            PHYSICAL MEASUREMENTS (TEXT)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={editingProduct.dimensions || ''}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, dimensions: e.target.value })}
+                                            placeholder="e.g. 12 in x 8 in x 4 in"
+                                            className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Available Sizes Dropdown & Chips (Req 1.3) */}
+                                <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-stone-200 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                            Available Sizes for Customers (Storefront Selector)
+                                        </label>
+                                        <span className="text-[10px] text-stone-500">
+                                            {(editingProduct.available_sizes || []).length} Sizes Selected
+                                        </span>
+                                    </div>
+
+                                    {/* Chips */}
+                                    <div className="flex flex-wrap gap-1.5 min-h-[30px] items-center">
+                                        {(editingProduct.available_sizes || []).length === 0 ? (
+                                            <span className="text-xs text-stone-400 italic">No available sizes selected yet. Pick from the dropdown below or type custom.</span>
+                                        ) : (
+                                            (editingProduct.available_sizes || []).map((sz, szIdx) => (
+                                                <span
+                                                    key={szIdx}
+                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-300 text-xs font-semibold text-stone-900 shadow-2xs"
+                                                >
+                                                    <span>{sz}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const updated = (editingProduct.available_sizes || []).filter((_, i) => i !== szIdx);
+                                                            setEditingProduct({ ...editingProduct, available_sizes: updated });
+                                                        }}
+                                                        className="text-stone-400 hover:text-rose-600 transition font-bold"
+                                                        title="Remove size option"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </span>
+                                            ))
+                                        )}
+                                    </div>
+
+                                    {/* Dropdown Selector */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                                        <select
+                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white font-medium focus:outline-none focus:border-black"
+                                            onChange={(e) => {
+                                                if (!e.target.value) return;
+                                                const current = editingProduct.available_sizes || [];
+                                                if (!current.includes(e.target.value)) {
+                                                    setEditingProduct({
+                                                        ...editingProduct,
+                                                        available_sizes: [...current, e.target.value]
+                                                    });
+                                                }
+                                                e.target.value = '';
+                                            }}
+                                        >
+                                            <option value="">+ Select from Master Sizes...</option>
+                                            {sizes.map(s => (
+                                                <option key={s.id} value={`${s.height_inches} ${editingProduct.measurement_unit || s.unit || 'in'} (${s.label})`}>
+                                                    {s.label} ({s.height_inches} {editingProduct.measurement_unit || s.unit || 'in'})
+                                                </option>
+                                            ))}
+                                        </select>
+
+                                        <div className="flex gap-1.5">
+                                            <input
+                                                type="text"
+                                                value={customSizeInput}
+                                                onChange={(e) => setCustomSizeInput(e.target.value)}
+                                                placeholder="Or type custom size (e.g. 15 cm Home Mandir)"
+                                                className="flex-1 px-3 py-1.5 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.preventDefault();
+                                                        if (customSizeInput.trim()) {
+                                                            const current = editingProduct.available_sizes || [];
+                                                            if (!current.includes(customSizeInput.trim())) {
+                                                                setEditingProduct({
+                                                                    ...editingProduct,
+                                                                    available_sizes: [...current, customSizeInput.trim()]
+                                                                });
+                                                            }
+                                                            setCustomSizeInput('');
+                                                        }
+                                                    }
+                                                }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (customSizeInput.trim()) {
+                                                        const current = editingProduct.available_sizes || [];
+                                                        if (!current.includes(customSizeInput.trim())) {
+                                                            setEditingProduct({
+                                                                ...editingProduct,
+                                                                available_sizes: [...current, customSizeInput.trim()]
+                                                            });
+                                                        }
+                                                        setCustomSizeInput('');
+                                                    }
+                                                }}
+                                                className="px-3 py-1.5 rounded-xl bg-[#161616] text-[#F7C600] hover:bg-black text-xs font-bold transition shrink-0"
+                                            >
+                                                + Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Custom Size Variants & Dynamic Pricing */}
+                                <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                                Size Variants with Custom Pricing (Optional)
+                                            </label>
+                                            <span className="text-[10px] text-stone-500">
+                                                Assign distinct prices per idol size variant
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const currentVariants = Array.isArray(editingProduct.variants) ? [...editingProduct.variants] : [];
+                                                const defaultLabel = sizes[0] ? `${sizes[0].height_inches}" (${sizes[0].label})` : '15 cm (Home Mandir)';
+                                                setEditingProduct({
+                                                    ...editingProduct,
+                                                    variants: [
+                                                        ...currentVariants,
+                                                        {
+                                                            variant_name: defaultLabel,
+                                                            size_id: sizes[0]?.id || '',
+                                                            price: (editingProduct.price || 1499) + 600,
+                                                            discount_price: (editingProduct.old_price || 2499) + 600,
+                                                            is_available: true
+                                                        }
+                                                    ]
+                                                });
+                                            }}
+                                            className="px-2.5 py-1 rounded-lg bg-[#161616] text-[#F7C600] hover:bg-black text-xs font-bold transition flex items-center gap-1 shadow-2xs"
+                                        >
+                                            <Plus className="w-3 h-3" />
+                                            <span>Add Variant</span>
+                                        </button>
+                                    </div>
+
+                                    {Array.isArray(editingProduct.variants) && editingProduct.variants.length > 0 ? (
+                                        <div className="space-y-2">
+                                            {editingProduct.variants.map((variant, vIdx) => (
+                                                <div key={vIdx} className="p-2.5 bg-white rounded-lg border border-stone-200 flex flex-col sm:flex-row items-center gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={variant.variant_name || ''}
+                                                        onChange={(e) => {
+                                                            const updated = [...editingProduct.variants];
+                                                            updated[vIdx] = { ...updated[vIdx], variant_name: e.target.value };
+                                                            setEditingProduct({ ...editingProduct, variants: updated });
+                                                        }}
+                                                        placeholder="Variant name"
+                                                        className="flex-1 w-full sm:w-auto px-2.5 py-1.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-black"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        value={variant.price || ''}
+                                                        onChange={(e) => {
+                                                            const updated = [...editingProduct.variants];
+                                                            updated[vIdx] = { ...updated[vIdx], price: parseFloat(e.target.value) || 0 };
+                                                            setEditingProduct({ ...editingProduct, variants: updated });
+                                                        }}
+                                                        placeholder="Price (₹)"
+                                                        className="w-full sm:w-24 px-2 py-1.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-black"
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        value={variant.discount_price || ''}
+                                                        onChange={(e) => {
+                                                            const updated = [...editingProduct.variants];
+                                                            updated[vIdx] = { ...updated[vIdx], discount_price: parseFloat(e.target.value) || 0 };
+                                                            setEditingProduct({ ...editingProduct, variants: updated });
+                                                        }}
+                                                        placeholder="Old Price (₹)"
+                                                        className="w-full sm:w-24 px-2 py-1.5 border rounded-lg text-xs text-stone-500 focus:outline-none focus:border-black"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const updated = editingProduct.variants.filter((_, idx) => idx !== vIdx);
+                                                            setEditingProduct({ ...editingProduct, variants: updated });
+                                                        }}
+                                                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
+                                                        title="Remove variant"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : null}
+                                </div>
+                            </div>
+
+                            {/* SECTION 4: PRICING & DISCOUNTS */}
+                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3">
+                                <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
+                                    <Tag className="w-4 h-4 text-[#C69722]" />
+                                    <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
+                                        4. Pricing & Discounts
+                                    </h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-700 block mb-1">PRICE (₹) *</label>
+                                        <input
+                                            type="number"
+                                            required
+                                            value={editingProduct.price}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
+                                            className="w-full px-3 py-2 border rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-black"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-700 block mb-1">OLD PRICE (₹)</label>
+                                        <input
+                                            type="number"
+                                            value={editingProduct.old_price || ''}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, old_price: parseFloat(e.target.value) || 0 })}
+                                            className="w-full px-3 py-2 border rounded-xl text-xs text-stone-500 focus:outline-none focus:border-black"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-700 block mb-1">DISCOUNT TEXT</label>
+                                        <input
+                                            type="text"
+                                            value={editingProduct.off_text || ''}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, off_text: e.target.value })}
+                                            placeholder="e.g. 40% off"
+                                            className="w-full px-3 py-2 border rounded-xl text-xs font-bold text-emerald-700 focus:outline-none focus:border-black"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* SECTION 5: PRODUCT IMAGES & ALTERNATE ANGLES (Req #1.4, #1.6, #3.4) */}
+                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-4">
+                                <div className="flex items-center justify-between border-b border-stone-100 pb-2">
+                                    <div className="flex items-center gap-2">
+                                        <ImageIcon className="w-4 h-4 text-[#C69722]" />
+                                        <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
+                                            5. Product Images & Alternate Angles
+                                        </h4>
+                                    </div>
+                                    <span className="text-[10px] text-stone-400">Drag & Drop Ready (Req 1.6)</span>
+                                </div>
+
+                                {/* Primary Image Uploader */}
+                                <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-stone-200 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                            PRIMARY HERO / THUMBNAIL IMAGE
+                                        </label>
+                                        <span className="text-[10px] text-stone-500">Main Storefront Card Image</span>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                                        {editingProduct.primary_catalog_image ? (
+                                            <div className="relative group w-20 h-20 rounded-xl overflow-hidden border border-stone-300 bg-white flex-shrink-0 flex items-center justify-center p-1 shadow-2xs">
+                                                <img
+                                                    src={api.getImageUrl(editingProduct.primary_catalog_image)}
+                                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
+                                                    alt="Primary"
+                                                    className="w-full h-full object-contain"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEditingProduct({ ...editingProduct, primary_catalog_image: '' })}
+                                                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow"
+                                                    title="Remove"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="w-20 h-20 rounded-xl border-2 border-dashed border-stone-300 bg-white/70 flex flex-col items-center justify-center text-stone-400 text-[10px] flex-shrink-0">
+                                                <ImageIcon className="w-6 h-6 stroke-1 mb-0.5 text-stone-400" />
+                                                <span>No Image</span>
+                                            </div>
+                                        )}
+
+                                        <div className="flex-1 w-full">
+                                            <ImageDropzone
+                                                label="Upload Primary Photo"
+                                                sublabel="Drag & drop file here or click to browse"
+                                                isUploading={uploadingPrimary}
+                                                onUpload={async (file) => {
+                                                    setUploadingPrimary(true);
+                                                    const url = await handleFileUpload(file, 'catalog');
+                                                    if (url) {
+                                                        setEditingProduct(prev => ({
+                                                            ...prev,
+                                                            primary_catalog_image: url,
+                                                            img: url
+                                                        }));
+                                                    }
+                                                    setUploadingPrimary(false);
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Multi-Angle Gallery */}
+                                <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-stone-200 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                                Multi-Angle Gallery (Alternate Perspectives)
+                                            </label>
+                                            <span className="text-[10.5px] text-stone-500">
+                                                Uploaded angles will be displayed on the customer product detail page
+                                            </span>
+                                        </div>
+                                        <span className="text-xs font-bold text-[#8E5B00]">
+                                            {(editingProduct.catalog_images || []).length} Angles
+                                        </span>
+                                    </div>
+
+                                    <ImageDropzone
+                                        multiple={true}
+                                        label="+ Drop Angle Photos Here (Multiple Files Supported)"
+                                        sublabel="Drag multiple alternate angles or browse files"
+                                        isUploading={uploadingCatalogAngle}
+                                        onUpload={async (file) => {
+                                            setUploadingCatalogAngle(true);
+                                            const url = await handleFileUpload(file, 'catalog');
+                                            if (url) {
+                                                setEditingProduct(prev => {
+                                                    const currentImages = prev.catalog_images || [];
+                                                    return {
+                                                        ...prev,
+                                                        catalog_images: [
+                                                            ...currentImages,
+                                                            {
+                                                                url: url,
+                                                                caption: `Angle ${currentImages.length + 1} - Sacred Detail`,
+                                                                sort_order: currentImages.length + 1
+                                                            }
+                                                        ]
+                                                    };
+                                                });
+                                            }
+                                            setUploadingCatalogAngle(false);
+                                        }}
+                                    />
+
+                                    {(!editingProduct.catalog_images || editingProduct.catalog_images.length === 0) ? (
+                                        <div className="text-center py-4 text-xs text-stone-400 bg-white rounded-xl border border-dashed border-stone-200">
+                                            No additional angles added yet. Drop photos above!
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1" data-lenis-prevent="true">
+                                            {editingProduct.catalog_images.map((img, idx) => (
+                                                <div key={idx} className="flex flex-col sm:flex-row items-center gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-2xs">
+                                                    <img
+                                                        src={api.getImageUrl(img.url)}
+                                                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = editingProduct.primary_catalog_image || '/images/products/ram-darbar.png'; }}
+                                                        alt=""
+                                                        className="w-12 h-12 object-contain rounded-lg bg-stone-50 border p-0.5 flex-shrink-0"
+                                                    />
+                                                    <div className="flex-1 w-full space-y-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <input
+                                                                type="text"
+                                                                value={img.caption || ''}
+                                                                onChange={(e) => {
+                                                                    const updated = [...editingProduct.catalog_images];
+                                                                    updated[idx] = { ...updated[idx], caption: e.target.value };
+                                                                    setEditingProduct({ ...editingProduct, catalog_images: updated });
+                                                                }}
+                                                                placeholder="Caption (e.g. Front Sacred View, 24K Gold Detailing)"
+                                                                className="flex-1 px-2.5 py-1.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-black"
+                                                            />
+                                                            <label className="cursor-pointer px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-bold flex items-center gap-1 transition flex-shrink-0">
+                                                                <Upload className="w-3 h-3 text-stone-600" />
+                                                                <span>Replace</span>
+                                                                <input
+                                                                    type="file"
+                                                                    accept="image/*"
+                                                                    className="hidden"
+                                                                    onChange={async (e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (file) {
+                                                                            const url = await handleFileUpload(file, 'catalog');
+                                                                            if (url) {
+                                                                                const updated = [...editingProduct.catalog_images];
+                                                                                updated[idx] = { ...updated[idx], url };
+                                                                                setEditingProduct({ ...editingProduct, catalog_images: updated });
+                                                                            }
+                                                                            e.target.value = '';
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveCatalogImage(idx)}
+                                                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
+                                                        title="Delete this catalog angle"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* SECTION 6: RATINGS & REVIEW SETTINGS */}
+                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3">
+                                <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
+                                    <Star className="w-4 h-4 text-[#C69722]" />
+                                    <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
+                                        6. Ratings & Review Settings
+                                    </h4>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-700 block mb-1">
+                                            PRODUCT RATING MODE
+                                        </label>
+                                        <select
+                                            value={editingProduct.rating_mode || 'enabled'}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, rating_mode: e.target.value })}
+                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
+                                        >
+                                            <option value="enabled">Enabled (View & Submit)</option>
+                                            <option value="read_only">Static (Read-Only Mode)</option>
+                                            <option value="hidden">Hidden (Turned Off)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-stone-700 block mb-1">
+                                            STATIC RATING VALUE (1.0 - 5.0)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.05"
+                                            min="1"
+                                            max="5"
+                                            value={editingProduct.static_rating_value ?? 5.0}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, static_rating_value: parseFloat(e.target.value) || 5.0 })}
+                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black font-bold"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        {/* Sticky Footer */}
+                        <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t border-stone-200 bg-stone-50/95 backdrop-blur-xs flex-shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setEditingProduct(null)}
+                                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-200/70 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                form="admin-product-edit-form"
+                                className="px-6 py-2.5 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider hover:bg-black transition shadow-sm active:scale-98"
+                            >
+                                {editingProduct.id ? 'Save Changes' : 'Create Product'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Hoisted Deity Category Modal (Req #1.1: Add Category Works from Everywhere) */}
+            {editingCategory && (
+                <div 
+                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setEditingCategory(null); }}
+                >
+                    <div 
+                        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
+                        data-lenis-prevent="true"
+                    >
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-[#FAF8F5] flex-shrink-0">
+                            <h3 className="font-serif text-lg font-bold text-stone-900">
+                                {editingCategory.id ? 'Edit Category Images & Details' : 'Add New Deity Category'}
+                            </h3>
+                            <button 
+                                type="button" 
+                                onClick={() => setEditingCategory(null)} 
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition"
+                                title="Close modal"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form 
+                            id="admin-category-edit-form"
+                            onSubmit={handleSaveCategory} 
+                            className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 overscroll-contain"
+                            data-lenis-prevent="true"
+                        >
+                            <div>
+                                <label className="text-xs font-bold text-stone-700 block mb-1">DEITY / CATEGORY NAME *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editingCategory.name || ''}
+                                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                                    placeholder="e.g. Ram Darbar, Radha Krishna, Lord Shiva"
+                                    className="w-full px-3 py-2 border rounded-xl text-xs font-semibold focus:outline-none focus:border-black"
+                                />
+                            </div>
+
+                            {/* Circle Icon Thumbnail with Drag & Drop */}
+                            <div>
+                                <label className="text-xs font-bold text-stone-700 block mb-1">
+                                    CIRCLE ICON THUMBNAIL
+                                </label>
+                                <div className="flex items-center gap-3">
+                                    {editingCategory.img ? (
+                                        <div className="w-14 h-14 rounded-full border border-stone-300 bg-stone-50 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
+                                            <img
+                                                src={api.getImageUrl(editingCategory.img)}
+                                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/categories/ram.png'; }}
+                                                alt=""
+                                                className="w-full h-full object-contain"
+                                            />
+                                        </div>
+                                    ) : null}
+                                    <div className="flex-1">
+                                        <ImageDropzone
+                                            label="Upload Category Icon"
+                                            sublabel="Square or round icon for category scroller"
+                                            isUploading={uploadingCatIcon}
+                                            onUpload={async (file) => {
+                                                setUploadingCatIcon(true);
+                                                const url = await handleFileUpload(file, 'categories');
+                                                if (url) setEditingCategory(prev => ({ ...prev, img: url }));
+                                                setUploadingCatIcon(false);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Hero Landing Banner Image with Drag & Drop */}
+                            <div>
+                                <label className="text-xs font-bold text-stone-700 block mb-1">
+                                    HERO LANDING BANNER IMAGE
+                                </label>
+                                <div className="space-y-2">
+                                    {editingCategory.banner_url ? (
+                                        <div className="h-20 rounded-xl border border-stone-300 overflow-hidden bg-stone-50 flex items-center justify-center">
+                                            <img
+                                                src={api.getImageUrl(editingCategory.banner_url)}
+                                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/categories/navratri-drop@2x.png'; }}
+                                                alt="Banner"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    ) : null}
+                                    <ImageDropzone
+                                        label="Upload Category Hero Banner"
+                                        sublabel="Wide landscape banner image"
+                                        isUploading={uploadingCatBanner}
+                                        onUpload={async (file) => {
+                                            setUploadingCatBanner(true);
+                                            const url = await handleFileUpload(file, 'banners');
+                                            if (url) setEditingCategory(prev => ({ ...prev, banner_url: url }));
+                                            setUploadingCatBanner(false);
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">SORT ORDER</label>
+                                    <input
+                                        type="number"
+                                        value={editingCategory.sort_order || 0}
+                                        onChange={(e) => setEditingCategory({ ...editingCategory, sort_order: parseInt(e.target.value, 10) || 0 })}
+                                        className="w-full px-3 py-2 border rounded-xl text-xs"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">ACTIVE STATUS</label>
+                                    <select
+                                        value={editingCategory.is_active ? 'true' : 'false'}
+                                        onChange={(e) => setEditingCategory({ ...editingCategory, is_active: e.target.value === 'true' })}
+                                        className="w-full px-3 py-2 border rounded-xl text-xs bg-white"
+                                    >
+                                        <option value="true">Active on Store</option>
+                                        <option value="false">Hidden / Draft</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-stone-200 bg-stone-50/95 flex-shrink-0">
+                            <button 
+                                type="button" 
+                                onClick={() => setEditingCategory(null)} 
+                                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-200/70 transition"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                type="submit" 
+                                form="admin-category-edit-form"
+                                className="px-5 py-2 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider hover:bg-black transition shadow-sm active:scale-98"
+                            >
+                                {editingCategory.id ? 'Save Category' : 'Create Category'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Hoisted Master Size Modal (Req #1.2 & #1.5) */}
+            {editingSize && (
+                <div 
+                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setEditingSize(null); }}
+                >
+                    <div 
+                        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-md shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
+                        data-lenis-prevent="true"
+                    >
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-[#FAF8F5]">
+                            <h3 className="font-serif text-lg font-bold text-stone-900">Edit Master Size</h3>
+                            <button 
+                                type="button" 
+                                onClick={() => setEditingSize(null)} 
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveEditSize} className="p-5 space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-stone-700 block mb-1">SIZE LABEL *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={editingSize.label}
+                                    onChange={(e) => setEditingSize({ ...editingSize, label: e.target.value })}
+                                    className="w-full px-3 py-2 border rounded-xl text-xs font-semibold"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">UNIT * (Req 1.5)</label>
+                                    <select
+                                        value={editingSize.unit || 'in'}
+                                        onChange={(e) => setEditingSize({ ...editingSize, unit: e.target.value })}
+                                        className="w-full px-3 py-2 border rounded-xl text-xs bg-white font-bold text-[#8E5B00]"
+                                    >
+                                        <option value="in">Inches (in)</option>
+                                        <option value="ft">Feet (ft)</option>
+                                        <option value="m">Meters (m)</option>
+                                        <option value="cm">Centimeters (cm)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">NUMERIC VALUE *</label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        required
+                                        value={editingSize.size_value ?? editingSize.height_inches ?? 12.0}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value) || 0;
+                                            setEditingSize({
+                                                ...editingSize,
+                                                size_value: val,
+                                                height_inches: editingSize.unit === 'ft' ? val * 12 : editingSize.unit === 'cm' ? val / 2.54 : editingSize.unit === 'm' ? val * 39.37 : val
+                                            });
+                                        }}
+                                        className="w-full px-3 py-2 border rounded-xl text-xs font-bold"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">HEIGHT (INCHES)</label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        required
+                                        value={editingSize.height_inches}
+                                        onChange={(e) => setEditingSize({ ...editingSize, height_inches: parseFloat(e.target.value) || 0 })}
+                                        className="w-full px-3 py-2 border rounded-xl text-xs"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">SORT ORDER</label>
+                                    <input
+                                        type="number"
+                                        value={editingSize.sort_order}
+                                        onChange={(e) => setEditingSize({ ...editingSize, sort_order: parseInt(e.target.value, 10) || 1 })}
+                                        className="w-full px-3 py-2 border rounded-xl text-xs"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-stone-700 block mb-1">DESCRIPTION</label>
+                                <input
+                                    type="text"
+                                    value={editingSize.description || ''}
+                                    onChange={(e) => setEditingSize({ ...editingSize, description: e.target.value })}
+                                    className="w-full px-3 py-2 border rounded-xl text-xs"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingSize(null)}
+                                    className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-5 py-2 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+{/* Modal: Render Backend Server Connection (Accessible anytime from top navbar) */}
             {isConfiguringServer && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
                     <div className="bg-[#24201C] border border-[#DFC48D]/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl text-white space-y-5 animate-in zoom-in-95 duration-200">

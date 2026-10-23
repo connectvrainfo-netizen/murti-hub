@@ -193,22 +193,28 @@ def link_product_to_festival(festival_id: str, payload: FestivalSectionItemCreat
     murti_img = None
     orig_price = None
     murti_found = False
+    clean_murti_id = str(payload.murti_id).replace("legacy-", "")
+    target_ids = {str(payload.murti_id), clean_murti_id, f"legacy-{clean_murti_id}"}
 
     for p in local_store.murtis:
-        if str(p.get("id")) == payload.murti_id or str(p.get("legacy_id")) == payload.murti_id:
+        p_id = str(p.get("id", ""))
+        p_legacy = str(p.get("legacy_id", ""))
+        p_slug = str(p.get("slug", ""))
+        if p_id in target_ids or p_legacy in target_ids or f"legacy-{p_legacy}" in target_ids or p_slug in target_ids:
             murti_title = p.get("title")
-            murti_img = p.get("primary_catalog_image")
+            murti_img = p.get("primary_catalog_image") or p.get("img") or "/images/products/ram-darbar.png"
             orig_price = p.get("price")
             murti_found = True
+            item_dict["murti_id"] = p.get("id") or payload.murti_id
             break
 
     if not murti_found and is_supabase_connected():
         try:
             client = get_supabase()
-            m_res = client.table("murtis").select("title, primary_catalog_image, price").eq("id", payload.murti_id).execute()
+            m_res = client.table("murtis").select("title, primary_catalog_image, price").or_(f"id.eq.{payload.murti_id},id.eq.{clean_murti_id}").execute()
             if m_res.data and len(m_res.data) > 0:
                 murti_title = m_res.data[0].get("title")
-                murti_img = m_res.data[0].get("primary_catalog_image")
+                murti_img = m_res.data[0].get("primary_catalog_image") or "/images/products/ram-darbar.png"
                 orig_price = m_res.data[0].get("price")
                 murti_found = True
         except Exception as e:
@@ -218,7 +224,7 @@ def link_product_to_festival(festival_id: str, payload: FestivalSectionItemCreat
         raise NotFoundError("Product", payload.murti_id)
             
     item_dict["murti_title"] = murti_title
-    item_dict["murti_image"] = murti_img
+    item_dict["murti_image"] = murti_img or "/images/products/ram-darbar.png"
     item_dict["original_price"] = orig_price
     
     if is_supabase_connected():
@@ -253,11 +259,14 @@ def unlink_product_from_festival(festival_id: str, murti_id: str, admin: dict = 
     """
     Req #6: Remove product from festival section.
     """
+    clean_id = str(murti_id).replace("legacy-", "")
+    target_ids = {str(murti_id), clean_id, f"legacy-{clean_id}"}
     deleted = False
+
     if is_supabase_connected():
         try:
             client = get_supabase()
-            res = client.table("festival_section_items").delete().eq("festival_id", festival_id).eq("murti_id", murti_id).execute()
+            res = client.table("festival_section_items").delete().eq("festival_id", festival_id).or_(f"murti_id.eq.{murti_id},murti_id.eq.{clean_id}").execute()
             if res.data and len(res.data) > 0:
                 deleted = True
         except Exception as e:
@@ -266,7 +275,11 @@ def unlink_product_from_festival(festival_id: str, murti_id: str, admin: dict = 
     for f in local_store.festival_sections:
         if f["id"] == festival_id and "items" in f:
             orig_len = len(f["items"])
-            f["items"] = [i for i in f["items"] if i.get("murti_id") != murti_id]
+            f["items"] = [
+                i for i in f["items"]
+                if str(i.get("murti_id", "")) not in target_ids
+                and str(i.get("id", "")) != murti_id
+            ]
             if len(f["items"]) < orig_len:
                 deleted = True
                 local_store.save()

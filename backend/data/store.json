@@ -2,13 +2,22 @@
   "site_settings": {
     "id": 1,
     "site_title": "Amol Marble Murti Bhandar - Sacred Jaipur Murtis",
-    "whatsapp_number": "+917020676423",
-    "whatsapp_default_message": "Namaste",
+    "whatsapp_number": "+919876543210",
+    "whatsapp_default_message": "TestMessage",
     "global_rating_mode": "enabled",
     "support_email": "support@amolmurtibhandar.com",
     "showroom_address": "Khazane Walon Ka Rasta, Jaipur, Rajasthan 302001",
     "banner_announcement": "Zero-Breakage Crating Guarantee across all 19,000+ PIN codes across India",
-    "updated_at": "2026-10-21T16:15:00.671076+00:00"
+    "updated_at": "2026-10-23T10:51:37.961970+00:00",
+    "collection_badge": "HAND-CARVED BY NATIONAL AWARD ARTISANS",
+    "collection_title": "DIVINE MAKRANA SACRED COLLECTION 2026",
+    "collection_subtitle": "Consecrated Heritage Masterpieces",
+    "collection_description": "Exclusive hand-sculpted Makrana marble murtis with 24K real gold leaf work.",
+    "collection_price_from": "₹45,000",
+    "collection_old_price": "₹65,000",
+    "collection_discount_text": "30% CONSECRATION DISCOUNT",
+    "collection_tag": "LIMITED EDITION 2026",
+    "collection_image_url": "uploads/banners/sacred-collection-hero.jpg"
   },
   "master_sizes": [
     {
@@ -145,6 +154,84 @@
       "id": "b0beb718-105c-476c-abcf-ef2da18df7c4",
       "created_at": "2026-10-21T16:15:00.697338+00:00",
       "updated_at": "2026-10-21T16:15:00.697338+00:00"
+    },
+    {
+      "label": "Test 2 Feet Grand Altar",
+      "height_inches": 24.0,
+      "description": "Large altar murti",
+      "sort_order": 6,
+      "is_active": true,
+      "id": "971cdae5-ee8f-42fa-968c-f55da8a29967",
+      "created_at": "2026-10-23T08:18:23.416916+00:00",
+      "updated_at": "2026-10-23T08:18:23.416916+00:00"
+    },
+    {
+      "label": "21 Inches (Grand Home Mandir)",
+      "height_inches": 21.0,
+      "description": "Hand-carved Makrana marble idol for grand home temple altars.",
+      "sort_order": 6,
+      "is_active": true,
+      "id": "469f44f0-e626-4e36-9fc3-bc3c78fe36a7",
+      "created_at": "2026-10-23T08:18:58.789844+00:00",
+      "updated_at": "2026-10-23T08:18:58.789844+00:00"
+    },
+    {
+      "label": "Test 2 Feet Grand Altar",
+      "height_inches": 24.0,
+      "description": "Large altar murti",
+      "sort_order": 6,
+      "is_active": true,
+      "id": "2f830ab1-0055-43be-9c36-03cd786015f3",
+      "created_at": "2026-10-23T10:00:50.478852+00:00",
+      "updated_at": "2026-10-23T10:00:50.478852+00:00"
+    },
+    {
+      "label": "36 Inches (3 Feet)",
+      "height_inches": null,
+      "unit": "in",
+      "size_value": 36.0,
+      "description": null,
+      "sort_order": 0,
+      "is_active": true,
+      "id": "07f6ecde-1800-4d58-89c6-35aa00df2d1e",
+      "created_at": "2026-10-23T10:44:47.745176+00:00",
+      "updated_at": "2026-10-23T10:44:47.745176+00:00"
+    },
+    {
+      "label": "36 Inches (3 Feet)",
+      "height_inches": null,
+      "unit": "in",
+      "size_value": 36.0,
+      "description": null,
+      "sort_order": 0,
+      "is_active": true,
+      "id": "d698a9da-c3f1-43bd-8a3d-de5108e6d6ae",
+      "created_at": "2026-10-23T10:46:10.918672+00:00",
+      "updated_at": "2026-10-23T10:46:10.918672+00:00"
+    },
+    {
+      "label": "36 Inches (3 Feet)",
+      "height_inches": null,
+      "unit": "in",
+      "size_value": 36.0,
+      "description": null,
+      "sort_order": 0,
+      "is_active": true,
+      "id": "e6cb399c-d826-46e0-9148-d6a45d76ffe5",
+      "created_at": "2026-10-23T10:46:48.471699+00:00",
+      "updated_at": "2026-10-23T10:46:48.471699+00:00"
+    },
+    {
+      "label": "36 Inches (3 Feet)",
+      "height_inches": null,
+      "unit": "in",
+      "size_value": 36.0,
+      "description": null,
+      "sort_order": 0,
+      "is_active": true,
+      "id": "f1878a84-b6f0-49e1-9c17-3d574004f210",
+      "created_at": "2026-10-23T10:51:37.933829+00:00",
+      "updated_at": "2026-10-23T10:51:37.933829+00:00"
     }
   ],
   "categories": [
@@ -162,16 +249,16 @@
     },
     {
       "id": "22222222-2222-2222-2222-222222220002",
-      "name": "Shri Gajanan Maharaj Shegaon",
+      "name": "Navratri Festive Drop 2026",
       "slug": "navratri-drop",
       "deity": "Durga",
       "route": "navratri",
       "img": "/images/categories/navratri-drop@2x.png",
-      "banner_url": "/images/categories/gajanan-maharaj@2x.png",
+      "banner_url": "/images/categories/navratri-new-banner.jpg",
       "description": "Sacred avatars and idols of Sant Shiromani Shri Gajanan Maharaj.",
       "sort_order": 2,
       "is_active": true,
-      "updated_at": "2026-10-21T16:15:00.706874+00:00"
+      "updated_at": "2026-10-23T10:00:50.492503+00:00"
     },
     {
       "id": "22222222-2222-2222-2222-222222220003",
@@ -282,9 +369,404 @@
       "id": "75eda166-5953-43d4-8222-f79ffb9e5440",
       "created_at": "2026-10-21T16:17:27.094052+00:00",
       "updated_at": "2026-10-22T11:57:02.276455+00:00"
+    },
+    {
+      "name": "Test Ganpati Bappa",
+      "slug": "test-ganpati-bappa",
+      "deity": null,
+      "route": "shop-all",
+      "img": null,
+      "banner_url": "https://example.com/banner.jpg",
+      "description": "Exquisite white marble Ganesha idols",
+      "sort_order": 0,
+      "is_active": true,
+      "id": "857662a9-5894-40a7-9dfb-82eebf8c837b",
+      "created_at": "2026-10-23T10:44:12.536040+00:00",
+      "updated_at": "2026-10-23T10:44:12.536040+00:00"
+    },
+    {
+      "name": "Test Ganpati Bappa",
+      "slug": "test-ganpati-bappa",
+      "deity": null,
+      "route": "shop-all",
+      "img": null,
+      "banner_url": "https://example.com/banner.jpg",
+      "description": "Exquisite white marble Ganesha idols",
+      "sort_order": 0,
+      "is_active": true,
+      "id": "7ef41b05-2383-48bb-a85c-a9d86438c047",
+      "created_at": "2026-10-23T10:44:47.357489+00:00",
+      "updated_at": "2026-10-23T10:44:47.357489+00:00"
+    },
+    {
+      "name": "Test Ganpati Bappa",
+      "slug": "test-ganpati-bappa",
+      "deity": null,
+      "route": "shop-all",
+      "img": null,
+      "banner_url": "https://example.com/banner.jpg",
+      "description": "Exquisite white marble Ganesha idols",
+      "sort_order": 0,
+      "is_active": true,
+      "id": "98fc193f-5a55-4b52-a06c-874774ca343b",
+      "created_at": "2026-10-23T10:46:10.258894+00:00",
+      "updated_at": "2026-10-23T10:46:10.258894+00:00"
+    },
+    {
+      "name": "Test Ganpati Bappa",
+      "slug": "test-ganpati-bappa",
+      "deity": null,
+      "route": "shop-all",
+      "img": null,
+      "banner_url": "https://example.com/banner.jpg",
+      "description": "Exquisite white marble Ganesha idols",
+      "sort_order": 0,
+      "is_active": true,
+      "id": "17f10dfe-1c75-4f2a-aa24-2c5d9568b756",
+      "created_at": "2026-10-23T10:46:48.075941+00:00",
+      "updated_at": "2026-10-23T10:46:48.075941+00:00"
+    },
+    {
+      "name": "Test Ganpati Bappa",
+      "slug": "test-ganpati-bappa",
+      "deity": null,
+      "route": "shop-all",
+      "img": null,
+      "banner_url": "https://example.com/banner.jpg",
+      "description": "Exquisite white marble Ganesha idols",
+      "sort_order": 0,
+      "is_active": true,
+      "id": "087e75df-478a-4333-8fa4-61b69d6b2af3",
+      "created_at": "2026-10-23T10:51:37.544627+00:00",
+      "updated_at": "2026-10-23T10:51:37.544627+00:00"
     }
   ],
   "murtis": [
+    {
+      "title": "Divine White Makrana Ram Lalla",
+      "slug": "divine-white-makrana-ram-lalla-3c3da4",
+      "legacy_id": null,
+      "category_id": "087e75df-478a-4333-8fa4-61b69d6b2af3",
+      "deity": "Ram",
+      "group_tag": "most-loved",
+      "price": 125000.0,
+      "old_price": 150000.0,
+      "off_text": null,
+      "material": "Makrana Pure White Marble",
+      "description": null,
+      "dimensions": "36 x 24 x 14",
+      "measurement_unit": "in",
+      "size_id": "f1878a84-b6f0-49e1-9c17-3d574004f210",
+      "available_sizes": [
+        "12 in",
+        "24 in",
+        "36 in",
+        "48 in"
+      ],
+      "weight": "850 grams",
+      "pran_pratishtha_ready": true,
+      "gold_leaf_karigari": true,
+      "primary_catalog_image": "uploads/products/ram-lalla-test.jpg",
+      "catalog_images": [
+        {
+          "url": "uploads/products/ram-lalla-angle1.jpg",
+          "caption": "Front Angle",
+          "sort_order": 1
+        },
+        {
+          "url": "uploads/products/ram-lalla-angle2.jpg",
+          "caption": "Side Profile",
+          "sort_order": 2
+        }
+      ],
+      "rating_mode": "enabled",
+      "static_rating_value": 5.0,
+      "static_reviews_count": 48,
+      "stock_status": "in_stock",
+      "is_featured": true,
+      "is_active": true,
+      "sort_order": 0,
+      "id": "3c3da4ab-f340-4a19-b5a7-c42130b8ab0a",
+      "created_at": "2026-10-23T10:51:37.954765+00:00",
+      "updated_at": "2026-10-23T10:51:37.954765+00:00",
+      "variants": []
+    },
+    {
+      "title": "Divine White Makrana Ram Lalla",
+      "slug": "divine-white-makrana-ram-lalla-f99f64",
+      "legacy_id": null,
+      "category_id": "17f10dfe-1c75-4f2a-aa24-2c5d9568b756",
+      "deity": "Ram",
+      "group_tag": "most-loved",
+      "price": 125000.0,
+      "old_price": 150000.0,
+      "off_text": null,
+      "material": "Makrana Pure White Marble",
+      "description": null,
+      "dimensions": "36 x 24 x 14",
+      "measurement_unit": "in",
+      "size_id": "e6cb399c-d826-46e0-9148-d6a45d76ffe5",
+      "available_sizes": [
+        "12 in",
+        "24 in",
+        "36 in",
+        "48 in"
+      ],
+      "weight": "850 grams",
+      "pran_pratishtha_ready": true,
+      "gold_leaf_karigari": true,
+      "primary_catalog_image": "uploads/products/ram-lalla-test.jpg",
+      "catalog_images": [
+        {
+          "url": "uploads/products/ram-lalla-angle1.jpg",
+          "caption": "Front Angle",
+          "sort_order": 1
+        },
+        {
+          "url": "uploads/products/ram-lalla-angle2.jpg",
+          "caption": "Side Profile",
+          "sort_order": 2
+        }
+      ],
+      "rating_mode": "enabled",
+      "static_rating_value": 5.0,
+      "static_reviews_count": 48,
+      "stock_status": "in_stock",
+      "is_featured": true,
+      "is_active": true,
+      "sort_order": 0,
+      "id": "f99f6467-b1df-4af4-828c-4cb0646524bc",
+      "created_at": "2026-10-23T10:46:48.492535+00:00",
+      "updated_at": "2026-10-23T10:46:48.492535+00:00",
+      "variants": []
+    },
+    {
+      "title": "Divine White Makrana Ram Lalla",
+      "slug": "divine-white-makrana-ram-lalla-6b7148",
+      "legacy_id": null,
+      "category_id": "98fc193f-5a55-4b52-a06c-874774ca343b",
+      "deity": "Ram",
+      "group_tag": "most-loved",
+      "price": 125000.0,
+      "old_price": 150000.0,
+      "off_text": null,
+      "material": "Makrana Pure White Marble",
+      "description": null,
+      "dimensions": "36 x 24 x 14",
+      "measurement_unit": "in",
+      "size_id": "d698a9da-c3f1-43bd-8a3d-de5108e6d6ae",
+      "available_sizes": [
+        "12 in",
+        "24 in",
+        "36 in",
+        "48 in"
+      ],
+      "weight": "850 grams",
+      "pran_pratishtha_ready": true,
+      "gold_leaf_karigari": true,
+      "primary_catalog_image": "uploads/products/ram-lalla-test.jpg",
+      "catalog_images": [
+        {
+          "url": "uploads/products/ram-lalla-angle1.jpg",
+          "caption": "Front Angle",
+          "sort_order": 1
+        },
+        {
+          "url": "uploads/products/ram-lalla-angle2.jpg",
+          "caption": "Side Profile",
+          "sort_order": 2
+        }
+      ],
+      "rating_mode": "enabled",
+      "static_rating_value": 5.0,
+      "static_reviews_count": 48,
+      "stock_status": "in_stock",
+      "is_featured": true,
+      "is_active": true,
+      "sort_order": 0,
+      "id": "6b71484b-8e02-4698-9475-e76a31bee600",
+      "created_at": "2026-10-23T10:46:10.941728+00:00",
+      "updated_at": "2026-10-23T10:46:10.941728+00:00",
+      "variants": []
+    },
+    {
+      "title": "Prabhu Ram Mandir Supreme Murti",
+      "slug": "prabhu-ram-mandir-supreme-murti-aec90f",
+      "legacy_id": null,
+      "category_id": null,
+      "deity": "Ram",
+      "group_tag": "most-loved",
+      "price": 2499.0,
+      "old_price": 3999.0,
+      "off_text": "37% off",
+      "material": "Pure White Makrana Marble",
+      "description": null,
+      "dimensions": "9 cm x 6 cm x 4 cm",
+      "weight": "850 grams",
+      "pran_pratishtha_ready": true,
+      "gold_leaf_karigari": true,
+      "primary_catalog_image": "/images/products/ram-darbar.png",
+      "catalog_images": [
+        {
+          "url": "/images/products/ram-darbar.png",
+          "caption": "Front Altar View",
+          "sort_order": 1
+        },
+        {
+          "url": "/images/products/ram-darbar.png",
+          "caption": "24K Gold Detailing Close-up",
+          "sort_order": 2
+        }
+      ],
+      "rating_mode": "enabled",
+      "static_rating_value": 5.0,
+      "static_reviews_count": 48,
+      "stock_status": "in_stock",
+      "is_featured": false,
+      "is_active": true,
+      "sort_order": 0,
+      "id": "aec90f16-8bf3-486f-a541-9610cdff3b01",
+      "created_at": "2026-10-23T10:00:50.504403+00:00",
+      "updated_at": "2026-10-23T10:00:50.504403+00:00",
+      "variants": [
+        {
+          "size_id": "2f830ab1-0055-43be-9c36-03cd786015f3",
+          "variant_name": "2 Feet Grand Altar",
+          "price": 5999.0,
+          "discount_price": null,
+          "variant_image_url": null,
+          "sku": null,
+          "stock_quantity": 10,
+          "is_active": true,
+          "sort_order": 0,
+          "id": "3e791cfe-88f0-432e-a51d-1e14a7b9626b",
+          "murti_id": "aec90f16-8bf3-486f-a541-9610cdff3b01"
+        }
+      ]
+    },
+    {
+      "title": "Shri Krishna with Kamadhenu Cow & Bansuri - 24K Gold Embellished",
+      "slug": "shri-krishna-with-kamadhenu-cow-bansuri-24k-gold-embellished-a1af83",
+      "legacy_id": null,
+      "category_id": null,
+      "deity": "Krishna",
+      "group_tag": "most-loved",
+      "price": 2899.0,
+      "old_price": 4999.0,
+      "off_text": "42% off",
+      "material": "Pure White Makrana Marble",
+      "description": null,
+      "dimensions": "15 Inches Height • Consecrated Altar Edition",
+      "weight": "2.8 kg",
+      "pran_pratishtha_ready": true,
+      "gold_leaf_karigari": true,
+      "primary_catalog_image": "/images/products/bal-ganesha-flute.png",
+      "catalog_images": [
+        {
+          "url": "/images/products/bal-ganesha-flute.png",
+          "caption": "Front Divine View",
+          "sort_order": 1
+        },
+        {
+          "url": "/images/products/bal-ganesha-flute.png",
+          "caption": "Gold Varakh Macro Close-up",
+          "sort_order": 2
+        }
+      ],
+      "rating_mode": "enabled",
+      "static_rating_value": 5.0,
+      "static_reviews_count": 48,
+      "stock_status": "in_stock",
+      "is_featured": false,
+      "is_active": true,
+      "sort_order": 0,
+      "id": "a1af83a9-400f-436b-88a1-5476ad057ce6",
+      "created_at": "2026-10-23T08:18:58.813715+00:00",
+      "updated_at": "2026-10-23T08:18:58.813715+00:00",
+      "variants": [
+        {
+          "size_id": "469f44f0-e626-4e36-9fc3-bc3c78fe36a7",
+          "variant_name": "12 Inches Compact",
+          "price": 2299.0,
+          "discount_price": null,
+          "variant_image_url": null,
+          "sku": null,
+          "stock_quantity": 15,
+          "is_active": true,
+          "sort_order": 0,
+          "id": "40453513-6f98-4809-a0f3-04a3a95b3ef1",
+          "murti_id": "a1af83a9-400f-436b-88a1-5476ad057ce6"
+        },
+        {
+          "size_id": "469f44f0-e626-4e36-9fc3-bc3c78fe36a7",
+          "variant_name": "21 Inches Grand Mandir",
+          "price": 3899.0,
+          "discount_price": null,
+          "variant_image_url": null,
+          "sku": null,
+          "stock_quantity": 5,
+          "is_active": true,
+          "sort_order": 0,
+          "id": "bd0487e7-2dec-45ae-b5d6-fd4c16d5e77d",
+          "murti_id": "a1af83a9-400f-436b-88a1-5476ad057ce6"
+        }
+      ]
+    },
+    {
+      "title": "Prabhu Ram Mandir Supreme Murti",
+      "slug": "prabhu-ram-mandir-supreme-murti-bc1ba7",
+      "legacy_id": null,
+      "category_id": null,
+      "deity": "Ram",
+      "group_tag": "most-loved",
+      "price": 2499.0,
+      "old_price": 3999.0,
+      "off_text": "37% off",
+      "material": "Pure White Makrana Marble",
+      "description": null,
+      "dimensions": "9 cm x 6 cm x 4 cm",
+      "weight": "850 grams",
+      "pran_pratishtha_ready": true,
+      "gold_leaf_karigari": true,
+      "primary_catalog_image": "/images/products/ram-darbar.png",
+      "catalog_images": [
+        {
+          "url": "/images/products/ram-darbar.png",
+          "caption": "Front Altar View",
+          "sort_order": 1
+        },
+        {
+          "url": "/images/products/ram-darbar.png",
+          "caption": "24K Gold Detailing Close-up",
+          "sort_order": 2
+        }
+      ],
+      "rating_mode": "enabled",
+      "static_rating_value": 5.0,
+      "static_reviews_count": 48,
+      "stock_status": "in_stock",
+      "is_featured": false,
+      "is_active": true,
+      "sort_order": 0,
+      "id": "bc1ba7f2-4020-4d68-80df-71473614bc97",
+      "created_at": "2026-10-23T08:18:23.439274+00:00",
+      "updated_at": "2026-10-23T08:18:23.439274+00:00",
+      "variants": [
+        {
+          "size_id": "971cdae5-ee8f-42fa-968c-f55da8a29967",
+          "variant_name": "2 Feet Grand Altar",
+          "price": 5999.0,
+          "discount_price": null,
+          "variant_image_url": null,
+          "sku": null,
+          "stock_quantity": 10,
+          "is_active": true,
+          "sort_order": 0,
+          "id": "5900b3da-2469-44a8-aa0d-b8bdb1d9e458",
+          "murti_id": "bc1ba7f2-4020-4d68-80df-71473614bc97"
+        }
+      ]
+    },
     {
       "title": "suraj",
       "slug": "suraj-f2c1a5",
@@ -1878,6 +2360,42 @@
           "murti_title": "Shri Krishna with Kamadhenu Cow & Bansuri - 24K Gold Embellished",
           "murti_image": "/images/products/bal-ganesha-flute.png",
           "original_price": 2899.0
+        },
+        {
+          "murti_id": "bc1ba7f2-4020-4d68-80df-71473614bc97",
+          "festival_price": 1999.0,
+          "custom_tag": "Navratri Special Deal",
+          "sort_order": 5,
+          "id": "145d22b8-00e9-4411-8829-8a2325f8f404",
+          "festival_id": "44444444-4444-4444-4444-444444440001",
+          "created_at": "2026-10-23T08:18:23.458888+00:00",
+          "murti_title": "Prabhu Ram Mandir Supreme Murti",
+          "murti_image": "/images/products/ram-darbar.png",
+          "original_price": 2499.0
+        },
+        {
+          "murti_id": "a1af83a9-400f-436b-88a1-5476ad057ce6",
+          "festival_price": 1999.0,
+          "custom_tag": "Diwali Mahotsav 50% OFF",
+          "sort_order": 1,
+          "id": "be574c57-cc3c-4e0b-bafd-4a1847dd7d21",
+          "festival_id": "44444444-4444-4444-4444-444444440001",
+          "created_at": "2026-10-23T08:18:58.830716+00:00",
+          "murti_title": "Shri Krishna with Kamadhenu Cow & Bansuri - 24K Gold Embellished",
+          "murti_image": "/images/products/bal-ganesha-flute.png",
+          "original_price": 2899.0
+        },
+        {
+          "murti_id": "aec90f16-8bf3-486f-a541-9610cdff3b01",
+          "festival_price": 1999.0,
+          "custom_tag": "Navratri Special Deal",
+          "sort_order": 5,
+          "id": "f4feb114-3058-4b21-943d-fe5d77821c2b",
+          "festival_id": "44444444-4444-4444-4444-444444440001",
+          "created_at": "2026-10-23T10:00:50.522450+00:00",
+          "murti_title": "Prabhu Ram Mandir Supreme Murti",
+          "murti_image": "/images/products/ram-darbar.png",
+          "original_price": 2499.0
         }
       ]
     }
@@ -2111,9 +2629,132 @@
         "date": null,
         "text": "Dhanyawad Anjali ji! May Lord Ram bless your family."
       }
+    },
+    {
+      "murti_id": "33333333-3333-3333-3333-333333330001",
+      "author": "Devotee Ramesh",
+      "location": "Jaipur, Rajasthan",
+      "rating": 5,
+      "title": "Sacred and Divine",
+      "content": "Exquisite craftsmanship and flawless marble delivery!",
+      "tag": "mandir",
+      "has_photo": false,
+      "photo_url": null,
+      "id": "39eb5c2a-60df-4708-b444-a7567ad30b13",
+      "verified": true,
+      "helpful_count": 0,
+      "unhelpful_count": 0,
+      "is_approved": true,
+      "created_at": "2026-10-23T08:18:23.405443+00:00"
+    },
+    {
+      "murti_id": "33333333-3333-3333-3333-333333330001",
+      "author": "Anjali Sharma",
+      "location": "Jaipur",
+      "rating": 5,
+      "title": "Divine craftsmanship",
+      "content": "Pristine white marble.",
+      "tag": "mandir",
+      "has_photo": false,
+      "photo_url": null,
+      "id": "ce02beb5-55e2-48a1-b14d-55cd62662cb7",
+      "verified": true,
+      "helpful_count": 0,
+      "unhelpful_count": 0,
+      "is_approved": true,
+      "created_at": "2026-10-23T08:18:58.768049+00:00",
+      "seller_reply": {
+        "author": "Amol Marble Murti Bhandar Atelier",
+        "date": null,
+        "text": "Dhanyawad Anjali ji! May Lord Ram bless your family."
+      }
+    },
+    {
+      "murti_id": "33333333-3333-3333-3333-333333330001",
+      "author": "Devotee Ramesh",
+      "location": "Jaipur, Rajasthan",
+      "rating": 5,
+      "title": "Sacred and Divine",
+      "content": "Exquisite craftsmanship and flawless marble delivery!",
+      "tag": "mandir",
+      "has_photo": false,
+      "photo_url": null,
+      "id": "95ec5367-cfa4-45b7-b4a1-4fe30d25cb98",
+      "verified": true,
+      "helpful_count": 0,
+      "unhelpful_count": 0,
+      "is_approved": true,
+      "created_at": "2026-10-23T10:00:50.465909+00:00"
     }
   ],
   "orders": [
+    {
+      "order_id": "MH-261023-7398",
+      "items": [
+        {
+          "product_id": "a1af83a9-400f-436b-88a1-5476ad057ce6",
+          "title": "Shri Krishna with Kamadhenu Cow & Bansuri - 24K Gold Embellished",
+          "unit_price": 2899.0,
+          "qty": 1,
+          "subtotal": 2899.0,
+          "stock_status": "in_stock",
+          "is_available": true,
+          "img": "/images/products/bal-ganesha-flute.png"
+        }
+      ],
+      "subtotal": 2899.0,
+      "discount_amount": 434.85,
+      "shipping_fee": 0.0,
+      "total": 2464.15,
+      "shipping": {
+        "full_name": "Rameshwar Kulkarni",
+        "phone": "+919876543210",
+        "email": "rameshwar@example.com",
+        "address": "Flat 402, Shiv Shradha Heights, Prabhat Road",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "411004",
+        "notes": null
+      },
+      "payment_method": "cod",
+      "payment_status": "cod_verified",
+      "order_status": "dispatched",
+      "tracking_number": "BD6147005IN",
+      "courier": "BlueDart Express Air",
+      "created_at": "2026-10-23T08:18:58.871458+00:00",
+      "timeline": [
+        {
+          "title": "Order Placed & Confirmed",
+          "desc": "Payment method: COD. Order authoritatively registered.",
+          "done": true,
+          "time": "Oct 23, 08:18 AM"
+        },
+        {
+          "title": "Priest Consecration & Sanctification",
+          "desc": "Vedic shlokas chanted before dispatch from Jaipur atelier.",
+          "done": true,
+          "time": "Oct 23, 08:18 AM"
+        },
+        {
+          "title": "7-Layer Cushioned Wooden Crating",
+          "desc": "Zero-breakage shock-absorbing insulation applied.",
+          "done": false,
+          "time": "In Progress"
+        },
+        {
+          "title": "Air Express Courier Handover",
+          "desc": "Handed over to BlueDart Express Air logistics.",
+          "done": false,
+          "time": "Scheduled"
+        },
+        {
+          "title": "Sacred Doorstep Delivery",
+          "desc": "Insured delivery to Pune, 411004.",
+          "done": false,
+          "time": "Estimated 3-5 days"
+        }
+      ]
+    },
     {
       "order_id": "MH-261021-2835",
       "items": [
@@ -2247,6 +2888,16 @@
           "time": "Estimated 3-5 days"
         }
       ]
+    }
+  ],
+  "admin_users": [
+    {
+      "id": "66666666-6666-6666-6666-666666660001",
+      "email": "admin@amolmurtibhandar.com",
+      "full_name": "Master Sculptor Admin",
+      "password_hash": "$2b$12$8S1EN29QkuUKjDYUOeRS4uAcbUYxvGQSnWEZj9KfbFFkdF0tx7FbK",
+      "role": "super_admin",
+      "is_active": true
     }
   ]
 }

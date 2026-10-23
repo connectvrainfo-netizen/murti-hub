@@ -17,6 +17,16 @@ class SiteSettingsBase(BaseModel):
     support_email: Optional[str] = "support@amolmurtibhandar.com"
     showroom_address: Optional[str] = "Khazane Walon Ka Rasta, Jaipur, Rajasthan 302001"
     banner_announcement: Optional[str] = "Zero-Breakage Crating Guarantee across all 19,000+ PIN codes across India"
+    # Sacred Collection Fields (Req 2.1)
+    collection_badge: Optional[str] = "SANCTIFIED SACRED COLLECTION 2026"
+    collection_title: Optional[str] = "Shri Ram Darbar"
+    collection_subtitle: Optional[str] = "Pure Makrana White Marble"
+    collection_description: Optional[str] = "Lord Ram, Mata Sita, Laxman & Hanuman hand-chiseled with 24K gold foil embellishments. Consecrated for home mandir altars and daily pooja."
+    collection_price_from: Optional[str] = "1,499"
+    collection_old_price: Optional[str] = "2,599"
+    collection_discount_text: Optional[str] = "Save 42%"
+    collection_tag: Optional[str] = "✦ Hand-Carved Makrana Marble"
+    collection_image_url: Optional[str] = "/images/products/ram-darbar.png"
 
 class SiteSettingsUpdate(BaseModel):
     whatsapp_number: Optional[str] = None
@@ -26,6 +36,15 @@ class SiteSettingsUpdate(BaseModel):
     support_email: Optional[str] = None
     showroom_address: Optional[str] = None
     banner_announcement: Optional[str] = None
+    collection_badge: Optional[str] = None
+    collection_title: Optional[str] = None
+    collection_subtitle: Optional[str] = None
+    collection_description: Optional[str] = None
+    collection_price_from: Optional[str] = None
+    collection_old_price: Optional[str] = None
+    collection_discount_text: Optional[str] = None
+    collection_tag: Optional[str] = None
+    collection_image_url: Optional[str] = None
 
 class SiteSettingsOut(SiteSettingsBase):
     id: int = 1

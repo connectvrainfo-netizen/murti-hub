@@ -103,12 +103,14 @@ class ApiService {
      */
     getImageUrl(path) {
         if (!path) return '';
-        if (path.startsWith('http://') || path.startsWith('https://')) return path;
-        if (path.startsWith('/uploads/')) {
+        if (typeof path !== 'string') return '';
+        if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:') || path.startsWith('blob:')) return path;
+        const normalized = path.startsWith('/') ? path : `/${path}`;
+        if (normalized.startsWith('/uploads/')) {
             const base = this.getBaseUrl();
-            return base ? `${base}${path}` : path;
+            return base ? `${base}${normalized}` : normalized;
         }
-        return path;
+        return normalized;
     }
 
     /**
