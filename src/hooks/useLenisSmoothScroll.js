@@ -57,15 +57,15 @@ export function useLenisSmoothScroll({ isModalOpen = false, currentPage = 'home'
         };
     }, []);
 
-    // Stop / resume scrolling when modal is active
+    // Stop / resume scrolling when modal is active or on standalone dedicated pages
     useEffect(() => {
         if (!lenisRef.current) return;
-        if (isModalOpen) {
+        if (isModalOpen || currentPage === 'admin' || currentPage === 'login') {
             lenisRef.current.stop();
         } else {
             lenisRef.current.start();
         }
-    }, [isModalOpen]);
+    }, [isModalOpen, currentPage]);
 
     // Refresh ScrollTrigger and scroll to top on page change
     useEffect(() => {

@@ -326,27 +326,30 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [uploadingFestBanner, setUploadingFestBanner] = useState(false);
     const [uploadingCollectionBanner, setUploadingCollectionBanner] = useState(false);
 
-    // Lock body scroll & pause Lenis smooth scrolling when any modal is open
+    // Disable Lenis smooth scrolling while inside Admin Panel so standard native scrolling operates smoothly
     useEffect(() => {
-        const isAnyModalOpen = Boolean(editingProduct || editingCategory || editingSize);
-        if (isAnyModalOpen) {
-            document.body.style.overflow = 'hidden';
-            if (typeof window !== 'undefined' && window.__lenis) {
-                window.__lenis.stop();
-            }
-        } else {
-            document.body.style.overflow = '';
-            if (typeof window !== 'undefined' && window.__lenis) {
-                window.__lenis.start();
-            }
+        if (typeof window !== 'undefined' && window.__lenis) {
+            window.__lenis.stop();
         }
         return () => {
-            document.body.style.overflow = '';
             if (typeof window !== 'undefined' && window.__lenis) {
                 window.__lenis.start();
             }
         };
-    }, [editingProduct, editingCategory, editingSize]);
+    }, []);
+
+    // Lock body scroll when any modal dialog is open
+    useEffect(() => {
+        const isAnyModalOpen = Boolean(editingProduct || editingCategory || editingSize || isConfiguringServer);
+        if (isAnyModalOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [editingProduct, editingCategory, editingSize, isConfiguringServer]);
 
     // Reusable file upload handler to backend /api/upload
     const handleFileUpload = async (file, folder = 'catalog') => {
@@ -962,7 +965,10 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     // =========================================================================
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen w-full bg-[#141210] flex flex-col justify-between p-4 sm:p-8 font-sans selection:bg-[#F7C600] selection:text-[#161616] relative overflow-hidden">
+            <div 
+                className="min-h-screen w-full bg-[#141210] flex flex-col justify-between p-4 sm:p-8 font-sans selection:bg-[#F7C600] selection:text-[#161616] relative overflow-y-auto"
+                data-lenis-prevent="true"
+            >
                 {/* Decorative gold ambient glow */}
                 <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#C69722]/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#C69722]/5 rounded-full blur-3xl pointer-events-none" />
@@ -1078,7 +1084,10 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     // DEDICATED FULL-SCREEN ADMIN PAGE (AUTHENTICATED)
     // =========================================================================
     return (
-        <div className="h-screen w-full bg-[#FAF8F5] text-stone-900 flex flex-col font-sans selection:bg-[#F7C600] selection:text-[#161616] overflow-hidden">
+        <div 
+            className="h-screen w-full bg-[#FAF8F5] text-stone-900 flex flex-col font-sans selection:bg-[#F7C600] selection:text-[#161616] overflow-hidden"
+            data-lenis-prevent="true"
+        >
 
             {/* Toast Notification */}
             {toastMessage && (
@@ -1163,10 +1172,13 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             </header>
 
             {/* Standalone Admin Layout: Sidebar + Main Workspace */}
-            <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden" data-lenis-prevent="true">
 
                 {/* Left Sidebar Menu - Sticky, scrollable, organized by domain */}
-                <aside className="w-full md:w-72 lg:w-80 bg-[#FAF6EE] border-r border-[#E8DFD0] p-3 sm:p-4 flex md:flex-col justify-between overflow-x-auto md:overflow-y-auto no-scrollbar flex-shrink-0 md:h-full md:sticky md:top-0">
+                <aside 
+                    className="w-full md:w-72 lg:w-80 bg-[#FAF6EE] border-r border-[#E8DFD0] p-3 sm:p-4 flex md:flex-col justify-between overflow-x-auto md:overflow-y-auto no-scrollbar flex-shrink-0 md:h-full"
+                    data-lenis-prevent="true"
+                >
                     <div className="w-full space-y-4">
                         {/* Status Strip on Desktop */}
                         <div className="hidden md:flex items-center justify-between px-2 pt-1 pb-1">
@@ -1368,7 +1380,12 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                 </aside>
 
                 {/* Main Content Workspace */}
-                <main className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-7xl">
+                <main 
+                    className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-8 w-full"
+                    data-lenis-prevent="true"
+                    tabIndex={0}
+                >
+                    <div className="max-w-7xl mx-auto space-y-6 pb-28">
 
                     {/* Render Cloud Sync Status Banner */}
                     {(!api.getBaseUrl() || isOfflineMode) && (
@@ -2856,7 +2873,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </form>
                         </div>
                     )}
-
+                    </div>
                 </main>
             </div>
 
