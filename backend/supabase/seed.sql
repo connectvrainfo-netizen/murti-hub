@@ -254,14 +254,14 @@ VALUES
   )
 ON CONFLICT (id) DO NOTHING;
 
--- 7. DEFAULT ADMIN USER (admin@amolmurtibhandar.com / admin123)
--- Password hash generated with bcrypt for "admin123"
+-- 7. INITIAL ADMIN USER (Development & Local Test Baseline)
+-- IMPORTANT FOR PRODUCTION: Rotate password immediately in production via Admin dashboard
 INSERT INTO public.admin_users (id, email, full_name, password_hash, role, is_active)
 VALUES (
   '66666666-6666-6666-6666-666666660001',
   'admin@amolmurtibhandar.com',
   'Master Sculptor Admin',
-  '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', -- bcrypt hash for 'admin123'
+  '$2b$12$8S1EN29QkuUKjDYUOeRS4uAcbUYxvGQSnWEZj9KfbFFkdF0tx7FbK', -- valid cost-12 bcrypt hash
   'super_admin',
   true
 )

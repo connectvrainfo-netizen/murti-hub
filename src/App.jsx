@@ -25,6 +25,8 @@ import { supabase } from './utils/supabase';
 import { useLenisSmoothScroll } from './hooks/useLenisSmoothScroll';
 import { useGsapScrollAnimations } from './hooks/useGsapScrollAnimations';
 import { useContinuousScroll } from './hooks/useContinuousScroll';
+import StructuredData from './components/StructuredData';
+import { seoConfig } from './config/seoConfig';
 
 // Helper to determine if current URL is the dedicated admin page
 const checkIsAdminPath = () => {
@@ -149,7 +151,6 @@ export default function App() {
     useEffect(() => {
         loadBackendData();
         if (typeof window !== 'undefined') {
-            window.__supabase = supabase;
             const init = getInitialNavigation();
             window.history.replaceState(
                 { page: init.page, productId: init.product?.id || init.product?.legacy_id, deity: init.deity },
@@ -780,6 +781,13 @@ export default function App() {
     return (
         <div className="min-h-screen bg-[#FDFBF5] text-[#161616] pb-24 lg:pb-0">
 
+            {/* ================= ADVANCED JSON-LD STRUCTURED DATA & DYNAMIC METADATA ================= */}
+            <StructuredData
+                currentPage={currentPage}
+                selectedProduct={selectedProduct}
+                activeDeityFilter={activeDeityFilter}
+            />
+
             {/* ================= STARTING DEVOTIONAL ANIMATION ================= */}
             {showIntro && (
                 <IntroAnimation onComplete={() => setShowIntro(false)} />
@@ -796,7 +804,7 @@ export default function App() {
                     <button onClick={() => navigateTo('home')} className="flex items-center select-none group text-left outline-none focus:outline-none flex-shrink-0 py-0.5">
                         <img
                             src="/images/logo.png"
-                            alt="अमोल मार्बल मूर्ती भंडार - Amol Marble Murti Bhandar"
+                            alt="Amol Marble Murti Bhandar Shegaon - Authentic Marble Idols & Murtis"
                             width="220"
                             height="56"
                             className="h-11 sm:h-13 md:h-14 w-auto object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
@@ -1085,7 +1093,14 @@ export default function App() {
                                                 onClick={() => openProductPage(p)}
                                                 className="flex items-center gap-2.5 p-2 rounded-xl border border-stone-200 hover:border-[#C69722] cursor-pointer bg-white transition group"
                                             >
-                                                <img src={p.img} alt={p.title} className="w-10 h-10 rounded-lg object-cover bg-stone-50" />
+                                                <img
+                                                    src={p.img}
+                                                    alt={`Handcrafted White Marble ${p.title} - Amol Marble Murti Bhandar Shegaon`}
+                                                    width="40"
+                                                    height="40"
+                                                    loading="lazy"
+                                                    className="w-10 h-10 rounded-lg object-cover bg-stone-50"
+                                                />
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-[11px] font-medium text-stone-900 truncate group-hover:text-[#C69722]">{p.title}</p>
                                                     <p className="text-[10px] font-bold text-[#C69722]">Rs. {p.price.toLocaleString('en-IN')}</p>
@@ -1099,6 +1114,11 @@ export default function App() {
                     </div>
                 )}
             </header>
+
+            {/* ========================================================================= */}
+            {/*                         MAIN CONTENT LANDMARK                             */}
+            {/* ========================================================================= */}
+            <main id="main-content" role="main">
 
             {/* ========================================================================= */}
             {/*                             HOMEPAGE VIEW                                 */}
@@ -1122,7 +1142,7 @@ export default function App() {
                                             className={`deity-cat-item group ${isSelected ? 'active-category' : ''}`}
                                         >
                                             <div className="deity-cat-card">
-                                                <img src={item.img} alt={item.name} loading="eager" />
+                                                <img src={item.img} alt={`${item.name} Marble Murti & Idols - Amol Marble Bhandar Shegaon`} width="64" height="64" loading="eager" />
                                             </div>
                                             <span className="deity-cat-label">{item.name}</span>
                                         </div>
@@ -1146,7 +1166,10 @@ export default function App() {
                                             <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#F7C600]/30 via-[#E8DEC8]/50 to-transparent blur-2xl transform scale-100"></div>
                                             <img
                                                 src="/images/products/ram-darbar.png"
-                                                alt="Shri Ram Darbar - Pure White Makrana Marble"
+                                                alt="Handcrafted White Marble Ram Darbar Murti at Amol Marble Murti Bhandar Shegaon"
+                                                width="384"
+                                                height="384"
+                                                fetchpriority="high"
                                                 className="relative max-h-full max-w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:scale-105 transition duration-500 cursor-pointer"
                                                 onClick={() => {
                                                     const ramItem = liveProducts.find(i => i.id === 1 || i.legacy_id === 1 || String(i.id).includes('1')) || liveProducts[0];
@@ -1166,10 +1189,10 @@ export default function App() {
                                             <span>SANCTIFIED SACRED COLLECTION 2026</span>
                                         </div>
 
-                                        <h1 className="font-serif text-2xl min-[360px]:text-3xl sm:text-4xl lg:text-5xl font-bold text-[#161616] leading-tight">
+                                        <h2 className="font-serif text-2xl min-[360px]:text-3xl sm:text-4xl lg:text-5xl font-bold text-[#161616] leading-tight">
                                             Shri Ram Darbar<br />
                                             <span className="italic text-[#8E5B00] font-normal text-base min-[360px]:text-lg sm:text-3xl lg:text-3xl">Pure Makrana White Marble</span>
-                                        </h1>
+                                        </h2>
 
                                         <p className="hidden min-[400px]:block text-xs sm:text-sm text-stone-600 leading-relaxed max-w-md mx-auto sm:mx-0 line-clamp-2 sm:line-clamp-none">
                                             Lord Ram, Mata Sita, Laxman & Hanuman hand-chiseled with 24K gold foil embellishments. Consecrated for home mandir altars and daily pooja.
@@ -1241,13 +1264,13 @@ export default function App() {
                                             <span>SANCTIFIED MAKRANA MARBLE ART</span>
                                         </div>
 
-                                        <h2 className="font-serif text-[24px] min-[360px]:text-[28px] sm:text-5xl lg:text-6xl text-white font-medium leading-[1.1] drop-shadow-md">
-                                            Where Faith<br />
-                                            <span className="italic text-[#F7C600] font-normal">Finds Form.</span>
-                                        </h2>
+                                        <h1 className="font-serif text-[24px] min-[360px]:text-[28px] sm:text-5xl lg:text-6xl text-white font-medium leading-[1.1] drop-shadow-md">
+                                            Exquisite Marble Murtis &amp; Divine Idols in Shegaon<br />
+                                            <span className="italic text-[#F7C600] font-normal text-xl min-[360px]:text-2xl sm:text-4xl block mt-1">Amol Marble Murti Bhandar</span>
+                                        </h1>
 
                                         <p className="text-[11px] min-[360px]:text-xs sm:text-sm text-stone-200/95 leading-relaxed max-w-lg drop-shadow line-clamp-2 sm:line-clamp-none">
-                                            Step inside अमोल मार्बल मूर्ती भंडार — India's home for hand-carved Makrana marble idols, home mandir deities, and handcrafted sacred temple collectibles.
+                                            Discover premium marble murtis, Gajanan Maharaj idols, and custom Hindu god statues at Amol Marble Murti Bhandar, Bus Stand Road, near Murarka High School, Shegaon, Maharashtra.
                                         </p>
 
                                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 pt-1 sm:pt-2">
@@ -1408,12 +1431,15 @@ export default function App() {
                             <div className="section-header-reveal flex items-center justify-center gap-2.5 mb-5 sm:mb-6">
                                 <span className="h-[1px] w-16 sm:w-36 bg-gradient-to-r from-transparent to-[#C69722]"></span>
                                 <span className="text-[#C69722] text-xs">•</span>
-                                <h2 className="font-serif text-2xl sm:text-[40px] font-semibold text-[#161616] px-2">
-                                    Featured <span className="text-[#C69722]">Idols</span>
+                                <h2 className="font-serif text-2xl sm:text-[40px] font-semibold text-[#161616] px-2 text-center">
+                                    Gajanan Maharaj Marble Statues &amp; <span className="text-[#C69722]">Featured Idols</span>
                                 </h2>
                                 <span className="text-[#C69722] text-xs">•</span>
                                 <span className="h-[1px] w-16 sm:w-36 bg-gradient-to-l from-transparent to-[#C69722]"></span>
                             </div>
+                            <p className="text-center text-xs sm:text-sm text-stone-600 max-w-xl mx-auto -mt-2 mb-6">
+                                Pure Makrana marble idols for temple &amp; home mandir, crafted with sacred precision in Shegaon.
+                            </p>
 
                             {/* Reference-Layout "Featured" Category Tabs */}
                             <div className="flex items-center justify-start sm:justify-center gap-2 mb-6 sm:mb-8 overflow-x-auto no-scrollbar py-1 px-1 sm:px-0">
@@ -1450,13 +1476,20 @@ export default function App() {
                                         const mostLoved = liveProducts.filter(p => p.group === 'most-loved' || p.group_tag === 'most-loved');
                                         const itemsToShow = mostLoved.length > 0 ? mostLoved : liveProducts.slice(0, 6);
                                         return [...itemsToShow, ...itemsToShow, ...itemsToShow].map((p, idx) => (
-                                        <div key={`${p.id}-${idx}`} className="w-[230px] sm:w-[272px] flex-shrink-0 flex flex-col justify-between group bg-white p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-sm hover:shadow-md transition">
+                                        <article key={`${p.id}-${idx}`} className="w-[230px] sm:w-[272px] flex-shrink-0 flex flex-col justify-between group bg-white p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-sm hover:shadow-md transition">
                                             <div>
                                                 <div 
                                                     onClick={() => openProductPage(p)}
                                                     className="relative rounded-xl overflow-hidden aspect-square sm:aspect-[3/4] bg-[#FDFBF5] mb-2.5 sm:mb-3 border border-stone-100 cursor-pointer"
                                                 >
-                                                    <img src={p.img} alt={p.title} className="w-full h-full object-contain p-2 img-studio-contrast group-hover:scale-105 transition duration-300 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]" loading="lazy" />
+                                                    <img
+                                                        src={p.img}
+                                                        alt={`Handcrafted White Marble ${p.title} at Amol Marble Murti Bhandar Shegaon`}
+                                                        width="272"
+                                                        height="272"
+                                                        className="w-full h-full object-contain p-2 img-studio-contrast group-hover:scale-105 transition duration-300 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]"
+                                                        loading="lazy"
+                                                    />
                                                     <span className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 bg-[#161616]/90 backdrop-blur-xs text-white text-[9px] sm:text-[10px] font-medium px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1 shadow-md">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-[#F7C600]"></span> Most Loved
                                                     </span>
@@ -1516,7 +1549,7 @@ export default function App() {
                                                     <span className="truncate">BUY NOW</span>
                                                 </button>
                                             </div>
-                                        </div>
+                                        </article>
                                     ));
                                 })()}
                             </div>
@@ -1663,7 +1696,7 @@ export default function App() {
                                                 festiveItems = matching.length > 0 ? matching : liveProducts.slice(6, 10);
                                             }
                                             return [...festiveItems, ...festiveItems, ...festiveItems].map((p, idx) => (
-                                            <div
+                                            <article
                                                 key={`${p.id}-${idx}`}
                                                 className="w-[230px] sm:w-[260px] lg:w-[270px] flex-shrink-0 bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/60 transition-all duration-300 flex flex-col justify-between group p-3 sm:p-4"
                                             >
@@ -1675,7 +1708,9 @@ export default function App() {
                                                     >
                                                         <img
                                                             src={p.img}
-                                                            alt={p.title}
+                                                            alt={`Handcrafted White Marble ${p.title} at Amol Marble Murti Bhandar Shegaon`}
+                                                            width="270"
+                                                            height="320"
                                                             className="w-full h-full object-contain p-2 sm:p-3 img-studio-contrast group-hover:scale-105 transition-transform duration-500 filter drop-shadow-[0_6px_12px_rgba(0,0,0,0.08)]"
                                                             loading="lazy"
                                                         />
@@ -1756,7 +1791,7 @@ export default function App() {
                                                         <span className="truncate">BUY NOW</span>
                                                     </button>
                                                 </div>
-                                            </div>
+                                            </article>
                                         ));
                                     })()}
                                 </div>
@@ -1809,7 +1844,14 @@ export default function App() {
                                             onClick={() => openProductPage(c)}
                                             className="absolute inset-0 cursor-pointer"
                                         >
-                                            <img src={c.img} alt={c.title} className="w-full h-full object-cover img-studio-contrast group-hover:scale-105 transition duration-300" loading="lazy" />
+                                            <img
+                                                src={c.img}
+                                                alt={`Handcrafted Marble Murti ${c.title} - Amol Marble Bhandar Shegaon`}
+                                                width="220"
+                                                height="310"
+                                                className="w-full h-full object-cover img-studio-contrast group-hover:scale-105 transition duration-300"
+                                                loading="lazy"
+                                            />
                                             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"></div>
                                         </div>
                                         <button
@@ -1862,10 +1904,10 @@ export default function App() {
                         <div className="max-w-[1280px] mx-auto px-4 sm:px-8 grid lg:grid-cols-12 gap-6 sm:gap-10 items-center">
                             <div className="lg:col-span-6 grid grid-cols-2 gap-2.5 sm:gap-4">
                                 <div className="editorial-img-card rounded-2xl sm:rounded-[24px] overflow-hidden h-[220px] min-[400px]:h-[260px] sm:h-[460px] shadow-lg bg-stone-900 group">
-                                    <img src="/images/editorial/durga-feature.png" alt="Hand-Painted Durga" className="w-full h-full object-cover img-studio-contrast" />
+                                    <img src="/images/editorial/durga-feature.png" alt="Handcrafted White Marble Durga Mata Murti by Amol Marble Murti Bhandar Shegaon" width="600" height="460" loading="lazy" className="w-full h-full object-cover img-studio-contrast" />
                                 </div>
                                 <div className="editorial-img-card rounded-2xl sm:rounded-[24px] overflow-hidden h-[220px] min-[400px]:h-[260px] sm:h-[460px] shadow-lg bg-stone-900 group">
-                                    <img src="/images/editorial/hanuman-feature.png" alt="Veer Hanuman Sanjeevani" className="w-full h-full object-cover img-studio-contrast" />
+                                    <img src="/images/editorial/hanuman-feature.png" alt="Veer Hanuman Ji Sanjeevani Marble Murti - Amol Marble Bhandar Shegaon" width="600" height="460" loading="lazy" className="w-full h-full object-cover img-studio-contrast" />
                                 </div>
                             </div>
 
@@ -1875,20 +1917,20 @@ export default function App() {
                                 </div>
 
                                 <h2 className="font-serif text-2xl min-[400px]:text-3xl sm:text-4xl lg:text-[52px] text-[#161616] leading-[1.1]">
-                                    Every Detail,<br />
-                                    <span className="italic text-[#C69722] font-normal">Painted With Devotion.</span>
+                                    Pure Makrana Marble Idols<br />
+                                    <span className="italic text-[#C69722] font-normal">For Temple &amp; Home.</span>
                                 </h2>
 
                                 <p className="text-[10px] sm:text-[11px] tracking-[0.22em] uppercase text-stone-500 font-semibold pt-0.5 sm:pt-1">
-                                    A PIECE OF TIMELESS ART.
+                                    AUTHENTIC SANATAN TEMPLE ART.
                                 </p>
 
                                 <p className="text-[11.5px] sm:text-sm text-stone-600 leading-relaxed max-w-lg">
-                                    Every murti in our Jaipur studio is meticulously hand-sculpted and finished by master artisans. From 24K gold foil embellishments to serene facial expressions, our idols transform everyday surroundings into sacred sanctuaries.
+                                    Every idol at Amol Marble Murti Bhandar is meticulously sculpted from authentic Makrana marble by hereditary artisans and finished with pure 24K gold foil embellishments. Located in Shegaon on Bus Stand Road, our showroom transforms everyday surroundings into sacred sanctuaries with consecrated statues of Shri Gajanan Maharaj, Shiva, Ram Darbar, and Hanuman.
                                 </p>
 
                                 <p className="text-[10.5px] sm:text-xs text-stone-500 font-medium">
-                                    Makrana Marble • Hand-Finished • Sanctified
+                                    Pure Makrana Marble • Shegaon Showroom • Pran Pratishtha Ready
                                 </p>
 
                                 <div className="pt-1 sm:pt-2">
@@ -2076,25 +2118,31 @@ export default function App() {
                     </section>
 
                     {/* ================= 14. FREQUENTLY ASKED QUESTIONS ================= */}
-                    <section id="faq-section" className="bg-white py-8 sm:py-14 border-t border-stone-100 reveal-section is-visible">
+                    <section id="faq-section" aria-labelledby="faq-section-heading" className="bg-white py-8 sm:py-14 border-t border-stone-100 reveal-section is-visible">
                         <div className="max-w-2xl mx-auto px-4 sm:px-6">
                             <div className="text-center mb-6 sm:mb-10">
-                                <p className="text-[11px] sm:text-xs text-stone-500 mb-1">Need help with your order?</p>
-                                <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#161616]">Frequently Asked Questions</h2>
+                                <p className="text-[11px] sm:text-xs text-[#8E5B00] font-bold tracking-widest uppercase mb-1">LOCAL BUYING &amp; SHOWROOM GUIDE</p>
+                                <h2 id="faq-section-heading" className="font-serif text-2xl sm:text-3xl lg:text-4xl text-[#161616]">
+                                    Frequently Asked Questions – Amol Marble Murti Bhandar Shegaon
+                                </h2>
                             </div>
 
-                            <h3 className="font-serif text-base sm:text-xl text-stone-700 mb-3 sm:mb-4">Orders, Shipping & Consecration</h3>
+                            <h3 className="font-serif text-base sm:text-xl text-stone-700 mb-3 sm:mb-4 text-center">
+                                Orders, Custom Murti Sculpting &amp; Shegaon Showroom Timings
+                            </h3>
 
-                            <div className="divide-y divide-stone-200 border-y border-stone-200">
+                            <div className="divide-y divide-stone-200 border-y border-stone-200" itemScope itemType="https://schema.org/FAQPage">
                                 {faqs.map((faq, idx) => (
-                                    <details key={idx} className="faq-row-item group py-3 sm:py-4">
+                                    <details key={idx} className="faq-row-item group py-3 sm:py-4" itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
                                         <summary className="flex items-center justify-between cursor-pointer text-[12px] sm:text-sm font-medium text-stone-800 list-none gap-3">
-                                            <span className="flex-1">{faq.question}</span>
+                                            <span className="flex-1 font-semibold" itemProp="name">{faq.question}</span>
                                             <span className="text-lg font-light group-open:rotate-45 transition-transform flex-shrink-0 w-6 h-6 flex items-center justify-center">+</span>
                                         </summary>
-                                        <p className="text-[11px] sm:text-xs text-stone-500 mt-2.5 sm:mt-3 leading-relaxed">
-                                            {faq.answer}
-                                        </p>
+                                        <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                                            <p className="text-[11.5px] sm:text-xs text-stone-600 mt-2.5 sm:mt-3 leading-relaxed" itemProp="text">
+                                                {faq.answer}
+                                            </p>
+                                        </div>
                                     </details>
                                 ))}
                             </div>
@@ -2169,66 +2217,85 @@ export default function App() {
                     </section>
 
                     {/* ================= 14C. JAIPUR SCULPTING ATELIER MAP & ADDRESS (REFERENCE LAYOUT ARRANGEMENT) ================= */}
-                    <section id="atelier-map-section" className="bg-white py-8 sm:py-12 border-t border-[#E6D6B8] reveal-section is-visible">
+                    {/* ================= 14C. SHEGAON SHOWROOM MAP & LOCATION ================= */}
+                    <section id="atelier-map-section" aria-labelledby="showroom-heading" className="bg-white py-8 sm:py-12 border-t border-[#E6D6B8] reveal-section is-visible">
                         <div className="max-w-[1440px] mx-auto px-4 sm:px-8">
                             <div className="atelier-card bg-[#FAF5E8] rounded-2xl sm:rounded-3xl border border-[#E6D6B8] overflow-hidden shadow-sm flex flex-col md:flex-row">
                                 <div className="p-5 sm:p-10 md:w-1/2 flex flex-col justify-between space-y-3 sm:space-y-4">
                                     <div>
                                         <div className="inline-flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase text-[#8E5B00] mb-1.5">
                                             <MapPin className="w-3.5 h-3.5 text-[#C69722]" />
-                                            <span>VISIT OUR HERITAGE ATELIER</span>
+                                            <span>VISIT OUR SHEGAON SHOWROOM</span>
                                         </div>
-                                        <h3 className="font-serif text-xl sm:text-2xl lg:text-3xl font-bold text-[#161616]">
-                                            Amol Marble Murti Bhandar
-                                        </h3>
+                                        <h2 id="showroom-heading" className="font-serif text-xl sm:text-2xl lg:text-3xl font-bold text-[#161616]">
+                                            Visit Our Showroom Near Murarka High School, Shegaon
+                                        </h2>
                                         <p className="text-[11.5px] sm:text-sm text-stone-600 mt-1.5 sm:mt-2 leading-relaxed">
-                                            Step inside our flagship artisan workshop in Jaipur, Rajasthan. Meet master sculptors and witness sacred consecration rituals in person.
+                                            Step inside Amol Marble Murti Bhandar on Bus Stand Road, Shegaon. Experience authentic pure Makrana marble murtis, Sant Shiromani Shri Gajanan Maharaj idols, and discuss custom temple carvings with our experienced artisans.
                                         </p>
                                     </div>
 
-                                    <div className="space-y-2 sm:space-y-2.5 text-[11px] sm:text-xs text-stone-700 bg-white/70 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-[#E6D6B8]/70">
+                                    <address className="not-italic space-y-2 sm:space-y-2.5 text-[11px] sm:text-xs text-stone-700 bg-white/70 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-[#E6D6B8]/70">
                                         <p className="flex items-start gap-2">
                                             <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8E5B00] flex-shrink-0 mt-0.5" />
-                                            <span className="font-medium">Khazane Walon Ka Rasta, Chandpole Bazar, Jaipur, Rajasthan 302001</span>
+                                            <span className="font-medium">Bus Stand Road, Near Murarka High School, Shegaon, Buldhana District, Maharashtra 444203</span>
                                         </p>
                                         <p className="flex items-center gap-2">
                                             <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#8E5B00] flex-shrink-0" />
-                                            <span>Open Daily: 9 AM – 8:30 PM</span>
+                                            <span>Open Daily (Mon – Sun): 08:00 AM – 08:00 PM IST</span>
                                         </p>
-                                    </div>
+                                        <p className="flex items-center gap-2">
+                                            <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-400 flex-shrink-0" />
+                                            <span className="font-semibold text-amber-900">4.9★ Google Rating (50+ Verified Devotee Reviews)</span>
+                                        </p>
+                                    </address>
 
                                     <div className="pt-1 sm:pt-2 flex flex-col min-[400px]:flex-row gap-2 sm:gap-3">
                                         <a
-                                            href="https://maps.google.com/?q=Jaipur+Marble+Murti"
+                                            href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6"
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="min-h-[44px] px-4 sm:px-6 py-2.5 rounded-xl bg-[#161616] hover:bg-black text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider transition inline-flex items-center justify-center gap-2 tap-target-48 active:scale-95"
+                                            className="min-h-[44px] px-4 sm:px-6 py-2.5 rounded-xl bg-[#161616] hover:bg-black text-white text-[11px] sm:text-xs font-bold uppercase tracking-wider transition inline-flex items-center justify-center gap-2 tap-target-48 active:scale-95 shadow-md"
+                                            aria-label="Get directions to Amol Marble Murti Bhandar on Google Maps"
                                         >
                                             <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#F7C600]" />
-                                            <span>Get Directions</span>
+                                            <span>Get Directions on Google Maps</span>
                                         </a>
                                         <button
                                             type="button"
                                             onClick={() => setInfoModalKey('contact')}
                                             className="min-h-[44px] px-4 sm:px-5 py-2.5 rounded-xl bg-white hover:bg-stone-50 border border-stone-300 text-stone-800 text-[11px] sm:text-xs font-bold uppercase tracking-wider transition tap-target-48 inline-flex items-center justify-center gap-2 active:scale-95"
                                         >
-                                            <span>Book Visit</span>
+                                            <span>Contact Showroom</span>
                                         </button>
                                     </div>
                                 </div>
 
-                                {/* Stylized Visual Map Card */}
-                                <div className="md:w-1/2 bg-[#F3EAD3] min-h-[180px] sm:min-h-[300px] relative overflow-hidden flex items-center justify-center p-4 sm:p-6 border-t md:border-t-0 md:border-l border-[#E6D6B8]">
+                                {/* Stylized Visual Map Card with Direct Google Maps CTA */}
+                                <div className="md:w-1/2 bg-[#F3EAD3] min-h-[220px] sm:min-h-[320px] relative overflow-hidden flex items-center justify-center p-4 sm:p-6 border-t md:border-t-0 md:border-l border-[#E6D6B8]">
                                     <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#8E5B00_1px,transparent_1px)] [background-size:20px_20px]"></div>
                                     <div className="relative text-center p-5 sm:p-8 rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-sm border border-[#E6D6B8] shadow-md max-w-sm">
                                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#FAF5E8] border border-[#C69722] mx-auto flex items-center justify-center text-[#8E5B00] mb-2 sm:mb-2.5 shadow-xs">
                                             <MapPin className="w-5 h-5 sm:w-6 sm:h-6" />
                                         </div>
-                                        <h5 className="font-serif font-bold text-[#161616] text-base sm:text-lg">Jaipur Sculpting Atelier</h5>
-                                        <p className="text-[10.5px] sm:text-xs text-stone-500 mt-1">Rajasthan's Heritage Center of Makrana Marble Idols</p>
-                                        <div className="mt-2.5 sm:mt-3.5 inline-block px-3 sm:px-3.5 py-1 sm:py-1.5 bg-emerald-50 text-emerald-800 rounded-full text-[10px] sm:text-[10.5px] font-bold border border-emerald-200">
-                                            ● Open for Visits Today
+                                        <h3 className="font-serif font-bold text-[#161616] text-base sm:text-lg">Amol Marble Murti Bhandar</h3>
+                                        <p className="text-[10.5px] sm:text-xs text-stone-600 mt-1">Bus Stand Road, Near Murarka High School, Shegaon, Maharashtra 444203</p>
+                                        <div className="mt-2.5 sm:mt-3 flex items-center justify-center gap-2">
+                                            <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-[10px] sm:text-[10.5px] font-bold border border-emerald-200">
+                                                ● Open Today: 8 AM – 8 PM
+                                            </span>
+                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-800 rounded-full text-[10px] sm:text-[10.5px] font-bold border border-amber-200">
+                                                <Star className="w-3 h-3 fill-amber-400 text-amber-500" /> 4.9★ (50+)
+                                            </span>
                                         </div>
+                                        <a
+                                            href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="mt-3.5 inline-flex items-center gap-1.5 text-xs text-[#8E5B00] hover:text-black font-bold uppercase tracking-wider hover:underline"
+                                        >
+                                            <span>Open in Google Maps App →</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -2273,7 +2340,7 @@ export default function App() {
                             >
                                 <div className="max-w-3xl mx-auto space-y-1.5 sm:space-y-3 relative z-10">
                                     <h1 className={`font-serif text-2xl sm:text-4xl md:text-5xl ${hasBanner ? 'text-white' : 'text-[#161616]'}`}>
-                                        {activeDeityFilter ? `${activeDeityFilter} Collection` : (pageMeta[currentPage]?.title || 'Products')}
+                                        {activeDeityFilter ? `${activeDeityFilter} Murtis – Amol Marble Murti Bhandar Shegaon` : `${pageMeta[currentPage]?.title || 'Sacred Marble Idols'} – Amol Marble Murti Bhandar Shegaon`}
                                     </h1>
                                     {!activeDeityFilter && pageMeta[currentPage]?.subtitle && (
                                         <p className={`font-serif text-xs sm:text-lg md:text-xl font-semibold ${hasBanner ? 'text-stone-200' : 'text-stone-800'}`}>
@@ -2420,13 +2487,20 @@ export default function App() {
                         ) : (
                             <div className={`grid grid-cols-2 sm:grid-cols-2 ${gridCols === 2 ? 'lg:grid-cols-2' : gridCols === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-2.5 sm:gap-6`}>
                                 {collectionItems.map(p => (
-                                    <div key={p.id} className="catalog-grid-card group flex flex-col justify-between bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-stone-200/90 shadow-2xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300">
+                                    <article key={p.id} className="catalog-grid-card group flex flex-col justify-between bg-white p-2 sm:p-4 rounded-xl sm:rounded-2xl border border-stone-200/90 shadow-2xs hover:shadow-xl hover:border-[#D4AF37]/50 transition-all duration-300">
                                         <div>
                                             <div 
                                                 onClick={() => openProductPage(p)}
                                                 className="relative rounded-lg sm:rounded-xl overflow-hidden aspect-square sm:aspect-[3/4] bg-gradient-to-b from-[#FAF5E8] to-[#F3EAD3] mb-1.5 sm:mb-3.5 border border-stone-100 cursor-pointer"
                                             >
-                                                <img src={p.img} alt={p.title} className="w-full h-full object-contain p-1.5 sm:p-2 img-studio-contrast group-hover:scale-105 transition-transform duration-500 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]" loading="lazy" />
+                                                <img 
+                                                    src={p.img} 
+                                                    alt={`Handcrafted ${p.title} - Pure White Makrana Marble Idol by Amol Marble Murti Bhandar Shegaon`} 
+                                                    width="320"
+                                                    height="320"
+                                                    className="w-full h-full object-contain p-1.5 sm:p-2 img-studio-contrast group-hover:scale-105 transition-transform duration-500 filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]" 
+                                                    loading="lazy" 
+                                                />
                                                 {p.off && (
                                                     <span className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 bg-[#161616]/90 backdrop-blur-xs text-[#F7C600] text-[8px] sm:text-[10px] font-extrabold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-md flex items-center gap-1">
                                                         <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-[#F7C600]"></span>
@@ -2490,13 +2564,14 @@ export default function App() {
                                                 <span className="truncate">BUY</span>
                                             </button>
                                         </div>
-                                    </div>
+                                    </article>
                                 ))}
                             </div>
                         )}
                     </div>
                 </div>
             )}
+            </main>
 
             {/* ================= 15. FOOTER ================= */}
             <footer id="site-footer" className="bg-jaali-gold border-t border-[#E6D6B8] pt-16 pb-10 text-stone-700">
@@ -2505,7 +2580,9 @@ export default function App() {
                         <div className="flex items-center gap-2">
                             <img
                                 src="/images/logo.png"
-                                alt="अमोल मार्बल मूर्ती भंडार - Amol Marble Murti Bhandar"
+                                alt="अमोल मार्बल मूर्ती भंडार - Amol Marble Murti Bhandar Shegaon"
+                                width="180"
+                                height="72"
                                 className="h-20 sm:h-24 w-auto object-contain drop-shadow-sm cursor-pointer hover:scale-105 transition-transform"
                                 onClick={() => { navigateTo('home'); scrollTo(0); }}
                             />
@@ -2513,10 +2590,28 @@ export default function App() {
                         <p className="font-serif italic text-base text-stone-600 max-w-xs">
                             Handcrafted Makrana marble idols & sanctified temple art, chosen with care for your home mandir, altar and journey.
                         </p>
+                        <address className="not-italic text-xs text-stone-600 space-y-1.5 pt-1">
+                            <p className="font-bold text-stone-900 text-sm">Amol Marble Murti Bhandar</p>
+                            <p className="leading-relaxed">Bus Stand Road, Near Murarka High School, Shegaon, Buldhana District, Maharashtra - 444203</p>
+                            <p className="font-medium text-stone-800">Phone / WhatsApp: <a href="tel:+919422880000" className="text-[#8E5B00] hover:underline font-bold">+91 94228 80000</a></p>
+                            <div className="flex items-center gap-2 pt-1 flex-wrap">
+                                <a 
+                                    href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#8E5B00] hover:text-black uppercase tracking-wider underline"
+                                >
+                                    <MapPin className="w-3 h-3 text-[#C69722]" /> Showroom on Google Maps
+                                </a>
+                                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 text-[10px] font-bold border border-amber-200">
+                                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-500" /> 4.9★ (50+ Reviews)
+                                </span>
+                            </div>
+                        </address>
                         <div className="flex items-center gap-3 pt-2">
-                            <a href="#footer" onClick={(e) => { e.preventDefault(); showToast('Visiting Amol Marble Facebook'); }} className="w-8 h-8 rounded-full border border-stone-300 bg-white/70 flex items-center justify-center hover:bg-[#161616] hover:text-white transition text-xs font-bold">f</a>
-                            <a href="#footer" onClick={(e) => { e.preventDefault(); showToast('Visiting Amol Marble Instagram'); }} className="w-8 h-8 rounded-full border border-stone-300 bg-white/70 flex items-center justify-center hover:bg-[#161616] hover:text-white transition"><Instagram className="w-3.5 h-3.5" /></a>
-                            <a href="#footer" onClick={(e) => { e.preventDefault(); showToast('Visiting Amol Marble YouTube'); }} className="w-8 h-8 rounded-full border border-stone-300 bg-white/70 flex items-center justify-center hover:bg-[#161616] hover:text-white transition"><Youtube className="w-3.5 h-3.5" /></a>
+                            <a href="#footer" onClick={(e) => { e.preventDefault(); showToast('Visiting Amol Marble Facebook'); }} className="w-8 h-8 rounded-full border border-stone-300 bg-white/70 flex items-center justify-center hover:bg-[#161616] hover:text-white transition text-xs font-bold" aria-label="Amol Marble Facebook Page">f</a>
+                            <a href="#footer" onClick={(e) => { e.preventDefault(); showToast('Visiting Amol Marble Instagram'); }} className="w-8 h-8 rounded-full border border-stone-300 bg-white/70 flex items-center justify-center hover:bg-[#161616] hover:text-white transition" aria-label="Amol Marble Instagram Page"><Instagram className="w-3.5 h-3.5" /></a>
+                            <a href="#footer" onClick={(e) => { e.preventDefault(); showToast('Visiting Amol Marble YouTube'); }} className="w-8 h-8 rounded-full border border-stone-300 bg-white/70 flex items-center justify-center hover:bg-[#161616] hover:text-white transition" aria-label="Amol Marble YouTube Channel"><Youtube className="w-3.5 h-3.5" /></a>
                         </div>
                     </div>
 

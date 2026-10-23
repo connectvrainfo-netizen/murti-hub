@@ -69,7 +69,8 @@ class LocalStore:
                 "murtis": self.murtis,
                 "festival_sections": self.festival_sections,
                 "reviews": self.reviews,
-                "orders": getattr(self, "orders", [])
+                "orders": getattr(self, "orders", []),
+                "admin_users": getattr(self, "admin_users", [])
             }
             def json_serial(obj):
                 if isinstance(obj, (datetime.datetime, datetime.date)):
@@ -100,6 +101,18 @@ class LocalStore:
             if "reviews" in data:
                 self.reviews = data["reviews"]
             self.orders = data.get("orders", [])
+            self.admin_users = data.get("admin_users", [])
+            if not self.admin_users:
+                self.admin_users = [
+                    {
+                        "id": "66666666-6666-6666-6666-666666660001",
+                        "email": settings.ADMIN_EMAIL or "admin@amolmurtibhandar.com",
+                        "full_name": "Master Sculptor Admin",
+                        "password_hash": "$2b$12$8S1EN29QkuUKjDYUOeRS4uAcbUYxvGQSnWEZj9KfbFFkdF0tx7FbK",
+                        "role": "super_admin",
+                        "is_active": True
+                    }
+                ]
             return True
         except Exception as e:
             print(f"[LocalStore] Warning: Could not read {STORE_FILE}: {e}. Keeping seeded defaults.")
@@ -1116,6 +1129,18 @@ class LocalStore:
                 ]
             }
         ]
+        
+        # 7. Admin Users (Hashed bcrypt passwords, zero plaintext)
+        self.admin_users = getattr(self, "admin_users", [
+            {
+                "id": "66666666-6666-6666-6666-666666660001",
+                "email": settings.ADMIN_EMAIL or "admin@amolmurtibhandar.com",
+                "full_name": "Master Sculptor Admin",
+                "password_hash": "$2b$12$8S1EN29QkuUKjDYUOeRS4uAcbUYxvGQSnWEZj9KfbFFkdF0tx7FbK",
+                "role": "super_admin",
+                "is_active": True
+            }
+        ])
         if save_to_disk:
             self.save()
 

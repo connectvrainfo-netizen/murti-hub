@@ -69,7 +69,7 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
     const [isAuthenticated, setIsAuthenticated] = useState(Boolean(api.getToken()));
     const [authLoading, setAuthLoading] = useState(false);
     const [authError, setAuthError] = useState('');
-    const [loginForm, setLoginForm] = useState({ email: 'admin@amolmurtibhandar.com', password: 'admin123' });
+    const [loginForm, setLoginForm] = useState({ email: '', password: '' });
 
     // Data States - Pre-seeded with existing catalog data
     const [loading, setLoading] = useState(false);
@@ -157,18 +157,19 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
     };
 
     useEffect(() => {
-        // Automatically authenticate so admin modal and all 20 products display immediately
-        if (!api.getToken()) {
-            api.login(loginForm.email, loginForm.password)
+        const token = api.getToken();
+        if (token) {
+            api.getMe()
                 .then(() => {
                     setIsAuthenticated(true);
                     refreshAllData();
                 })
                 .catch(() => {
-                    refreshAllData();
+                    api.logout();
+                    setIsAuthenticated(false);
                 });
         } else {
-            refreshAllData();
+            setIsAuthenticated(false);
         }
     }, []);
 
@@ -183,13 +184,21 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
         e.preventDefault();
         setAuthLoading(true);
         setAuthError('');
+
+        if (!loginForm.email.trim() || !loginForm.password) {
+            setAuthError('Please enter both email and password.');
+            setAuthLoading(false);
+            return;
+        }
+
         try {
-            await api.login(loginForm.email, loginForm.password);
+            await api.login(loginForm.email.trim(), loginForm.password);
             setIsAuthenticated(true);
             showToast('Welcome back, Admin!');
             refreshAllData();
         } catch (err) {
             setAuthError(err.message || 'Login failed. Check credentials.');
+            setIsAuthenticated(false);
         } finally {
             setAuthLoading(false);
         }

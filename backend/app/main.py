@@ -37,21 +37,30 @@ Comprehensive backend API for sacred Makrana marble murtis store with full Admin
 7. **Master Sizes Management**: Manage reusable size tags and link murti variants with custom prices.
 8. **Standard Admin Operations**: JWT auth, review moderation & seller replies, dashboard metrics, and media uploads.
 """,
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url="/docs" if (settings.DEBUG or settings.ENVIRONMENT != "production") else None,
+    redoc_url="/redoc" if (settings.DEBUG or settings.ENVIRONMENT != "production") else None
 )
 
 # -----------------------------------------------------------------------------
-# 1. MIDDLEWARE: CORS, Request Tracking & Request-ID
+# 1. MIDDLEWARE: CORS, Security Headers, Request Tracking & Request-ID
 # -----------------------------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
-    allow_origin_regex=r"^https?://.*",
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
+    allow_headers=["Authorization", "Content-Type", "Accept", "X-Request-ID"],
 )
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    if not settings.DEBUG and settings.ENVIRONMENT == "production":
+        response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
+    return response
 
 @app.middleware("http")
 async def request_logging_and_tracing_middleware(request: Request, call_next):
@@ -242,10 +251,9 @@ def root(request: Request):
         "version": settings.APP_VERSION,
         "status": "online",
         "database": "supabase" if is_supabase_connected() else "in-memory (pre-seeded)",
-        "docs_url": "/docs",
+        "docs_url": "/docs" if (settings.DEBUG or settings.ENVIRONMENT != "production") else None,
         "health_check": "/health",
-        "uptimerobot_probe": "/uptimerobot",
-        "admin_email": settings.ADMIN_EMAIL
+        "uptimerobot_probe": "/uptimerobot"
     }
 
 

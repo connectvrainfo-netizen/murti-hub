@@ -67,14 +67,12 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
         if (typeof window === 'undefined') return false;
-        return Boolean(api.getToken()) || localStorage.getItem('murti_admin_session') === 'active';
+        return Boolean(api.getToken());
     });
-    const [isOfflineMode, setIsOfflineMode] = useState(() => {
-        return !api.getBaseUrl() || !api.getToken();
-    });
+    const [isOfflineMode, setIsOfflineMode] = useState(false);
     const [authLoading, setAuthLoading] = useState(false);
     const [authError, setAuthError] = useState('');
-    const [loginForm, setLoginForm] = useState({ email: 'admin@amolmurtibhandar.com', password: 'admin123' });
+    const [loginForm, setLoginForm] = useState({ email: '', password: '' });
     const [backendUrlInput, setBackendUrlInput] = useState(api.getBaseUrl() || '');
     const [isConfiguringServer, setIsConfiguringServer] = useState(Boolean(!api.getBaseUrl()));
     const [testingConnection, setTestingConnection] = useState(false);
@@ -202,37 +200,20 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     };
 
     useEffect(() => {
-        const hasToken = Boolean(api.getToken());
-        const hasSession = typeof localStorage !== 'undefined' && localStorage.getItem('murti_admin_session') === 'active';
-
-        if (hasToken) {
-            setIsAuthenticated(true);
-            setIsOfflineMode(false);
-            refreshAllData();
-            return;
-        }
-
-        if (hasSession) {
-            setIsAuthenticated(true);
-            setIsOfflineMode(!api.getBaseUrl());
-            refreshAllData();
-            return;
-        }
-
-        // Background automatic login against connected backend
-        if (api.getBaseUrl() && loginForm.email && loginForm.password) {
-            api.login(loginForm.email, loginForm.password)
+        const token = api.getToken();
+        if (token) {
+            api.getMe()
                 .then(() => {
                     setIsAuthenticated(true);
                     setIsOfflineMode(false);
-                    if (typeof localStorage !== 'undefined') localStorage.setItem('murti_admin_session', 'active');
                     refreshAllData();
                 })
                 .catch(() => {
-                    refreshAllData();
+                    api.logout();
+                    setIsAuthenticated(false);
                 });
         } else {
-            refreshAllData();
+            setIsAuthenticated(false);
         }
     }, []);
 
@@ -248,56 +229,28 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         setAuthLoading(true);
         setAuthError('');
 
-        const isDefaultCreds =
-            loginForm.email.trim().toLowerCase() === 'admin@amolmurtibhandar.com' &&
-            loginForm.password === 'admin123';
-
-        // 1. If backend URL is available, attempt real JWT login
-        if (api.getBaseUrl()) {
-            try {
-                await api.login(loginForm.email, loginForm.password);
-                setIsAuthenticated(true);
-                setIsOfflineMode(false);
-                if (typeof localStorage !== 'undefined') localStorage.setItem('murti_admin_session', 'active');
-                showToast('Welcome back, Admin! (Connected to Render backend)');
-                refreshAllData();
-                setAuthLoading(false);
-                return;
-            } catch (err) {
-                console.warn('Backend login attempt returned:', err);
-                if (isDefaultCreds) {
-                    setIsAuthenticated(true);
-                    setIsOfflineMode(true);
-                    if (typeof localStorage !== 'undefined') localStorage.setItem('murti_admin_session', 'active');
-                    showToast('Admin Portal unlocked in Standalone Mode. Render backend is sleeping or offline.');
-                    refreshAllData();
-                    setAuthLoading(false);
-                    return;
-                }
-                setAuthError(err.message || 'Login failed. Please check credentials or Render connection.');
-                setAuthLoading(false);
-                return;
-            }
+        if (!loginForm.email.trim() || !loginForm.password) {
+            setAuthError('Please enter both email and password.');
+            setAuthLoading(false);
+            return;
         }
 
-        // 2. If no backend URL configured yet:
-        if (isDefaultCreds) {
+        try {
+            await api.login(loginForm.email.trim(), loginForm.password);
             setIsAuthenticated(true);
-            setIsOfflineMode(true);
-            if (typeof localStorage !== 'undefined') localStorage.setItem('murti_admin_session', 'active');
-            showToast('Welcome to Admin Portal! (Standalone Catalog Mode)');
+            setIsOfflineMode(false);
+            showToast('Welcome back, Admin!');
             refreshAllData();
-        } else {
-            setAuthError('Invalid credentials. Use default admin credentials or configure your Render backend URL.');
+        } catch (err) {
+            setAuthError(err.message || 'Login failed. Please verify credentials or connection.');
+            setIsAuthenticated(false);
+        } finally {
+            setAuthLoading(false);
         }
-        setAuthLoading(false);
     };
 
-    const handleLogout = () => {
-        api.logout();
-        if (typeof localStorage !== 'undefined') {
-            localStorage.removeItem('murti_admin_session');
-        }
+    const handleLogout = async () => {
+        await api.logout();
         setIsAuthenticated(false);
         setIsOfflineMode(false);
         showToast('Logged out of Admin Portal');

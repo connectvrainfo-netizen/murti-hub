@@ -249,10 +249,11 @@ def create_authoritative_order(payload: OrderCreateRequest, response: Response):
 # ============================================================================
 # 3. ORDER TRACKING LOOKUP (Authoritative Status Verification)
 # ============================================================================
-@router.get("/{order_id}", response_model=ApiResponse[OrderOut], summary="Authoritative order tracking by ID")
+@router.get("/{order_id}", response_model=ApiResponse[OrderOut], summary="Authoritative order tracking by ID with privacy protection")
 def get_order_by_id(order_id: str):
     """
     Customer order tracking: Authoritatively looks up order details and live dispatch progress.
+    Customer PII (full address, phone, notes) is masked in public responses to protect privacy.
     """
     clean_id = order_id.strip().upper()
     if not clean_id.startswith("MH-") and clean_id.isdigit():
@@ -261,7 +262,19 @@ def get_order_by_id(order_id: str):
     orders = getattr(local_store, "orders", [])
     for order in orders:
         if order.get("order_id", "").upper() == clean_id:
-            return ApiResponse(success=True, message="Order found", data=order)
+            order_copy = order.copy()
+            if "shipping" in order_copy and isinstance(order_copy["shipping"], dict):
+                s = order_copy["shipping"].copy()
+                raw_name = s.get("full_name", "")
+                raw_phone = s.get("phone", "")
+                raw_pin = s.get("pincode", "")
+                s["full_name"] = (raw_name[:2] + "****") if len(raw_name) >= 2 else "****"
+                s["phone"] = (raw_phone[:3] + "******" + raw_phone[-2:]) if len(raw_phone) >= 5 else "******"
+                s["address"] = "Confidential (Protected for Sacred Delivery)"
+                s["notes"] = None
+                s["pincode"] = (raw_pin[:3] + "***") if len(raw_pin) >= 3 else "***"
+                order_copy["shipping"] = s
+            return ApiResponse(success=True, message="Order found", data=order_copy)
 
     raise NotFoundError("Order", order_id, f"Order '{order_id}' not found in authoritative records. Please check the Order ID provided.")
 

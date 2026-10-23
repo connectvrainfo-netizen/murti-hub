@@ -218,16 +218,12 @@ class ApiService {
             }
 
             if (!res.ok) {
-                // If token is invalid or expired and this is not a retry or login request, auto re-authenticate
-                if (res.status === 401 && !isRetry && !endpoint.includes('/auth/login')) {
-                    try {
-                        console.warn('[API Auth] 401 Unauthorized detected. Auto-refreshing admin session token...');
-                        const loginRes = await this.login('admin@amolmurtibhandar.com', 'admin123');
-                        if (loginRes?.access_token) {
-                            return await this.request(endpoint, options, true, retryCount);
-                        }
-                    } catch (loginErr) {
-                        this.setToken(null);
+                // If token is invalid or expired, immediately clear active session
+                if (res.status === 401 && !endpoint.includes('/auth/login')) {
+                    this.setToken(null);
+                    if (typeof localStorage !== 'undefined') {
+                        localStorage.removeItem('murti_admin_session');
+                        localStorage.removeItem('murti_admin_token');
                     }
                 }
 
@@ -314,8 +310,16 @@ class ApiService {
         return this.request('/auth/me');
     }
 
-    logout() {
-        this.setToken(null);
+    async logout() {
+        try {
+            await this.request('/auth/logout', { method: 'POST' }).catch(() => {});
+        } finally {
+            this.setToken(null);
+            if (typeof localStorage !== 'undefined') {
+                localStorage.removeItem('murti_admin_session');
+                localStorage.removeItem('murti_admin_token');
+            }
+        }
     }
 
     // =========================================================================
