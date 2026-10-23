@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Star, ShieldCheck, Gem, Sparkles, Truck, Check, Heart, ShoppingBag, ArrowRight } from 'lucide-react';
+import SafeImage from './SafeImage';
 
 export default function ProductDetailModal({
     product,
@@ -50,8 +51,9 @@ export default function ProductDetailModal({
                     {/* Left: Image Gallery */}
                     <div className="md:col-span-5 bg-[#FAF5E8] p-4 sm:p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-[#E8DEC8]">
                         <div className="relative rounded-2xl overflow-hidden aspect-square bg-white shadow-sm border border-[#E6D6B8]/80 group">
-                            <img
+                            <SafeImage
                                 src={product.img}
+                                fallbackSrc="/images/products/ram-darbar.png"
                                 alt={product.title}
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />

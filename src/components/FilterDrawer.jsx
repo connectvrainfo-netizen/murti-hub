@@ -10,6 +10,8 @@ export default function FilterDrawer({
     onSelectPriceRange,
     placement,
     onSelectPlacement,
+    availability = 'all',
+    onSelectAvailability,
     onResetAll,
     itemsCount
 }) {
@@ -18,11 +20,19 @@ export default function FilterDrawer({
     const deities = ['All Deities', 'Hanuman', 'Shiva', 'Krishna', 'Ganesha', 'Ram', 'Durga', 'Gajanan Maharaj', 'Murugan'];
     const priceOptions = [
         { label: 'All Prices', val: 'all' },
-        { label: 'Under ₹1,000 (Gifting & Small Idols)', val: 'under-1000' },
-        { label: '₹1,000 - ₹2,000 (Home Mandir)', val: '1000-2000' },
-        { label: 'Above ₹2,000 (Grand Sacred Altars)', val: 'above-2000' }
+        { label: 'Under ₹1,000 (Small & Gifting Idols)', val: 'under-1000' },
+        { label: '₹1,000 - ₹2,000 (Home Mandir Sanctum)', val: '1000-2000' },
+        { label: 'Above ₹2,000 (Grand Heritage Altars)', val: 'above-2000' }
     ];
-    const placements = ['All Placements', 'Home Mandir', 'Office Desk'];
+    const placements = [
+        { label: 'All Placements', val: 'all' },
+        { label: 'Home Mandir & Altar', val: 'home-mandir' },
+        { label: 'Office Desk & Study Table', val: 'office-desk' }
+    ];
+    const availabilityOptions = [
+        { label: 'All Sanctified Idols', val: 'all' },
+        { label: 'In Stock & Ready for Dispatch', val: 'in_stock' }
+    ];
 
     return (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs">
@@ -98,20 +108,44 @@ export default function FilterDrawer({
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {placements.map(pl => {
-                                const isSelected = (pl === 'All Placements' && placement === 'all') || (placement === pl);
+                                const isSelected = placement === pl.val;
                                 return (
                                     <button
-                                        key={pl}
+                                        key={pl.val}
                                         type="button"
-                                        onClick={() => onSelectPlacement(pl === 'All Placements' ? 'all' : pl)}
+                                        onClick={() => onSelectPlacement(pl.val)}
                                         className={`min-h-[44px] px-4 py-2 rounded-xl border transition tap-target-48 ${isSelected ? 'border-[#C69722] bg-[#161616] text-[#F7C600] font-bold shadow-xs' : 'border-stone-200 text-stone-700 hover:border-stone-400 bg-white'}`}
                                     >
-                                        {pl}
+                                        {pl.label}
                                     </button>
                                 );
                             })}
                         </div>
                     </div>
+
+                    {/* Filter by Availability */}
+                    {onSelectAvailability && (
+                        <div className="space-y-2.5">
+                            <label className="font-bold text-[#161616] uppercase tracking-wider block">
+                                Availability:
+                            </label>
+                            <div className="flex flex-wrap gap-2">
+                                {availabilityOptions.map(opt => {
+                                    const isSelected = availability === opt.val;
+                                    return (
+                                        <button
+                                            key={opt.val}
+                                            type="button"
+                                            onClick={() => onSelectAvailability(opt.val)}
+                                            className={`min-h-[44px] px-4 py-2 rounded-xl border transition tap-target-48 ${isSelected ? 'border-[#C69722] bg-[#161616] text-[#F7C600] font-bold shadow-xs' : 'border-stone-200 text-stone-700 hover:border-stone-400 bg-white'}`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer Actions */}

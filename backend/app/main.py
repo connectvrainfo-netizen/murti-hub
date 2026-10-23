@@ -53,6 +53,54 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# In-memory sliding window request log for API rate limiting
+API_REQUEST_LOG = {}
+RATE_LIMIT_WINDOW_SECONDS = 60
+GENERAL_RATE_LIMIT = 150
+SENSITIVE_RATE_LIMIT = 25  # per minute for sensitive endpoints
+
+def _get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "127.0.0.1"
+
+@app.middleware("http")
+async def rate_limiting_middleware(request: Request, call_next):
+    path = request.url.path
+    # Only rate-limit API calls; exclude OPTIONS (CORS preflight) and health probes
+    if path.startswith("/api/") and request.method not in ["OPTIONS", "HEAD"] and not path.startswith("/api/health"):
+        ip = _get_client_ip(request)
+        now = time.time()
+        key = f"{ip}:{path}" if request.method == "POST" and any(s in path for s in ["/auth", "/orders", "/reviews"]) else ip
+        is_sensitive = request.method == "POST" and any(s in path for s in ["/auth", "/orders", "/reviews"])
+        limit = SENSITIVE_RATE_LIMIT if is_sensitive else GENERAL_RATE_LIMIT
+
+        timestamps = [t for t in API_REQUEST_LOG.get(key, []) if now - t < RATE_LIMIT_WINDOW_SECONDS]
+        if len(timestamps) >= limit:
+            retry_after = max(1, int(RATE_LIMIT_WINDOW_SECONDS - (now - timestamps[0])))
+            logger.warning(f"[RateLimit] Rate limit exceeded ({len(timestamps)}/{limit}) for key {key} on {path}. Retry after {retry_after}s")
+            return JSONResponse(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                content={
+                    "success": False,
+                    "message": "Too many requests. Please wait a moment before trying again.",
+                    "detail": "Too many requests. Please wait a moment before trying again.",
+                    "error_code": "TOO_MANY_REQUESTS",
+                    "status_code": 429
+                },
+                headers={
+                    "Retry-After": str(retry_after),
+                    "X-RateLimit-Limit": str(limit),
+                    "X-RateLimit-Remaining": "0"
+                }
+            )
+
+        timestamps.append(now)
+        API_REQUEST_LOG[key] = timestamps
+
+    return await call_next(request)
+
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
     response = await call_next(request)

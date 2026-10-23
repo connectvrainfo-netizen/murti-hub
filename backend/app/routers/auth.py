@@ -3,9 +3,9 @@ import datetime
 from typing import Dict, List, Optional
 from fastapi import APIRouter, Depends, Request, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
-from app.schemas.auth import AdminLoginRequest, TokenResponse, AdminProfile
+from app.schemas.auth import AdminLoginRequest, UserRegisterRequest, TokenResponse, AdminProfile
 from app.schemas.common import ApiResponse
-from app.auth import verify_password, create_access_token, decode_access_token, revoke_token, get_current_admin, security_bearer
+from app.auth import verify_password, get_password_hash, create_access_token, decode_access_token, revoke_token, get_current_admin, security_bearer
 from app.config import settings
 from app.database import get_supabase, is_supabase_connected, local_store
 from app.logger import logger
@@ -122,6 +122,96 @@ def admin_login(payload: AdminLoginRequest, request: Request):
             access_token=access_token,
             token_type="bearer",
             admin=admin_data
+        )
+    )
+
+@router.post("/register", response_model=ApiResponse[TokenResponse], status_code=status.HTTP_201_CREATED, summary="Create a new authenticated account")
+def user_register(payload: UserRegisterRequest, request: Request):
+    """
+    Registers a new account securely with bcrypt password hashing in the database.
+    - Rate limited to prevent automated spam.
+    - Never stores plaintext passwords.
+    - Returns immediate authentication token.
+    """
+    ip = get_client_ip(request)
+    check_login_rate_limit(ip)
+
+    email = payload.email.strip().lower()
+    if "@" not in email or "." not in email:
+        raise HTTPException(status_code=400, detail="Please enter a valid email address.")
+    if len(payload.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+
+    full_name = (payload.full_name or "Devotee Member").strip()
+
+    # 1. Check if email already exists in Supabase
+    if is_supabase_connected():
+        try:
+            client = get_supabase()
+            existing = client.table("admin_users").select("id").eq("email", email).execute()
+            if existing.data and len(existing.data) > 0:
+                raise HTTPException(status_code=409, detail="An account with this email address already exists.")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"[Supabase] Email check error: {e}")
+
+    # 2. Check local_store.admin_users
+    if hasattr(local_store, "admin_users"):
+        for u in getattr(local_store, "admin_users", []):
+            if u.get("email", "").lower() == email:
+                raise HTTPException(status_code=409, detail="An account with this email address already exists.")
+
+    # 3. Hash password with bcrypt
+    password_hash = get_password_hash(payload.password)
+    user_id = str(time.time_ns())[-12:]
+    import uuid
+    user_uuid = str(uuid.uuid4())
+
+    new_user = {
+        "id": user_uuid,
+        "email": email,
+        "full_name": full_name,
+        "password_hash": password_hash,
+        "role": "editor",
+        "is_active": True,
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat()
+    }
+
+    # 4. Save to Supabase or local store
+    saved = False
+    if is_supabase_connected():
+        try:
+            client = get_supabase()
+            res = client.table("admin_users").insert(new_user).execute()
+            if res.data and len(res.data) > 0:
+                saved = True
+        except Exception as e:
+            logger.warning(f"[Supabase] User insert failed: {e}. Saving to local store.")
+
+    if not saved:
+        if not hasattr(local_store, "admin_users") or not isinstance(local_store.admin_users, list):
+            local_store.admin_users = []
+        local_store.admin_users.append(new_user)
+        local_store.save()
+
+    user_data = {
+        "id": user_uuid,
+        "email": email,
+        "full_name": full_name,
+        "role": "editor"
+    }
+
+    access_token = create_access_token(user_data)
+    logger.info(f"New user registered successfully: '{email}' from IP: {ip}")
+
+    return ApiResponse(
+        success=True,
+        message="Account created and authenticated successfully",
+        data=TokenResponse(
+            access_token=access_token,
+            token_type="bearer",
+            admin=user_data
         )
     )
 

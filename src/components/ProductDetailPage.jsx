@@ -7,6 +7,7 @@ import {
     Tag
 } from 'lucide-react';
 import { catalog } from '../data/catalog';
+import SafeImage from './SafeImage';
 import api from '../services/api';
 
 export default function ProductDetailPage({
@@ -17,6 +18,7 @@ export default function ProductDetailPage({
     isWishlisted,
     onToggleWishlist,
     onSelectProduct,
+    allProducts = [],
     globalRatingMode = 'enabled',
     masterSizes = []
 }) {
@@ -307,7 +309,8 @@ export default function ProductDetailPage({
     });
 
     // Related Products (exclude current)
-    const relatedProducts = catalog
+    const productCatalog = (allProducts && allProducts.length > 0) ? allProducts : catalog;
+    const relatedProducts = productCatalog
         .filter(item => item.id !== product.id && (item.deity === product.deity || item.group === product.group))
         .slice(0, 4);
 
@@ -378,13 +381,13 @@ export default function ProductDetailPage({
                                         }`}
                                         title={view.title}
                                     >
-                                        <img
+                                        <SafeImage
                                             src={view.img}
+                                            fallbackSrc={baseProductImg || '/images/products/ram-darbar.png'}
                                             alt={`Handcrafted White Marble ${product.title} - View ${view.title} - Amol Marble Murti Bhandar Shegaon`}
                                             width="80"
                                             height="80"
                                             loading="lazy"
-                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = baseProductImg || '/images/products/ram-darbar.png'; }}
                                             className={`w-full h-full object-contain p-1.5 img-studio-contrast group-hover:scale-105 transition duration-300 ${view.id === 'detail' ? 'scale-125 object-top' : ''}`}
                                         />
                                         {/* Active Indicator Label */}
@@ -401,14 +404,14 @@ export default function ProductDetailPage({
                         {/* Main Image Display with Click Switch, Zoom & Trust Badges */}
                         <div className="flex-1 relative rounded-3xl overflow-hidden bg-white border border-[#E6D6B8] shadow-lg group">
                             <div className="relative aspect-square sm:aspect-[4/3] lg:aspect-square overflow-hidden bg-[#FBF9F3]">
-                                <img
+                                <SafeImage
                                     key={safeActiveIdx}
                                     src={currentView.img}
+                                    fallbackSrc={baseProductImg || '/images/products/ram-darbar.png'}
                                     alt={`Handcrafted White Marble ${product.title} at Amol Marble Murti Bhandar Shegaon`}
                                     width="600"
                                     height="600"
                                     fetchpriority="high"
-                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = baseProductImg || '/images/products/ram-darbar.png'; }}
                                     className={`w-full h-full object-contain p-4 sm:p-8 img-studio-contrast transition-all duration-500 transform ${currentView.zoomClass || ''} group-hover:scale-105 animate-in fade-in`}
                                 />
 
@@ -1054,8 +1057,9 @@ export default function ProductDetailPage({
                                 {rev.hasPhoto && (
                                     <div className="pt-1">
                                         <div className="inline-flex items-center gap-2 p-1.5 rounded-xl border border-stone-200 bg-stone-50">
-                                            <img
+                                            <SafeImage
                                                 src={rev.photoUrl}
+                                                fallbackSrc="/images/products/ram-darbar.png"
                                                 alt="Customer verification"
                                                 className="w-14 h-14 rounded-lg object-cover bg-white"
                                             />
@@ -1140,8 +1144,9 @@ export default function ProductDetailPage({
                                             onClick={() => onSelectProduct(item)}
                                             className="relative rounded-lg sm:rounded-xl overflow-hidden aspect-square mb-2 sm:mb-3 bg-[#FAF5E8] border border-stone-100 cursor-pointer"
                                         >
-                                            <img
-                                                src={item.img}
+                                            <SafeImage
+                                                src={api.getImageUrl(item.img) || '/images/products/ram-darbar.png'}
+                                                fallbackSrc="/images/products/ram-darbar.png"
                                                 alt={`Handcrafted White Marble ${item.title} at Amol Marble Murti Bhandar Shegaon`}
                                                 width="280"
                                                 height="280"

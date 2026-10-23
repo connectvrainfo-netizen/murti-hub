@@ -7,8 +7,7 @@ export const deityCategories = [
     { id: "ganpati", name: "Ganpati", route: "shop-all", deity: "Ganesha", img: "/images/categories/ganpati@2x.png" },
     { id: "ram", name: "Ram", route: "shop-all", deity: "Ram", img: "/images/categories/ram@2x.png" },
     { id: "durga-shakti", name: "Durga & Shakti", route: "shop-all", deity: "Durga", img: "/images/categories/durga-shakti@2x.png" },
-    { id: "murugan", name: "Murugan", route: "shop-all", deity: "Murugan", img: "/images/categories/murugan@2x.png" },
-    { id: "hand-paint", name: "Hand Paint", route: "sacred", deity: null, img: "/images/categories/hand-paint@2x.png" },
+    { id: "murugan", name: "Murugan", route: "shop-all", deity: "Murugan", img: "/images/categories/murugan@2x.png" }
 ];
 
 export const catalog = [

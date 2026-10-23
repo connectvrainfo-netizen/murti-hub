@@ -6,7 +6,6 @@ export default function ScrollProgress({ onScrollTop }) {
     const barRef = useRef(null);
     const fabRef = useRef(null);
     const [showFab, setShowFab] = useState(false);
-    const [progressPercent, setProgressPercent] = useState(0);
 
     useEffect(() => {
         const bar = barRef.current;
@@ -19,8 +18,6 @@ export default function ScrollProgress({ onScrollTop }) {
             onUpdate: (self) => {
                 const progress = self.progress;
                 gsap.set(bar, { scaleX: progress, transformOrigin: 'left center' });
-                const pct = Math.round(progress * 100);
-                setProgressPercent(pct);
                 setShowFab(self.scroll() > 400);
             }
         });
@@ -89,9 +86,6 @@ export default function ScrollProgress({ onScrollTop }) {
                     <ArrowUp className="w-5 h-5 text-[#8E5B00] group-hover:-translate-y-0.5 transition-transform duration-300 stroke-[2.4]" />
                     <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[#F7C600] ring-2 ring-white animate-pulse" />
                 </button>
-                <span className="text-[9px] font-bold tracking-widest text-[#8E5B00] bg-white/95 px-2 py-0.5 rounded-full shadow-xs border border-[#E6D6B8]/60 backdrop-blur-xs select-none">
-                    {progressPercent}%
-                </span>
             </div>
         </>
     );

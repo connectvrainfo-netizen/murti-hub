@@ -46,6 +46,7 @@ function formatApiErrorMessage(data, status, defaultStatusText) {
     if (status === 404) return 'The requested resource was not found.';
     if (status === 413) return 'Uploaded file is too large. Max limit is 15 MB.';
     if (status === 422) return 'Invalid form input. Please verify all required fields.';
+    if (status === 429) return data?.message || 'Too many requests. Please wait a moment before trying again.';
     if (status >= 500) return 'Server error occurred. Please try again shortly.';
     return defaultStatusText || `Request failed with status ${status}`;
 }
@@ -233,9 +234,10 @@ class ApiService {
                     }
                 }
 
-                // Transient 5xx or 429 Rate Limit Retry with Exponential Backoff (Checklist Section 2 & 3)
+                // Transient 5xx or 429 Rate Limit Retry with Exponential Backoff (excluding auth routes)
                 const isTransientError = res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504;
-                if (isTransientError && retryCount < 2) {
+                const isAuthRoute = endpoint.includes('/auth/');
+                if (isTransientError && !isAuthRoute && retryCount < 2) {
                     const retryAfterHeader = res.headers?.get ? res.headers.get('Retry-After') : null;
                     const delayMs = retryAfterHeader ? parseInt(retryAfterHeader, 10) * 1000 : Math.pow(2, retryCount) * 800 + Math.random() * 200;
                     console.warn(`[API Retry] ${res.status} on ${endpoint}. Retrying in ${Math.round(delayMs)}ms (attempt ${retryCount + 1}/2)...`);
@@ -303,6 +305,9 @@ class ApiService {
         const token = res?.data?.access_token || res?.access_token;
         if (token) {
             this.setToken(token);
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('murti_admin_session', JSON.stringify(res.data?.admin || { email }));
+            }
             return res.data || res;
         }
         throw new ApiError({
@@ -310,6 +315,22 @@ class ApiService {
             status: 401,
             errorCode: 'INVALID_AUTH_RESPONSE'
         });
+    }
+
+    async register(email, password, fullName = 'Devotee Member') {
+        const res = await this.request('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({ email, password, full_name: fullName })
+        });
+        const token = res?.data?.access_token || res?.access_token;
+        if (token) {
+            this.setToken(token);
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('murti_admin_session', JSON.stringify(res.data?.admin || { email, full_name: fullName }));
+            }
+            return res.data || res;
+        }
+        return res.data || res;
     }
 
     async getMe() {

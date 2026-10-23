@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+import time
 
 # Ensure backend root is on sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -84,10 +85,10 @@ def run_tests():
         "price": 125000.0,
         "old_price": 150000.0,
         "material": "Makrana Pure White Marble",
-        "primary_catalog_image": "uploads/products/ram-lalla-test.jpg",
+        "primary_catalog_image": "/images/products/ram-darbar.png",
         "catalog_images": [
-            {"url": "uploads/products/ram-lalla-angle1.jpg", "caption": "Front Angle", "sort_order": 1},
-            {"url": "uploads/products/ram-lalla-angle2.jpg", "caption": "Side Profile", "sort_order": 2}
+            {"url": "/images/products/ram-darbar.png", "caption": "Front Angle", "sort_order": 1},
+            {"url": "/images/products/ram-darbar.png", "caption": "Side Profile", "sort_order": 2}
         ],
         "is_featured": True,
         "stock_status": "in_stock"
@@ -116,7 +117,7 @@ def run_tests():
         "collection_old_price": "₹65,000",
         "collection_discount_text": "30% CONSECRATION DISCOUNT",
         "collection_tag": "LIMITED EDITION 2026",
-        "collection_image_url": "uploads/banners/sacred-collection-hero.jpg"
+        "collection_image_url": "/images/products/ram-darbar.png"
     }
     r = client.put("/api/settings", json=settings_payload, headers=auth_headers)
     assert r.status_code == 200, f"Failed to update settings: {r.text}"
@@ -167,13 +168,33 @@ def run_tests():
     else:
         print("No active festival found, skipping link verification.")
 
-    # Clean up test entities so test runs never pollute the database
-    if cat_id:
-        client.delete(f"/api/categories/{cat_id}", headers=auth_headers)
-    if size_id:
-        client.delete(f"/api/sizes/{size_id}", headers=auth_headers)
-    if murti_id:
-        client.delete(f"/api/products/{murti_id}", headers=auth_headers)
+    # Clean up test product, category, and size to keep store data clean
+    client.delete(f"/api/products/{murti_id}", headers=auth_headers)
+    client.delete(f"/api/categories/{cat_id}", headers=auth_headers)
+    client.delete(f"/api/sizes/{size_id}", headers=auth_headers)
+    print("Cleaned up test product, category, and size.")
+
+    # --- 6. Testing User Registration & Account Creation API ---
+    print("\n--- 6. Testing User Registration & Auth API ---")
+    reg_email = f"test.devotee.{int(time.time())}@example.com"
+    reg_payload = {
+        "email": reg_email,
+        "password": "securePassword123",
+        "full_name": "Test Devotee"
+    }
+    r = client.post("/api/auth/register", json=reg_payload)
+    assert r.status_code == 201, f"Failed to register: {r.text}"
+    reg_data = extract_data(r)
+    assert "access_token" in reg_data, "No access_token returned on registration"
+    print(f"Successfully registered new user: {reg_email}")
+
+    # Verify session token works on /api/auth/me
+    user_headers = {"Authorization": f"Bearer {reg_data['access_token']}"}
+    r = client.get("/api/auth/me", headers=user_headers)
+    assert r.status_code == 200, f"Failed to get user profile: {r.text}"
+    me_data = extract_data(r)
+    assert me_data.get("email") == reg_email
+    print(f"Verified registered session active: {me_data.get('full_name')} ({me_data.get('email')})")
 
     print("\n=== ALL TESTS PASSED SUCCESSFULLY! ===")
 

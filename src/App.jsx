@@ -20,6 +20,8 @@ import FilterDrawer from './components/FilterDrawer';
 import IntroAnimation from './components/IntroAnimation';
 import ScrollProgress from './components/ScrollProgress';
 import AdminPage from './components/AdminPage';
+import LoginPage from './components/LoginPage';
+import SafeImage from './components/SafeImage';
 import api from './services/api';
 import { supabase } from './utils/supabase';
 import { useLenisSmoothScroll } from './hooks/useLenisSmoothScroll';
@@ -38,10 +40,20 @@ const checkIsAdminPath = () => {
     return path === '/admin' || path.startsWith('/admin') || hash === '#admin' || hash.startsWith('#admin') || params.get('page') === 'admin' || search.includes('admin');
 };
 
+// Helper to determine if current URL is the dedicated customer login page
+const checkIsLoginPath = () => {
+    if (typeof window === 'undefined') return false;
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+    const hash = window.location.hash.toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    return path === '/login' || path.startsWith('/login') || hash === '#login' || hash.startsWith('#login') || params.get('page') === 'login';
+};
+
 // Helper to determine initial page, product, and category from URL parameters
 const getInitialNavigation = () => {
     if (typeof window === 'undefined') return { page: 'home', product: null, deity: null };
     if (checkIsAdminPath()) return { page: 'admin', product: null, deity: null };
+    if (checkIsLoginPath()) return { page: 'login', product: null, deity: null };
     
     try {
         const searchParams = new URLSearchParams(window.location.search);
@@ -87,30 +99,42 @@ export default function App() {
         api.getProducts({ include_inactive: false }).then(res => {
             const items = res?.items || (Array.isArray(res) ? res : null);
             if (items && items.length > 0) {
-                const mappedProducts = items.map(p => ({
-                    ...p,
-                    id: p.id,
-                    legacy_id: p.legacy_id,
-                    title: p.title,
-                    price: p.price,
-                    oldPrice: p.old_price ?? p.oldPrice ?? 0,
-                    off: p.off_text ?? p.off ?? '',
-                    deity: p.deity,
-                    group: p.group_tag ?? p.group ?? 'most-loved',
-                    img: p.primary_catalog_image || p.img || '/images/products/ram-darbar.png',
-                    primary_catalog_image: p.primary_catalog_image || p.img || '/images/products/ram-darbar.png',
-                    description: p.description,
-                    material: p.material,
-                    dimensions: p.dimensions,
-                    weight: p.weight,
-                    stock_status: p.stock_status || 'in_stock',
-                    is_active: p.is_active !== false,
-                    pran_pratishtha_ready: p.pran_pratishtha_ready !== false,
-                    rating_mode: p.rating_mode || 'enabled',
-                    static_rating_value: p.static_rating_value ?? 4.9,
-                    catalog_images: p.catalog_images || [],
-                    variants: p.variants || []
-                }));
+                const resolveProductImg = (img) => {
+                    if (!img || typeof img !== 'string') return '/images/products/ram-darbar.png';
+                    const trimmed = img.trim();
+                    if (!trimmed || trimmed === 'null' || trimmed === 'undefined' || trimmed.includes('ram-lalla-test') || trimmed.includes('test-')) {
+                        return '/images/products/ram-darbar.png';
+                    }
+                    return api.getImageUrl(trimmed) || '/images/products/ram-darbar.png';
+                };
+
+                const mappedProducts = items.map(p => {
+                    const resolvedImg = resolveProductImg(p.primary_catalog_image || p.img);
+                    return {
+                        ...p,
+                        id: p.id,
+                        legacy_id: p.legacy_id,
+                        title: p.title,
+                        price: p.price,
+                        oldPrice: p.old_price ?? p.oldPrice ?? 0,
+                        off: p.off_text ?? p.off ?? '',
+                        deity: p.deity,
+                        group: p.group_tag ?? p.group ?? 'most-loved',
+                        img: resolvedImg,
+                        primary_catalog_image: resolvedImg,
+                        description: p.description,
+                        material: p.material,
+                        dimensions: p.dimensions,
+                        weight: p.weight,
+                        stock_status: p.stock_status || 'in_stock',
+                        is_active: p.is_active !== false,
+                        pran_pratishtha_ready: p.pran_pratishtha_ready !== false,
+                        rating_mode: p.rating_mode || 'enabled',
+                        static_rating_value: p.static_rating_value ?? 4.9,
+                        catalog_images: p.catalog_images || [],
+                        variants: p.variants || []
+                    };
+                });
                 setLiveProducts(mappedProducts);
 
                 // If user loaded on direct ?product=ID URL, sync the live product
@@ -126,15 +150,20 @@ export default function App() {
         }).catch(() => {});
         api.getCategories(false).then(cats => {
             if (Array.isArray(cats) && cats.length > 0) {
-                setLiveCategories(cats.map(c => ({
+                const activeCats = cats.filter(c => 
+                    c.slug !== 'hand-paint' && 
+                    c.name !== 'Hand Paint' && 
+                    c.name !== 'Hand-Paint'
+                );
+                setLiveCategories(activeCats.map(c => ({
                     ...c,
                     id: c.slug || c.id,
                     db_id: c.id,
                     name: c.name,
-                    route: c.slug === 'navratri-drop' ? 'navratri' : 'shop-all',
-                    deity: c.name,
-                    img: c.icon_image_url || c.img || '/images/categories/gajanan-maharaj@2x.png',
-                    banner_image_url: c.banner_image_url || '',
+                    route: c.route || (c.slug === 'navratri-drop' ? 'navratri' : 'shop-all'),
+                    deity: c.deity !== undefined ? c.deity : (c.name === 'Ganpati' ? 'Ganesha' : c.name === 'Durga & Shakti' ? 'Durga' : c.slug === 'navratri-drop' ? null : c.name),
+                    img: c.img || c.icon_image_url || '/images/categories/gajanan-maharaj@2x.png',
+                    banner_image_url: c.banner_url || c.banner_image_url || '',
                     is_active: c.is_active !== false
                 })));
             }
@@ -179,6 +208,7 @@ export default function App() {
     const [sortBy, setSortBy] = useState('featured');
     const [filterPriceRange, setFilterPriceRange] = useState('all');
     const [filterPlacement, setFilterPlacement] = useState('all');
+    const [filterAvailability, setFilterAvailability] = useState('all');
 
     // 3. Browser Forward/Back Button & History Synchronization
     useEffect(() => {
@@ -228,6 +258,13 @@ export default function App() {
             // 2. Dedicated Admin path
             if (checkIsAdminPath()) {
                 setCurrentPage('admin');
+                setSelectedProduct(null);
+                return;
+            }
+
+            // 2b. Dedicated Login path
+            if (checkIsLoginPath()) {
+                setCurrentPage('login');
                 setSelectedProduct(null);
                 return;
             }
@@ -438,21 +475,6 @@ export default function App() {
         setKwikPhone('');
     };
 
-    // 10. Google Quality Scorecard State
-    const [isGoogleQualityOpen, setIsGoogleQualityOpen] = useState(false);
-
-    // 12. Newsletter State
-    const [newsletterEmail, setNewsletterEmail] = useState('');
-    const handleNewsletterSubmit = (e) => {
-        e.preventDefault();
-        if (!newsletterEmail || !newsletterEmail.includes('@')) {
-            showToast('Please enter a valid email address');
-            return;
-        }
-        showToast('Subscribed! Check inbox for code DIVINE15');
-        setNewsletterEmail('');
-    };
-
     // Check if any modal is active (pauses smooth momentum background scroll)
     const isAnyModalOpen = Boolean(
         isCheckoutOpen ||
@@ -512,6 +534,17 @@ export default function App() {
             return;
         }
 
+        if (pageKey === 'login') {
+            if (pushToHistory && typeof window !== 'undefined') {
+                window.history.pushState({ page: 'login' }, '', '/login');
+            }
+            setCurrentPage('login');
+            setSelectedProduct(null);
+            setIsMobileMenuOpen(false);
+            scrollTo(0);
+            return;
+        }
+
         let targetUrl = '/';
         if (pageKey !== 'home' || deity) {
             const params = new URLSearchParams();
@@ -532,6 +565,7 @@ export default function App() {
         setActiveDeityFilter(deity);
         setFilterPlacement('all');
         setFilterPriceRange('all');
+        setFilterAvailability('all');
         setSearchQuery('');
         setIsWishlistFilterActive(false);
         if (pageKey !== 'product') setSelectedProduct(null);
@@ -723,17 +757,50 @@ export default function App() {
             );
         }
 
+        // Helper to extract clean numeric price
+        const getNumericPrice = (p) => {
+            if (typeof p?.price === 'number') return p.price;
+            const cleaned = String(p?.price || '').replace(/[^\d.]/g, '');
+            return parseFloat(cleaned) || 0;
+        };
+
         if (filterPriceRange !== 'all') {
-            if (filterPriceRange === 'under-1000') items = items.filter(p => p.price < 1000);
-            if (filterPriceRange === '1000-2000') items = items.filter(p => p.price >= 1000 && p.price <= 2000);
-            if (filterPriceRange === 'above-2000') items = items.filter(p => p.price > 2000);
+            if (filterPriceRange === 'under-1000') items = items.filter(p => getNumericPrice(p) < 1000);
+            if (filterPriceRange === '1000-2000') items = items.filter(p => {
+                const pr = getNumericPrice(p);
+                return pr >= 1000 && pr <= 2000;
+            });
+            if (filterPriceRange === 'above-2000') items = items.filter(p => getNumericPrice(p) > 2000);
         }
 
         if (filterPlacement !== 'all') {
-            items = items.filter(p =>
-                p.title.toLowerCase().includes(filterPlacement.toLowerCase()) ||
-                p.deity?.toLowerCase().includes(filterPlacement.toLowerCase())
-            );
+            if (filterPlacement === 'home-mandir') {
+                items = items.filter(p => {
+                    const desc = (p.description || '').toLowerCase();
+                    const title = (p.title || '').toLowerCase();
+                    const dim = (p.dimensions || '').toLowerCase();
+                    return desc.includes('mandir') || desc.includes('altar') || desc.includes('pooja') || desc.includes('temple') ||
+                           title.includes('mandir') || !desc.includes('desk') || dim.includes('12') || dim.includes('15') || dim.includes('18');
+                });
+            } else if (filterPlacement === 'office-desk') {
+                items = items.filter(p => {
+                    const desc = (p.description || '').toLowerCase();
+                    const title = (p.title || '').toLowerCase();
+                    const dim = (p.dimensions || '').toLowerCase();
+                    const weight = (p.weight || '').toLowerCase();
+                    return desc.includes('desk') || desc.includes('office') || desc.includes('compact') ||
+                           dim.includes('6') || dim.includes('9') || weight.includes('1.') || weight.includes('2.');
+                });
+            } else {
+                items = items.filter(p =>
+                    p.title.toLowerCase().includes(filterPlacement.toLowerCase()) ||
+                    p.deity?.toLowerCase().includes(filterPlacement.toLowerCase())
+                );
+            }
+        }
+
+        if (filterAvailability === 'in_stock') {
+            items = items.filter(p => p.stock_status === 'in_stock' || !p.stock_status || p.stock_status === 'active');
         }
 
         if (searchQuery.trim()) {
@@ -745,8 +812,8 @@ export default function App() {
         }
 
         if (sortBy === 'az') items.sort((a, b) => a.title.localeCompare(b.title));
-        if (sortBy === 'low') items.sort((a, b) => a.price - b.price);
-        if (sortBy === 'high') items.sort((a, b) => b.price - a.price);
+        if (sortBy === 'low') items.sort((a, b) => getNumericPrice(a) - getNumericPrice(b));
+        if (sortBy === 'high') items.sort((a, b) => getNumericPrice(b) - getNumericPrice(a));
 
         return items;
     };
@@ -774,6 +841,28 @@ export default function App() {
                     navigateTo('home');
                 }}
                 onDataChanged={loadBackendData}
+            />
+        );
+    }
+
+    // =========================================================================
+    // DEDICATED STANDALONE LOGIN & REGISTRATION ROUTE (/login or #login)
+    // Completely isolated from customer storefront header, footer, & modals
+    // =========================================================================
+    if (currentPage === 'login') {
+        return (
+            <LoginPage
+                onReturnToStore={() => {
+                    window.history.pushState(null, '', '/');
+                    navigateTo('home');
+                }}
+                onLoginSuccess={(userData) => {
+                    if (userData?.role === 'admin') {
+                        navigateTo('admin');
+                    } else {
+                        navigateTo('home');
+                    }
+                }}
             />
         );
     }
@@ -863,7 +952,7 @@ export default function App() {
                         {/* Account Login Button (Desktop & Tablet) */}
                         <button
                             type="button"
-                            onClick={openKwikPass}
+                            onClick={() => navigateTo('login')}
                             className="hidden md:flex w-auto px-3 h-10 items-center justify-center gap-1.5 rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition text-xs font-semibold"
                             aria-label="Account Login"
                         >
@@ -981,6 +1070,14 @@ export default function App() {
                         <div className="pt-2 border-t border-[#E2D4B7] flex flex-col gap-2 text-xs">
                             <button
                                 type="button"
+                                onClick={() => { setIsMobileMenuOpen(false); navigateTo('login'); }}
+                                className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-white border border-stone-200 text-stone-800 font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition shadow-xs"
+                            >
+                                <User className="w-4 h-4 text-[#C69722]" />
+                                <span>Sign In / My Account</span>
+                            </button>
+                            <button
+                                type="button"
                                 onClick={() => { setIsMobileMenuOpen(false); setShowIntro(true); }}
                                 className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-[#FAF2DE] border border-[#E5CD96] text-[#9D6809] font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition shadow-xs"
                             >
@@ -1093,7 +1190,7 @@ export default function App() {
                                                 onClick={() => openProductPage(p)}
                                                 className="flex items-center gap-2.5 p-2 rounded-xl border border-stone-200 hover:border-[#C69722] cursor-pointer bg-white transition group"
                                             >
-                                                <img
+                                                <SafeImage
                                                     src={p.img}
                                                     alt={`Handcrafted White Marble ${p.title} - Amol Marble Murti Bhandar Shegaon`}
                                                     width="40"
@@ -1142,12 +1239,9 @@ export default function App() {
                                             className={`deity-cat-item group ${isSelected ? 'active-category' : ''}`}
                                         >
                                             <div className="deity-cat-card">
-                                                <img
+                                                <SafeImage
                                                     src={api.getImageUrl(item.img) || '/images/categories/ganpati@2x.png'}
-                                                    onError={(e) => {
-                                                        e.currentTarget.onerror = null;
-                                                        e.currentTarget.src = '/images/categories/ganpati@2x.png';
-                                                    }}
+                                                    fallbackSrc="/images/categories/ganpati@2x.png"
                                                     alt={`${item.name} Marble Murti & Idols - Amol Marble Bhandar Shegaon`}
                                                     width="64"
                                                     height="64"
@@ -1174,13 +1268,13 @@ export default function App() {
                                     <div className="w-full sm:w-1/2 flex items-center justify-center relative order-1 sm:order-1 pt-1 sm:pt-0">
                                         <div className="relative w-40 h-40 min-[360px]:w-48 min-[360px]:h-48 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
                                             <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#F7C600]/30 via-[#E8DEC8]/50 to-transparent blur-2xl transform scale-100"></div>
-                                            <img
+                                            <SafeImage
                                                 src={api.getImageUrl(siteSettings?.collection_image_url || "/images/products/ram-darbar.png")}
+                                                fallbackSrc="/images/products/ram-darbar.png"
                                                 alt={`Handcrafted White Marble ${siteSettings?.collection_title || 'Ram Darbar'} at Amol Marble Murti Bhandar Shegaon`}
                                                 width="384"
                                                 height="384"
                                                 fetchpriority="high"
-                                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
                                                 className="relative max-h-full max-w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:scale-105 transition duration-500 cursor-pointer"
                                                 onClick={() => {
                                                     const ramItem = liveProducts.find(i => i.id === 1 || i.legacy_id === 1 || String(i.id).includes('1')) || liveProducts[0];
@@ -1503,7 +1597,7 @@ export default function App() {
                                                     onClick={() => openProductPage(p)}
                                                     className="relative rounded-xl overflow-hidden aspect-square sm:aspect-[3/4] bg-[#FDFBF5] mb-2.5 sm:mb-3 border border-stone-100 cursor-pointer"
                                                 >
-                                                    <img
+                                                    <SafeImage
                                                         src={p.img}
                                                         alt={`Handcrafted White Marble ${p.title} at Amol Marble Murti Bhandar Shegaon`}
                                                         width="272"
@@ -1736,9 +1830,8 @@ export default function App() {
                                                         onClick={() => openProductPage(p)}
                                                         className="relative rounded-xl sm:rounded-2xl overflow-hidden aspect-square sm:aspect-[3/4] mb-2.5 sm:mb-3 bg-gradient-to-b from-[#FAF5E8] to-[#F3EAD3] border border-stone-100 cursor-pointer"
                                                     >
-                                                        <img
+                                                        <SafeImage
                                                             src={p.img}
-                                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
                                                             alt={`Handcrafted White Marble ${p.title} at Amol Marble Murti Bhandar Shegaon`}
                                                             width="270"
                                                             height="320"
@@ -1875,8 +1968,9 @@ export default function App() {
                                             onClick={() => openProductPage(c)}
                                             className="absolute inset-0 cursor-pointer"
                                         >
-                                            <img
+                                            <SafeImage
                                                 src={c.img}
+                                                fallbackSrc="/images/products/ram-darbar.png"
                                                 alt={`Handcrafted Marble Murti ${c.title} - Amol Marble Bhandar Shegaon`}
                                                 width="220"
                                                 height="310"
@@ -1969,7 +2063,7 @@ export default function App() {
                                         onClick={() => navigateTo('sacred')}
                                         className="inline-flex items-center gap-2 text-[11px] font-bold tracking-[0.16em] uppercase border-b-2 border-[#161616] pb-1 hover:text-[#C69722] hover:border-[#C69722] transition"
                                     >
-                                        EXPLORE HAND-PAINTED MURTIS <ArrowRight className="w-3.5 h-3.5" />
+                                        EXPLORE SACRED COLLECTION <ArrowRight className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
 
@@ -2350,6 +2444,7 @@ export default function App() {
                         onSelectProduct={openProductPage}
                         globalRatingMode={siteSettings?.global_rating_mode || 'enabled'}
                         masterSizes={masterSizes}
+                        allProducts={liveProducts}
                     />
                 </ErrorBoundary>
             )}
@@ -2406,12 +2501,9 @@ export default function App() {
                                                 : 'border-stone-200 bg-white hover:border-[#C69722] text-stone-700 font-medium'
                                         }`}
                                     >
-                                        <img
+                                        <SafeImage
                                             src={api.getImageUrl(cat.img) || '/images/categories/ganpati@2x.png'}
-                                            onError={(e) => {
-                                                e.currentTarget.onerror = null;
-                                                e.currentTarget.src = '/images/categories/ganpati@2x.png';
-                                            }}
+                                            fallbackSrc="/images/categories/ganpati@2x.png"
                                             alt={cat.name}
                                             className="w-5 h-5 rounded-full object-cover"
                                         />
@@ -2516,6 +2608,7 @@ export default function App() {
                                         setActiveDeityFilter(null);
                                         setFilterPriceRange('all');
                                         setFilterPlacement('all');
+                                        setFilterAvailability('all');
                                         setSearchQuery('');
                                     }}
                                     className="mt-5 px-6 py-2.5 rounded-full bg-[#161616] hover:bg-[#C69722] text-white text-xs font-semibold uppercase tracking-wider transition"
@@ -2532,7 +2625,7 @@ export default function App() {
                                                 onClick={() => openProductPage(p)}
                                                 className="relative rounded-lg sm:rounded-xl overflow-hidden aspect-square sm:aspect-[3/4] bg-gradient-to-b from-[#FAF5E8] to-[#F3EAD3] mb-1.5 sm:mb-3.5 border border-stone-100 cursor-pointer"
                                             >
-                                                <img 
+                                                <SafeImage 
                                                     src={p.img} 
                                                     alt={`Handcrafted ${p.title} - Pure White Makrana Marble Idol by Amol Marble Murti Bhandar Shegaon`} 
                                                     width="320"
@@ -2658,9 +2751,19 @@ export default function App() {
                         <h4 className="text-[11px] font-bold tracking-[0.18em] uppercase text-[#161616]">• HELP & INFO</h4>
                         <ul className="space-y-2.5 text-xs text-stone-600">
                             <li><button onClick={() => setIsSearchOpen(true)} className="hover:text-black">Search Idols</button></li>
-                            <li><button onClick={() => { navigateTo('home'); setTimeout(() => document.getElementById('hero-slider')?.scrollIntoView({ behavior: 'smooth' }), 100); }} className="hover:text-black">Our Showroom Story</button></li>
+                            <li><button onClick={() => {
+                                if (currentPage !== 'home') {
+                                    navigateTo('home');
+                                    setTimeout(() => {
+                                        document.getElementById('atelier-map-section')?.scrollIntoView({ behavior: 'smooth' });
+                                    }, 200);
+                                } else {
+                                    document.getElementById('atelier-map-section')?.scrollIntoView({ behavior: 'smooth' });
+                                }
+                            }} className="hover:text-black">Our Showroom Story</button></li>
                             <li><button onClick={() => setIsBulkQuoteOpen(true)} className="hover:text-black">Bulk & Corporate Orders</button></li>
                             <li><button onClick={() => setIsTrackingModalOpen(true)} className="hover:text-black font-semibold text-[#161616]">Track Your Order</button></li>
+                            <li><button onClick={() => navigateTo('login')} className="hover:text-[#C69722] font-semibold text-[#161616]">Sign In / My Account</button></li>
                             <li><button onClick={() => setInfoModalKey('privacy')} className="hover:text-black">Your Privacy Choices</button></li>
                             <li><button onClick={() => navigateTo('admin')} className="text-stone-400 hover:text-[#C69722] flex items-center gap-1 text-[11px] pt-1">🔒 Staff / Admin Portal</button></li>
                         </ul>
@@ -2689,40 +2792,16 @@ export default function App() {
                     </div>
                 </div>
 
-                {/* Newsletter Subscription Row */}
-                <div className="max-w-[1320px] mx-auto px-4 sm:px-8 py-8 border-t border-[#E6D6B8] flex flex-col md:flex-row items-center justify-between gap-5">
-                    <div className="text-center md:text-left">
-                        <h4 className="font-serif text-xl font-semibold text-[#161616]">Join the Amol Murti Parivar</h4>
-                        <p className="text-xs text-stone-600 mt-1">Receive auspicious dates, consecration notifications, and 15% off code.</p>
-                    </div>
-                    <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row w-full md:w-auto max-w-md gap-2">
-                        <label htmlFor="newsletter-email-input" className="sr-only">Email Address</label>
-                        <input
-                            id="newsletter-email-input"
-                            name="email"
-                            type="email"
-                            inputMode="email"
-                            autoComplete="email"
-                            value={newsletterEmail}
-                            onChange={(e) => setNewsletterEmail(e.target.value)}
-                            placeholder="Enter your email address"
-                            className="px-4 py-3 text-base rounded-xl border border-stone-300 bg-white focus:outline-none focus:border-black flex-1 md:w-64 shadow-xs"
-                            required
-                        />
-                        <button
-                            type="submit"
-                            className="px-6 py-3 min-h-[48px] rounded-xl bg-[#161616] hover:bg-[#C69722] text-white text-xs font-bold uppercase tracking-wider transition shadow-sm active:scale-98 flex items-center justify-center"
-                        >
-                            Subscribe
-                        </button>
-                    </form>
-                </div>
-
                 <div className="max-w-[1320px] mx-auto px-4 sm:px-8 pt-6 border-t border-[#E6D6B8] flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
                     <p className="text-[11px] text-stone-500">© 2026 अमोल मार्बल मूर्ती भंडार (Amol Marble Murti Bhandar). All rights reserved. Sanctified Marble Idols.</p>
-                    <button onClick={() => navigateTo('admin')} className="text-[10.5px] text-stone-400 hover:text-stone-700 underline underline-offset-2 transition">
-                        Staff / Admin Login (/admin)
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => navigateTo('login')} className="text-[10.5px] text-stone-500 hover:text-[#C69722] underline underline-offset-2 transition">
+                            Customer Login (/login)
+                        </button>
+                        <button onClick={() => navigateTo('admin')} className="text-[10.5px] text-stone-400 hover:text-stone-700 underline underline-offset-2 transition">
+                            Staff / Admin Login (/admin)
+                        </button>
+                    </div>
                 </div>
             </footer>
 
@@ -2851,8 +2930,9 @@ export default function App() {
                                 <div className="space-y-4">
                                     {cart.map(item => (
                                         <div key={item.id} className="flex gap-3 items-center border-b border-stone-100 pb-3">
-                                            <img
+                                            <SafeImage
                                                 src={item.img}
+                                                fallbackSrc="/images/products/ram-darbar.png"
                                                 alt={item.title}
                                                 className="w-16 h-16 rounded-xl object-contain bg-[#FAF5E8] border border-stone-200 p-1 flex-shrink-0"
                                             />
@@ -2984,53 +3064,7 @@ export default function App() {
                  </div>
              )}
 
-             {/* ================= 18. FLOATING SCORECARD & ACCESSIBILITY ================= */}
-             <div className="hidden sm:block fixed bottom-4 left-4 z-30">
-                 {isGoogleQualityOpen && (
-                     <div className="mb-2 w-72 bg-white rounded-2xl shadow-2xl border border-stone-200 p-4 text-xs space-y-2.5 animate-in fade-in zoom-in-95 duration-150">
-                         <div className="flex items-center justify-between">
-                             <h4 className="font-bold text-sm text-[#161616]">Shop quality<br /><span className="text-[11px] font-normal text-stone-500">by Google</span></h4>
-                             <button
-                                 type="button"
-                                 onClick={() => setIsGoogleQualityOpen(false)}
-                                 className="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-black"
-                                 aria-label="Close scorecard"
-                             >
-                                 ✕
-                             </button>
-                         </div>
-                         <p className="text-[11px] text-stone-500 leading-snug">These scores show how this shop stacks up against others for delivery speed, authentic marble, and return policies.</p>
-                         <div className="space-y-1.5 pt-1 border-t border-stone-100 text-[11px]">
-                             <div className="flex justify-between">
-                                 <span>Shipping<br /><em className="not-italic text-[10px] text-stone-400">Free delivery across India</em></span>
-                                 <span className="text-green-700 font-semibold">● Good</span>
-                             </div>
-                             <div className="flex justify-between">
-                                 <span>Returns<br /><em className="not-italic text-[10px] text-stone-400">7-day returns for all idols</em></span>
-                                 <span className="text-green-700 font-semibold">● Great</span>
-                             </div>
-                             <div className="flex justify-between">
-                                 <span>Craft authenticity</span>
-                                 <span className="text-green-700 font-semibold">● 100% Hand-Carved</span>
-                             </div>
-                             <div className="flex justify-between">
-                                 <span>Payment options<br /><em className="not-italic text-[10px] text-stone-400">UPI, COD, NetBanking</em></span>
-                                 <span className="text-green-700 font-semibold">● Good</span>
-                             </div>
-                         </div>
-                     </div>
-                 )}
 
-                 <button
-                     type="button"
-                     onClick={() => setIsGoogleQualityOpen(!isGoogleQualityOpen)}
-                     className="bg-white hover:bg-stone-50 border border-stone-200 shadow-lg rounded-xl px-3.5 py-2.5 min-h-[44px] flex items-center gap-2 text-xs font-medium text-stone-800 transition active:scale-95"
-                     aria-label="Toggle Google shop quality scorecard"
-                 >
-                     <Award className="w-4 h-4 text-[#C69722]" />
-                     <span>Shop quality by Google</span>
-                 </button>
-             </div>
 
              {/* ================= 20. MULTI-STEP CHECKOUT MODAL ================= */}
              <CheckoutModal
@@ -3089,10 +3123,13 @@ export default function App() {
                  onSelectPriceRange={setFilterPriceRange}
                  placement={filterPlacement}
                  onSelectPlacement={setFilterPlacement}
+                 availability={filterAvailability}
+                 onSelectAvailability={setFilterAvailability}
                  onResetAll={() => {
                      setActiveDeityFilter(null);
                      setFilterPriceRange('all');
                      setFilterPlacement('all');
+                     setFilterAvailability('all');
                  }}
                  itemsCount={collectionItems.length}
              />

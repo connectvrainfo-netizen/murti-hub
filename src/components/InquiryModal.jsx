@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, MessageCircle, MapPin, Info } from 'lucide-react';
+import SafeImage from './SafeImage';
 
 export default function InquiryModal({ product, onClose, onSubmit }) {
     if (!product) return null;
@@ -27,7 +28,7 @@ export default function InquiryModal({ product, onClose, onSubmit }) {
                 <div className="p-4 sm:p-5 border-b border-[#E6D6B8] bg-[#FAF5E8] rounded-t-3xl flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                         <div className="w-12 h-12 rounded-xl overflow-hidden bg-white border border-stone-200 flex-shrink-0">
-                            <img src={product.img} alt={product.title} className="w-full h-full object-contain p-1" />
+                            <SafeImage src={product.img} fallbackSrc="/images/products/ram-darbar.png" alt={product.title} className="w-full h-full object-contain p-1" />
                         </div>
                         <div className="min-w-0">
                             <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-[#C69722]">WHATSAPP INQUIRY</span>

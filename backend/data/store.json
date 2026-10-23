@@ -8,7 +8,7 @@
     "support_email": "support@amolmurtibhandar.com",
     "showroom_address": "Khazane Walon Ka Rasta, Jaipur, Rajasthan 302001",
     "banner_announcement": "Zero-Breakage Crating Guarantee across all 19,000+ PIN codes across India",
-    "updated_at": "2026-10-23T11:52:12.105317+00:00",
+    "updated_at": "2026-10-23T14:06:39.852368+00:00",
     "collection_badge": "HAND-CARVED BY NATIONAL AWARD ARTISANS",
     "collection_title": "DIVINE MAKRANA SACRED COLLECTION 2026",
     "collection_subtitle": "Consecrated Heritage Masterpieces",
@@ -17,7 +17,7 @@
     "collection_old_price": "₹65,000",
     "collection_discount_text": "30% CONSECRATION DISCOUNT",
     "collection_tag": "LIMITED EDITION 2026",
-    "collection_image_url": "uploads/banners/sacred-collection-hero.jpg"
+    "collection_image_url": "/images/products/ram-darbar.png"
   },
   "master_sizes": [
     {
@@ -268,6 +268,18 @@
       "id": "48c2e14b-ab30-4427-b1e8-43aa58150963",
       "created_at": "2026-10-23T11:37:54.032684+00:00",
       "updated_at": "2026-10-23T11:37:54.032684+00:00"
+    },
+    {
+      "label": "36 Inches (3 Feet)",
+      "height_inches": null,
+      "unit": "in",
+      "size_value": 36.0,
+      "description": null,
+      "sort_order": 0,
+      "is_active": true,
+      "id": "6207884f-c86a-4180-82f2-922bd32e9163",
+      "created_at": "2026-10-23T12:16:46.556714+00:00",
+      "updated_at": "2026-10-23T12:16:46.556714+00:00"
     }
   ],
   "categories": [
@@ -467,55 +479,6 @@
       ]
     },
     {
-      "title": "Divine White Makrana Ram Lalla",
-      "slug": "divine-white-makrana-ram-lalla-6712ad",
-      "legacy_id": null,
-      "category_id": "90f026ba-157d-4214-9801-fb84f9d5e427",
-      "deity": "Ram",
-      "group_tag": "most-loved",
-      "price": 125000.0,
-      "old_price": 150000.0,
-      "off_text": null,
-      "material": "Makrana Pure White Marble",
-      "description": null,
-      "dimensions": "36 x 24 x 14",
-      "measurement_unit": "in",
-      "size_id": "04235846-8451-4007-91d3-4a1574ddffdd",
-      "available_sizes": [
-        "12 in",
-        "24 in",
-        "36 in",
-        "48 in"
-      ],
-      "weight": "850 grams",
-      "pran_pratishtha_ready": true,
-      "gold_leaf_karigari": true,
-      "primary_catalog_image": "uploads/products/ram-lalla-test.jpg",
-      "catalog_images": [
-        {
-          "url": "uploads/products/ram-lalla-angle1.jpg",
-          "caption": "Front Angle",
-          "sort_order": 1
-        },
-        {
-          "url": "uploads/products/ram-lalla-angle2.jpg",
-          "caption": "Side Profile",
-          "sort_order": 2
-        }
-      ],
-      "rating_mode": "enabled",
-      "static_rating_value": 5.0,
-      "static_reviews_count": 48,
-      "stock_status": "in_stock",
-      "is_featured": true,
-      "is_active": true,
-      "sort_order": 0,
-      "id": "6712ada1-70af-4f32-9e8c-989edb4729ca",
-      "created_at": "2026-10-23T11:37:18.175698+00:00",
-      "updated_at": "2026-10-23T11:37:18.175698+00:00",
-      "variants": []
-    },
-    {
       "title": "Prabhu Ram Mandir Supreme Murti",
       "slug": "prabhu-ram-mandir-supreme-murti-a30d16",
       "legacy_id": null,
@@ -572,153 +535,6 @@
           "murti_id": "a30d1628-2737-4dbe-98e4-d3ec9ce91db1"
         }
       ]
-    },
-    {
-      "title": "Divine White Makrana Ram Lalla",
-      "slug": "divine-white-makrana-ram-lalla-3c3da4",
-      "legacy_id": null,
-      "category_id": "087e75df-478a-4333-8fa4-61b69d6b2af3",
-      "deity": "Ram",
-      "group_tag": "most-loved",
-      "price": 125000.0,
-      "old_price": 150000.0,
-      "off_text": null,
-      "material": "Makrana Pure White Marble",
-      "description": null,
-      "dimensions": "36 x 24 x 14",
-      "measurement_unit": "in",
-      "size_id": "f1878a84-b6f0-49e1-9c17-3d574004f210",
-      "available_sizes": [
-        "12 in",
-        "24 in",
-        "36 in",
-        "48 in"
-      ],
-      "weight": "850 grams",
-      "pran_pratishtha_ready": true,
-      "gold_leaf_karigari": true,
-      "primary_catalog_image": "uploads/products/ram-lalla-test.jpg",
-      "catalog_images": [
-        {
-          "url": "uploads/products/ram-lalla-angle1.jpg",
-          "caption": "Front Angle",
-          "sort_order": 1
-        },
-        {
-          "url": "uploads/products/ram-lalla-angle2.jpg",
-          "caption": "Side Profile",
-          "sort_order": 2
-        }
-      ],
-      "rating_mode": "enabled",
-      "static_rating_value": 5.0,
-      "static_reviews_count": 48,
-      "stock_status": "in_stock",
-      "is_featured": true,
-      "is_active": true,
-      "sort_order": 0,
-      "id": "3c3da4ab-f340-4a19-b5a7-c42130b8ab0a",
-      "created_at": "2026-10-23T10:51:37.954765+00:00",
-      "updated_at": "2026-10-23T10:51:37.954765+00:00",
-      "variants": []
-    },
-    {
-      "title": "Divine White Makrana Ram Lalla",
-      "slug": "divine-white-makrana-ram-lalla-f99f64",
-      "legacy_id": null,
-      "category_id": "17f10dfe-1c75-4f2a-aa24-2c5d9568b756",
-      "deity": "Ram",
-      "group_tag": "most-loved",
-      "price": 125000.0,
-      "old_price": 150000.0,
-      "off_text": null,
-      "material": "Makrana Pure White Marble",
-      "description": null,
-      "dimensions": "36 x 24 x 14",
-      "measurement_unit": "in",
-      "size_id": "e6cb399c-d826-46e0-9148-d6a45d76ffe5",
-      "available_sizes": [
-        "12 in",
-        "24 in",
-        "36 in",
-        "48 in"
-      ],
-      "weight": "850 grams",
-      "pran_pratishtha_ready": true,
-      "gold_leaf_karigari": true,
-      "primary_catalog_image": "uploads/products/ram-lalla-test.jpg",
-      "catalog_images": [
-        {
-          "url": "uploads/products/ram-lalla-angle1.jpg",
-          "caption": "Front Angle",
-          "sort_order": 1
-        },
-        {
-          "url": "uploads/products/ram-lalla-angle2.jpg",
-          "caption": "Side Profile",
-          "sort_order": 2
-        }
-      ],
-      "rating_mode": "enabled",
-      "static_rating_value": 5.0,
-      "static_reviews_count": 48,
-      "stock_status": "in_stock",
-      "is_featured": true,
-      "is_active": true,
-      "sort_order": 0,
-      "id": "f99f6467-b1df-4af4-828c-4cb0646524bc",
-      "created_at": "2026-10-23T10:46:48.492535+00:00",
-      "updated_at": "2026-10-23T10:46:48.492535+00:00",
-      "variants": []
-    },
-    {
-      "title": "Divine White Makrana Ram Lalla",
-      "slug": "divine-white-makrana-ram-lalla-6b7148",
-      "legacy_id": null,
-      "category_id": "98fc193f-5a55-4b52-a06c-874774ca343b",
-      "deity": "Ram",
-      "group_tag": "most-loved",
-      "price": 125000.0,
-      "old_price": 150000.0,
-      "off_text": null,
-      "material": "Makrana Pure White Marble",
-      "description": null,
-      "dimensions": "36 x 24 x 14",
-      "measurement_unit": "in",
-      "size_id": "d698a9da-c3f1-43bd-8a3d-de5108e6d6ae",
-      "available_sizes": [
-        "12 in",
-        "24 in",
-        "36 in",
-        "48 in"
-      ],
-      "weight": "850 grams",
-      "pran_pratishtha_ready": true,
-      "gold_leaf_karigari": true,
-      "primary_catalog_image": "uploads/products/ram-lalla-test.jpg",
-      "catalog_images": [
-        {
-          "url": "uploads/products/ram-lalla-angle1.jpg",
-          "caption": "Front Angle",
-          "sort_order": 1
-        },
-        {
-          "url": "uploads/products/ram-lalla-angle2.jpg",
-          "caption": "Side Profile",
-          "sort_order": 2
-        }
-      ],
-      "rating_mode": "enabled",
-      "static_rating_value": 5.0,
-      "static_reviews_count": 48,
-      "stock_status": "in_stock",
-      "is_featured": true,
-      "is_active": true,
-      "sort_order": 0,
-      "id": "6b71484b-8e02-4698-9475-e76a31bee600",
-      "created_at": "2026-10-23T10:46:10.941728+00:00",
-      "updated_at": "2026-10-23T10:46:10.941728+00:00",
-      "variants": []
     },
     {
       "title": "Prabhu Ram Mandir Supreme Murti",
@@ -3087,6 +2903,33 @@
       "password_hash": "$2b$12$8S1EN29QkuUKjDYUOeRS4uAcbUYxvGQSnWEZj9KfbFFkdF0tx7FbK",
       "role": "super_admin",
       "is_active": true
+    },
+    {
+      "id": "64343825-1759-44ed-9efc-82153d6ee416",
+      "email": "test.devotee.1792757823@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$3Lp3KhE5cCoTObWZ18TBMuGZ2TI1m.QMdsl7854RGP9HuugR7vXEW",
+      "role": "editor",
+      "is_active": true,
+      "created_at": "2026-10-23T12:17:04.175680+00:00"
+    },
+    {
+      "id": "c6ab5478-fd94-452b-98ac-b340f73a94a4",
+      "email": "test.devotee.1792759091@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$32ESBCdRZ0S75fwNc6dhF.og52bNAhuXScyT3xyErfYhSkOeZnKZm",
+      "role": "editor",
+      "is_active": true,
+      "created_at": "2026-10-23T12:38:11.377538+00:00"
+    },
+    {
+      "id": "c32923a7-6556-483e-8741-3562fb555e62",
+      "email": "test.devotee.1792764399@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$cjMwr27gZ463rdjxXoCHnOhObLSWmBmwcryww723yCRvcwT3UJIPm",
+      "role": "editor",
+      "is_active": true,
+      "created_at": "2026-10-23T14:06:40.209862+00:00"
     }
   ]
 }

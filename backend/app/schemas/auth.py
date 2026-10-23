@@ -2,8 +2,13 @@ from typing import Optional, Dict, Any
 from pydantic import BaseModel, EmailStr, Field
 
 class AdminLoginRequest(BaseModel):
-    email: str = Field(..., description="Admin email address e.g. admin@amolmurtibhandar.com")
-    password: str = Field(..., description="Admin password")
+    email: str = Field(..., description="Admin or user email address e.g. admin@amolmurtibhandar.com")
+    password: str = Field(..., description="Account password")
+
+class UserRegisterRequest(BaseModel):
+    email: str = Field(..., description="Valid email address for registration")
+    password: str = Field(..., min_length=6, description="Password (minimum 6 characters)")
+    full_name: Optional[str] = Field("Devotee Member", description="Full name or display name")
 
 class TokenResponse(BaseModel):
     access_token: str
