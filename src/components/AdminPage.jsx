@@ -1398,79 +1398,135 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     {/* ========================================================================= */}
                     {activeTab === 'dashboard' && (
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="font-serif text-2xl font-bold text-[#161616]">
-                                    Operations Cockpit
-                                </h2>
-                                <p className="text-xs text-stone-500 mt-1">
-                                    Real-time status of all catalog products, customer routing, and campaigns
-                                </p>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200/60 pb-4">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
+                                            Operations Cockpit
+                                        </h2>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            Active
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-stone-500 mt-1">
+                                        Real-time catalog telemetry, customer concierge routing, and temple campaigns
+                                    </p>
+                                </div>
+                                <div className="text-[11px] font-mono text-stone-400 bg-white border border-stone-200 px-3 py-1.5 rounded-xl shadow-2xs self-start sm:self-auto">
+                                    Last Synced: Just now
+                                </div>
                             </div>
 
                             {/* Stat Cards */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div 
                                     onClick={() => setActiveTab('products')}
-                                    className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs hover:border-[#C69722] cursor-pointer transition"
+                                    className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-[#C69722] shadow-2xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-200 group flex flex-col justify-between"
                                 >
-                                    <span className="text-[10px] uppercase font-bold text-stone-400">Total Products</span>
-                                    <div className="text-3xl font-serif font-black text-[#161616] mt-1">{products.length}</div>
-                                    <span className="text-[11px] text-emerald-600 font-semibold">{products.filter(p => p.is_active).length} Active on Store</span>
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Total Products</span>
+                                            <div className="w-8 h-8 rounded-xl bg-[#FAF2DE] text-[#8E5B00] flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Package className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <div className="text-3xl font-serif font-black text-[#161616] mt-2">{products.length}</div>
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px]">
+                                        <span className="text-emerald-700 font-semibold">{products.filter(p => p.is_active).length} Active on Store</span>
+                                        <span className="text-stone-400 group-hover:text-[#C69722] font-bold group-hover:translate-x-0.5 transition-all">➔</span>
+                                    </div>
                                 </div>
+
                                 <div 
                                     onClick={() => setActiveTab('categories')}
-                                    className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs hover:border-[#C69722] cursor-pointer transition"
+                                    className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-amber-500 shadow-2xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-200 group flex flex-col justify-between"
                                 >
-                                    <span className="text-[10px] uppercase font-bold text-stone-400">Deity Categories</span>
-                                    <div className="text-3xl font-serif font-black text-[#161616] mt-1">{categories.length}</div>
-                                    <span className="text-[11px] text-stone-500 font-medium">Banners Configured</span>
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Deity Categories</span>
+                                            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <ImageIcon className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <div className="text-3xl font-serif font-black text-[#161616] mt-2">{categories.length}</div>
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px]">
+                                        <span className="text-stone-600 font-medium">Banners Configured</span>
+                                        <span className="text-stone-400 group-hover:text-amber-600 font-bold group-hover:translate-x-0.5 transition-all">➔</span>
+                                    </div>
                                 </div>
+
                                 <div 
                                     onClick={() => setActiveTab('sizes')}
-                                    className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs hover:border-[#C69722] cursor-pointer transition"
+                                    className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-stone-700 shadow-2xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-200 group flex flex-col justify-between"
                                 >
-                                    <span className="text-[10px] uppercase font-bold text-stone-400">Master Sizes</span>
-                                    <div className="text-3xl font-serif font-black text-[#161616] mt-1">{sizes.length}</div>
-                                    <span className="text-[11px] text-[#C69722] font-semibold">Standard Heights</span>
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Master Sizes</span>
+                                            <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Tag className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <div className="text-3xl font-serif font-black text-[#161616] mt-2">{sizes.length}</div>
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px]">
+                                        <span className="text-[#C69722] font-semibold">Standard Heights</span>
+                                        <span className="text-stone-400 group-hover:text-stone-800 font-bold group-hover:translate-x-0.5 transition-all">➔</span>
+                                    </div>
                                 </div>
+
                                 <div 
                                     onClick={() => setActiveTab('reviews')}
-                                    className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs hover:border-[#C69722] cursor-pointer transition"
+                                    className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-emerald-600 shadow-2xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-200 group flex flex-col justify-between"
                                 >
-                                    <span className="text-[10px] uppercase font-bold text-stone-400">Customer Reviews</span>
-                                    <div className="text-3xl font-serif font-black text-[#161616] mt-1">{reviews.length}</div>
-                                    <span className="text-[11px] text-emerald-600 font-semibold">{reviews.filter(r => r.is_approved).length} Approved & Live</span>
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Customer Reviews</span>
+                                            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Star className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <div className="text-3xl font-serif font-black text-[#161616] mt-2">{reviews.length}</div>
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px]">
+                                        <span className="text-emerald-700 font-semibold">{reviews.filter(r => r.is_approved).length} Approved & Live</span>
+                                        <span className="text-stone-400 group-hover:text-emerald-600 font-bold group-hover:translate-x-0.5 transition-all">➔</span>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Quick Action Command Center */}
-                            <div className="bg-gradient-to-r from-[#161616] via-[#241F1A] to-[#161616] rounded-2xl p-5 text-white flex flex-col sm:flex-row items-center justify-between gap-4 border border-[#DFC48D]/30 shadow-md">
-                                <div className="space-y-1 text-center sm:text-left">
-                                    <div className="flex items-center justify-center sm:justify-start gap-2 text-xs font-bold text-[#F7C600] uppercase tracking-wider">
+                            <div className="bg-gradient-to-r from-[#171512] via-[#241F1A] to-[#171512] rounded-3xl p-6 text-white flex flex-col lg:flex-row items-center justify-between gap-5 border border-[#DFC48D]/30 shadow-lg relative overflow-hidden">
+                                <div className="space-y-1.5 text-center lg:text-left z-10">
+                                    <div className="flex items-center justify-center lg:justify-start gap-2 text-xs font-bold text-[#F7C600] uppercase tracking-wider">
                                         <Sparkles className="w-4 h-4" />
                                         <span>Quick Action Command Center</span>
                                     </div>
-                                    <h3 className="font-serif text-lg font-bold">Fast-Track Catalog Management</h3>
-                                    <p className="text-xs text-stone-400">Directly create new products, manage deities, launch festival discounts, or test WhatsApp concierge.</p>
+                                    <h3 className="font-serif text-lg sm:text-xl font-bold tracking-wide">Fast-Track Catalog Management</h3>
+                                    <p className="text-xs text-stone-400 max-w-xl">
+                                        Directly publish new sanctified murtis, configure circle deity banners, update festive discounts, or preview WhatsApp customer inquiries.
+                                    </p>
                                 </div>
-                                <div className="flex items-center gap-2 flex-wrap justify-center">
+                                <div className="flex items-center gap-2.5 flex-wrap justify-center z-10">
                                     <button
                                         onClick={handleOpenAddProduct}
-                                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] text-xs font-black uppercase tracking-wider transition shadow-lg flex items-center gap-1.5 active:scale-95"
+                                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] text-xs font-black uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 flex items-center gap-1.5 active:scale-95 cursor-pointer"
                                     >
                                         <Plus className="w-4 h-4 stroke-[2.5]" />
                                         <span>+ Add Product</span>
                                     </button>
                                     <button
                                         onClick={handleOpenAddCategory}
-                                        className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition flex items-center gap-1.5 border border-white/10"
+                                        className="px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition flex items-center gap-1.5 border border-white/10 cursor-pointer"
                                     >
                                         <ImageIcon className="w-3.5 h-3.5" />
                                         <span>+ Add Category</span>
                                     </button>
                                     <button
                                         onClick={handleTestWhatsApp}
-                                        className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                                        className="px-3.5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                                         title="Verify live customer message format"
                                     >
                                         <Send className="w-3.5 h-3.5" />
@@ -1481,45 +1537,45 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
                             {/* Overview Cards: WhatsApp Concierge & Rating Mode */}
                             <div className="grid sm:grid-cols-2 gap-5">
-                                <div className="bg-[#FAF2DE] border border-[#DFC48D] p-5 rounded-2xl flex flex-col justify-between">
+                                <div className="bg-[#FAF2DE] border border-[#DFC48D] p-5 rounded-2xl flex flex-col justify-between shadow-2xs">
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2 text-xs font-bold text-[#8E5B00] uppercase">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-[#8E5B00] uppercase tracking-wider">
                                                 <Phone className="w-4 h-4 text-[#C69722]" />
                                                 <span>WhatsApp Live Concierge</span>
                                             </div>
                                             <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full">
-                                                Active
+                                                Active & Routing
                                             </span>
                                         </div>
-                                        <div className="text-lg font-mono font-bold text-stone-900 mt-1">
+                                        <div className="text-xl font-mono font-bold text-stone-900 mt-2">
                                             {settings.whatsapp_number}
                                         </div>
-                                        <p className="text-xs text-stone-600 mt-2 italic line-clamp-2">
+                                        <div className="mt-3 p-3 bg-white/70 rounded-xl border border-[#DFC48D]/40 text-xs text-stone-700 italic">
                                             "{settings.whatsapp_default_message}"
-                                        </p>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-2 mt-5">
                                         <button
                                             onClick={() => setActiveTab('settings')}
-                                            className="px-3.5 py-1.5 rounded-xl bg-[#161616] hover:bg-[#C69722] text-white text-xs font-bold transition shadow-sm"
+                                            className="px-3.5 py-2 rounded-xl bg-[#161616] hover:bg-[#C69722] text-white text-xs font-bold transition shadow-sm cursor-pointer"
                                         >
                                             Configure Settings ➔
                                         </button>
                                         <button
                                             onClick={handleTestWhatsApp}
-                                            className="px-3 py-1.5 rounded-xl bg-white text-stone-800 hover:bg-stone-100 border text-xs font-bold transition flex items-center gap-1"
+                                            className="px-3 py-2 rounded-xl bg-white text-stone-800 hover:bg-stone-100 border border-stone-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
                                         >
                                             <Send className="w-3 h-3 text-emerald-600" />
-                                            <span>Test Live</span>
+                                            <span>Test Live Preview</span>
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="bg-white border border-stone-200 p-5 rounded-2xl flex flex-col justify-between">
+                                <div className="bg-white border border-stone-200 p-5 rounded-2xl flex flex-col justify-between shadow-2xs">
                                     <div>
                                         <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2 text-xs font-bold text-stone-800 uppercase">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-stone-800 uppercase tracking-wider">
                                                 <Star className="w-4 h-4 text-amber-500" />
                                                 <span>Global Rating Display Mode</span>
                                             </div>
@@ -1533,7 +1589,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 {settings.global_rating_mode}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-stone-600 mt-2 leading-relaxed">
+                                        <p className="text-xs text-stone-600 mt-3 leading-relaxed">
                                             {settings.global_rating_mode === 'enabled' && 'Devotees can view all ratings AND submit new verified reviews with photos.'}
                                             {settings.global_rating_mode === 'read_only' && 'Static mode enabled: Devotees can view approved reviews, but review submission forms are turned off.'}
                                             {settings.global_rating_mode === 'hidden' && 'Rating section is completely hidden from customer storefront.'}
@@ -1544,7 +1600,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         <span className="text-[11px] text-stone-400">Enforced by FastAPI backend</span>
                                         <button
                                             onClick={() => setActiveTab('settings')}
-                                            className="text-xs font-bold text-[#8E5B00] hover:underline"
+                                            className="text-xs font-bold text-[#8E5B00] hover:underline cursor-pointer"
                                         >
                                             Change Mode ➔
                                         </button>
@@ -1553,27 +1609,31 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
 
                             {/* Recent Products Quick Table */}
-                            <div className="bg-white rounded-2xl border border-stone-200 p-5 shadow-2xs space-y-3">
+                            <div className="bg-white rounded-3xl border border-stone-200 p-6 shadow-2xs space-y-4">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="font-serif font-bold text-base text-stone-900">
-                                        Recently Added & Updated Murtis
-                                    </h3>
+                                    <div>
+                                        <h3 className="font-serif font-bold text-base sm:text-lg text-stone-900">
+                                            Recently Added & Updated Murtis
+                                        </h3>
+                                        <p className="text-xs text-stone-500">Quick status check on active catalog inventory</p>
+                                    </div>
                                     <button
                                         onClick={() => setActiveTab('products')}
-                                        className="text-xs font-bold text-[#8E5B00] hover:underline"
+                                        className="text-xs font-bold text-[#8E5B00] hover:underline flex items-center gap-1 cursor-pointer"
                                     >
-                                        View All {products.length} Products ➔
+                                        <span>View All {products.length} Products</span>
+                                        <ArrowUpRight className="w-3.5 h-3.5" />
                                     </button>
                                 </div>
 
                                 <div className="divide-y divide-stone-100">
                                     {products.slice(0, 5).map(p => (
-                                        <div key={p.id} className="py-3 flex items-center justify-between gap-3">
+                                        <div key={p.id} className="py-3 flex items-center justify-between gap-3 hover:bg-stone-50/50 rounded-xl px-2 transition">
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <img
-                                                    src={p.primary_catalog_image || p.img}
+                                                <SafeImage
+                                                    src={api.getImageUrl(p.primary_catalog_image || p.img)}
                                                     alt={p.title}
-                                                    className="w-10 h-10 object-contain rounded-lg bg-[#FAF5E8] p-1 border flex-shrink-0"
+                                                    className="w-11 h-11 object-contain rounded-xl bg-[#FAF5E8] p-1 border border-stone-200 flex-shrink-0"
                                                 />
                                                 <div className="min-w-0">
                                                     <div className="font-bold text-stone-900 text-xs truncate max-w-xs">{p.title}</div>
@@ -1584,7 +1644,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             <div className="flex items-center gap-2">
                                                 <button
                                                     onClick={() => handleToggleProductStatus(p)}
-                                                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold transition ${
+                                                    className={`px-3 py-1 rounded-full text-[10px] font-bold transition cursor-pointer ${
                                                         p.is_active ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
                                                     }`}
                                                     title="Click to toggle status"
@@ -1593,7 +1653,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 </button>
                                                 <button
                                                     onClick={() => { setActiveTab('products'); setEditingProduct({ ...p, variants: p.variants || [], catalog_images: p.catalog_images || [], available_sizes: p.available_sizes || [], measurement_unit: p.measurement_unit || 'in' }); }}
-                                                    className="p-1.5 text-stone-500 hover:text-black rounded-lg hover:bg-stone-100"
+                                                    className="p-1.5 text-stone-500 hover:text-black rounded-lg hover:bg-stone-100 transition cursor-pointer"
                                                     title="Edit product"
                                                 >
                                                     <Edit3 className="w-3.5 h-3.5" />
