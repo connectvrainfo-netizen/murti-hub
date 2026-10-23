@@ -963,6 +963,23 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             {authLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                             <span>SIGN IN TO ADMIN PORTAL</span>
                         </button>
+
+                        {/* Server Status & Configuration Link */}
+                        <div className="pt-2 flex items-center justify-between text-[11px] text-stone-400">
+                            <span className="flex items-center gap-1.5 truncate max-w-[210px]" title={api.getBaseUrl() || 'Direct API'}>
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${api.getBaseUrl() ? 'bg-emerald-400' : 'bg-stone-500'}`} />
+                                <span className="truncate font-mono text-[10px] text-stone-400">
+                                    {api.getBaseUrl() || 'Default Server'}
+                                </span>
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => setIsConfiguringServer(true)}
+                                className="text-[11px] text-[#F7C600] hover:underline font-semibold"
+                            >
+                                Configure Server
+                            </button>
+                        </div>
                     </form>
                 </div>
 
