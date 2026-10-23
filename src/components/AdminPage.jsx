@@ -1671,20 +1671,25 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     {/* ========================================================================= */}
                     {activeTab === 'products' && (
                         <div className="space-y-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/60 pb-4">
                                 <div>
-                                    <h2 className="font-serif text-2xl font-bold text-[#161616]">
-                                        Products & Catalog Management
-                                    </h2>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
+                                            Products & Catalog Management
+                                        </h2>
+                                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40 font-mono">
+                                            {products.length} Idols
+                                        </span>
+                                    </div>
                                     <p className="text-xs text-stone-500 mt-1">
-                                        Manage listing prices, catalog photo gallery, size specifications, and stock status
+                                        Manage listing prices, catalog photo gallery, size specifications, and stock availability
                                     </p>
                                 </div>
 
                                 <div className="flex items-center gap-2 w-full sm:w-auto">
                                     <button
                                         onClick={handleOpenAddProduct}
-                                        className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition flex-shrink-0 shadow-sm active:scale-95"
+                                        className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-[#F7C600]/25 flex-shrink-0 active:scale-95 cursor-pointer"
                                     >
                                         <Plus className="w-4 h-4 stroke-[2.5]" />
                                         <span>+ Add New Product</span>
@@ -1693,59 +1698,66 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
 
                             {/* Search & Deity / Status Filters Bar */}
-                            <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
+                            <div className="bg-white p-5 rounded-3xl border border-stone-200 shadow-2xs space-y-3.5">
                                 <div className="flex flex-col sm:flex-row items-center gap-3">
                                     <div className="relative flex-1 w-full">
-                                        <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                                        <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                                         <input
                                             type="text"
                                             placeholder="Search by title, deity, marble material..."
                                             value={productSearch}
                                             onChange={(e) => setProductSearch(e.target.value)}
-                                            className="w-full pl-9 pr-8 py-2 rounded-xl border border-stone-300 bg-stone-50/50 text-xs focus:bg-white focus:outline-none"
+                                            className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-stone-200 bg-stone-50/50 text-xs focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition-all font-medium"
                                         />
                                         {productSearch && (
                                             <button
                                                 onClick={() => setProductSearch('')}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 text-xs"
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-stone-200 text-stone-500 hover:bg-stone-300 flex items-center justify-center text-xs transition"
                                             >
                                                 ✕
                                             </button>
                                         )}
                                     </div>
 
-                                    {/* Status Filter */}
-                                    <div className="flex items-center gap-1 w-full sm:w-auto overflow-x-auto no-scrollbar">
-                                        {['All', 'active', 'draft'].map(st => (
+                                    {/* Status Filter Segment */}
+                                    <div className="flex items-center gap-1 w-full sm:w-auto overflow-x-auto no-scrollbar p-1 bg-stone-100 rounded-xl border border-stone-200/80">
+                                        {[
+                                            { id: 'All', label: 'All Status', count: products.length },
+                                            { id: 'active', label: 'Active', count: products.filter(p => p.is_active).length },
+                                            { id: 'draft', label: 'Draft', count: products.filter(p => !p.is_active).length }
+                                        ].map(st => (
                                             <button
-                                                key={st}
-                                                onClick={() => setSelectedStatusFilter(st)}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition ${
-                                                    selectedStatusFilter === st
-                                                        ? 'bg-[#161616] text-[#F7C600]'
-                                                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                                                key={st.id}
+                                                onClick={() => setSelectedStatusFilter(st.id)}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                                                    selectedStatusFilter === st.id
+                                                        ? 'bg-white text-stone-900 shadow-xs font-black'
+                                                        : 'text-stone-600 hover:text-stone-900'
                                                 }`}
                                             >
-                                                {st === 'All' ? 'All Status' : st}
+                                                <span>{st.label}</span>
+                                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${selectedStatusFilter === st.id ? 'bg-[#FAF2DE] text-[#8E5B00]' : 'bg-stone-200/70 text-stone-500'}`}>
+                                                    {st.count}
+                                                </span>
                                             </button>
                                         ))}
                                     </div>
                                 </div>
 
                                 {/* Deity Filter Pills */}
-                                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
-                                    <span className="text-[10px] font-bold uppercase text-stone-400 flex items-center gap-1 mr-1">
-                                        <Filter className="w-3 h-3" />
+                                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 border-t border-stone-100">
+                                    <span className="text-[10px] font-bold uppercase text-stone-400 flex items-center gap-1 mr-1 flex-shrink-0">
+                                        <Filter className="w-3 h-3 text-[#C69722]" />
                                         Deity:
                                     </span>
                                     {uniqueDeities.map(deity => (
                                         <button
                                             key={deity}
                                             onClick={() => setSelectedDeityFilter(deity)}
-                                            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition ${
+                                            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
                                                 selectedDeityFilter === deity
                                                     ? 'bg-[#C69722] text-white font-bold shadow-xs'
-                                                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                                                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200/80'
                                             }`}
                                         >
                                             {deity}
@@ -1754,73 +1766,124 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 </div>
                             </div>
 
+                            {/* Summary Counter Bar */}
+                            <div className="flex items-center justify-between text-xs text-stone-500 px-1">
+                                <div>
+                                    Showing <strong className="text-stone-900">{filteredProducts.length}</strong> of {products.length} products
+                                    {selectedDeityFilter !== 'All' && <span> • Filtered by deity: <span className="font-semibold text-stone-800">"{selectedDeityFilter}"</span></span>}
+                                    {selectedStatusFilter !== 'All' && <span> • Status: <span className="font-semibold text-stone-800">"{selectedStatusFilter}"</span></span>}
+                                </div>
+                                {(productSearch || selectedDeityFilter !== 'All' || selectedStatusFilter !== 'All') && (
+                                    <button
+                                        onClick={() => {
+                                            setProductSearch('');
+                                            setSelectedDeityFilter('All');
+                                            setSelectedStatusFilter('All');
+                                        }}
+                                        className="text-[#8E5B00] hover:underline font-bold text-xs"
+                                    >
+                                        Reset All Filters
+                                    </button>
+                                )}
+                            </div>
+
                             {/* Products Table */}
-                            <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-2xs">
+                            <div className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-2xs">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left text-xs text-stone-700">
                                         <thead className="bg-[#FAF8F5] text-[10px] font-bold text-stone-500 uppercase tracking-wider border-b border-stone-200">
                                             <tr>
-                                                <th className="p-3.5">Product</th>
-                                                <th className="p-3.5">Price</th>
-                                                <th className="p-3.5">Catalog Gallery</th>
-                                                <th className="p-3.5">Stock Status</th>
-                                                <th className="p-3.5">Rating Mode</th>
-                                                <th className="p-3.5">Status (1-Click)</th>
-                                                <th className="p-3.5 text-right">Actions</th>
+                                                <th className="p-4">Product</th>
+                                                <th className="p-4">Price</th>
+                                                <th className="p-4">Catalog Gallery</th>
+                                                <th className="p-4">Stock Status</th>
+                                                <th className="p-4">Rating Mode</th>
+                                                <th className="p-4">Status (1-Click)</th>
+                                                <th className="p-4 text-right">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-stone-100">
                                             {filteredProducts.length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={7} className="p-8 text-center text-stone-400 text-xs">
-                                                        No products found matching filters.
+                                                    <td colSpan={7} className="p-12 text-center text-stone-400 text-xs">
+                                                        <div className="max-w-xs mx-auto space-y-2">
+                                                            <Package className="w-8 h-8 text-stone-300 mx-auto" />
+                                                            <div className="font-bold text-stone-700">No products found</div>
+                                                            <p className="text-[11px] text-stone-400">Try adjusting your search terms or clearing the deity filters above.</p>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setProductSearch('');
+                                                                    setSelectedDeityFilter('All');
+                                                                    setSelectedStatusFilter('All');
+                                                                }}
+                                                                className="mt-2 px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs rounded-xl transition"
+                                                            >
+                                                                Reset Filters
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             ) : (
                                                 filteredProducts.map(p => (
-                                                    <tr key={p.id} className="hover:bg-stone-50/60 transition">
-                                                        <td className="p-3.5 flex items-center gap-3">
-                                                            <img
-                                                                src={p.primary_catalog_image || p.img}
+                                                    <tr key={p.id} className="hover:bg-[#FAF9F6] transition-colors group">
+                                                        <td className="p-4 flex items-center gap-3.5">
+                                                            <SafeImage
+                                                                src={api.getImageUrl(p.primary_catalog_image || p.img)}
                                                                 alt={p.title}
-                                                                className="w-12 h-12 object-contain rounded-xl bg-[#FAF5E8] p-1 border flex-shrink-0"
+                                                                className="w-12 h-12 object-contain rounded-xl bg-[#FAF5E8] p-1 border border-stone-200 flex-shrink-0 group-hover:scale-105 transition-transform"
                                                             />
                                                             <div className="min-w-0">
-                                                                <div className="font-bold text-stone-900 truncate max-w-sm">{p.title}</div>
-                                                                <div className="text-[10px] text-stone-400">{p.deity} • {p.group_tag}</div>
+                                                                <div className="font-bold text-stone-900 truncate max-w-xs sm:max-w-sm">{p.title}</div>
+                                                                <div className="text-[11px] text-stone-400 mt-0.5 flex items-center gap-1.5">
+                                                                    <span className="font-semibold text-stone-600 bg-stone-100 px-1.5 py-0.2 rounded text-[10px]">{p.deity}</span>
+                                                                    <span>•</span>
+                                                                    <span>{p.group_tag}</span>
+                                                                    {p.material && (
+                                                                        <>
+                                                                            <span>•</span>
+                                                                            <span className="truncate max-w-[120px]">{p.material}</span>
+                                                                        </>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </td>
-                                                        <td className="p-3.5 font-bold text-stone-900 whitespace-nowrap">
-                                                            ₹{p.price?.toLocaleString('en-IN')}
-                                                            {p.off_text && <span className="ml-1 text-[10px] text-amber-600 font-normal">({p.off_text})</span>}
+                                                        <td className="p-4 font-bold text-stone-900 whitespace-nowrap">
+                                                            <div className="text-sm font-serif">₹{p.price?.toLocaleString('en-IN')}</div>
+                                                            {p.off_text && <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold border border-emerald-200/60 inline-block mt-0.5">{p.off_text}</span>}
                                                         </td>
-                                                        <td className="p-3.5 whitespace-nowrap">
-                                                            <span className="bg-stone-100 text-stone-800 px-2.5 py-1 rounded-full text-[10px] font-bold">
-                                                                {p.catalog_images?.length || 1} Images in Gallery
+                                                        <td className="p-4 whitespace-nowrap">
+                                                            <span className="bg-stone-100 text-stone-800 px-2.5 py-1 rounded-full text-[10px] font-bold inline-flex items-center gap-1 border border-stone-200">
+                                                                <ImageIcon className="w-3 h-3 text-[#C69722]" />
+                                                                <span>{p.catalog_images?.length || 1} Angles</span>
                                                             </span>
                                                         </td>
-                                                        <td className="p-3.5 whitespace-nowrap">
-                                                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold capitalize ${
+                                                        <td className="p-4 whitespace-nowrap">
+                                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold capitalize ${
                                                                 p.stock_status === 'in_stock' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
                                                                 p.stock_status === 'made_to_order' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
                                                                 'bg-rose-50 text-rose-700 border border-rose-200'
                                                             }`}>
-                                                                {p.stock_status === 'in_stock' ? 'In Stock' :
-                                                                 p.stock_status === 'made_to_order' ? 'Made To Order' : 'Out of Stock'}
+                                                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                                                    p.stock_status === 'in_stock' ? 'bg-emerald-500' :
+                                                                    p.stock_status === 'made_to_order' ? 'bg-amber-500' : 'bg-rose-500'
+                                                                }`} />
+                                                                <span>{p.stock_status === 'in_stock' ? 'In Stock' :
+                                                                 p.stock_status === 'made_to_order' ? 'Made To Order' : 'Out of Stock'}</span>
                                                             </span>
                                                         </td>
-                                                        <td className="p-3.5 whitespace-nowrap">
-                                                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                                                                p.rating_mode === 'enabled' ? 'bg-emerald-100 text-emerald-800' :
-                                                                p.rating_mode === 'read_only' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                                                        <td className="p-4 whitespace-nowrap">
+                                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                                                p.rating_mode === 'enabled' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                                                                p.rating_mode === 'read_only' ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
                                                             }`}>
-                                                                {p.rating_mode} ({p.static_rating_value}★)
+                                                                <Star className="w-3 h-3 fill-current text-amber-500" />
+                                                                <span>{p.rating_mode} ({p.static_rating_value ?? 5.0}★)</span>
                                                             </span>
                                                         </td>
-                                                        <td className="p-3.5 whitespace-nowrap">
+                                                        <td className="p-4 whitespace-nowrap">
                                                             <button
                                                                 onClick={() => handleToggleProductStatus(p)}
-                                                                className={`px-3 py-1 rounded-full text-[10px] font-bold transition flex items-center gap-1 ${
+                                                                className={`px-3 py-1 rounded-full text-[10px] font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs ${
                                                                     p.is_active ? 'text-emerald-800 bg-emerald-100 hover:bg-emerald-200' : 'text-stone-500 bg-stone-100 hover:bg-stone-200'
                                                                 }`}
                                                                 title="Click to toggle Active / Draft"
@@ -1829,16 +1892,17 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                                 <span>{p.is_active ? 'Active' : 'Draft'}</span>
                                                             </button>
                                                         </td>
-                                                        <td className="p-3.5 text-right whitespace-nowrap">
+                                                        <td className="p-4 text-right whitespace-nowrap">
                                                             <button
                                                                 onClick={() => setEditingProduct({ ...p, variants: p.variants || [], catalog_images: p.catalog_images || [], available_sizes: p.available_sizes || [], measurement_unit: p.measurement_unit || 'in' })}
-                                                                className="px-3.5 py-1.5 rounded-lg bg-stone-100 hover:bg-[#161616] hover:text-white text-stone-800 text-xs font-bold transition mr-1.5"
+                                                                className="px-3.5 py-1.5 rounded-xl bg-stone-100 hover:bg-[#161616] hover:text-white text-stone-800 text-xs font-bold transition mr-1.5 cursor-pointer inline-flex items-center gap-1"
                                                             >
-                                                                Edit
+                                                                <Edit3 className="w-3 h-3" />
+                                                                <span>Edit</span>
                                                             </button>
                                                             <button
                                                                 onClick={() => handleDeleteProduct(p.id, p.title)}
-                                                                className="px-2.5 py-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-700 text-xs transition"
+                                                                className="p-1.5 rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-700 text-xs transition cursor-pointer"
                                                                 title="Delete Product"
                                                             >
                                                                 <Trash2 className="w-3.5 h-3.5 inline" />
