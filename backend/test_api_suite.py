@@ -167,6 +167,14 @@ def run_tests():
     else:
         print("No active festival found, skipping link verification.")
 
+    # Clean up test entities so test runs never pollute the database
+    if cat_id:
+        client.delete(f"/api/categories/{cat_id}", headers=auth_headers)
+    if size_id:
+        client.delete(f"/api/sizes/{size_id}", headers=auth_headers)
+    if murti_id:
+        client.delete(f"/api/products/{murti_id}", headers=auth_headers)
+
     print("\n=== ALL TESTS PASSED SUCCESSFULLY! ===")
 
 if __name__ == "__main__":

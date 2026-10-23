@@ -1598,7 +1598,15 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     >
                                         <div className="flex items-start gap-3">
                                             <div className="w-14 h-14 rounded-full bg-[#FAF5E8] border border-[#DFC48D] overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
-                                                <img src={cat.img} alt={cat.name} className="w-full h-full object-contain" />
+                                                <img
+                                                    src={api.getImageUrl(cat.img) || '/images/categories/ganpati@2x.png'}
+                                                    alt={cat.name}
+                                                    className="w-full h-full object-contain"
+                                                    onError={(e) => {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = '/images/categories/ganpati@2x.png';
+                                                    }}
+                                                />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center justify-between">
@@ -1612,12 +1620,24 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             </div>
                                         </div>
 
-                                        {cat.banner_url && (
+                                        {cat.banner_url ? (
                                             <div className="relative h-20 rounded-xl overflow-hidden border border-stone-200 bg-stone-100">
-                                                <img src={cat.banner_url} alt="" className="w-full h-full object-cover" />
+                                                <img
+                                                    src={api.getImageUrl(cat.banner_url)}
+                                                    alt=""
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = api.getImageUrl(cat.img) || '/images/categories/navratri-drop@2x.png';
+                                                    }}
+                                                />
                                                 <span className="absolute bottom-1 right-2 text-[9px] bg-black/60 text-white px-1.5 py-0.5 rounded font-mono">
                                                     Hero Banner
                                                 </span>
+                                            </div>
+                                        ) : (
+                                            <div className="h-12 rounded-xl border border-dashed border-stone-200 bg-stone-50/60 flex items-center justify-center text-stone-400 text-[10px] font-mono">
+                                                No Hero Banner Configured
                                             </div>
                                         )}
 

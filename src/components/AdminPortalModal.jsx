@@ -805,7 +805,15 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                                             >
                                                 <div className="flex items-start gap-3">
                                                     <div className="w-14 h-14 rounded-full bg-[#FAF5E8] border border-[#DFC48D] overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
-                                                        <img src={cat.img} alt={cat.name} className="w-full h-full object-contain" />
+                                                        <img
+                                                            src={api.getImageUrl(cat.img) || '/images/categories/ganpati@2x.png'}
+                                                            alt={cat.name}
+                                                            className="w-full h-full object-contain"
+                                                            onError={(e) => {
+                                                                e.currentTarget.onerror = null;
+                                                                e.currentTarget.src = '/images/categories/ganpati@2x.png';
+                                                            }}
+                                                        />
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center justify-between">

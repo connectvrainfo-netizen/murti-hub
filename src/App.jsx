@@ -1142,7 +1142,17 @@ export default function App() {
                                             className={`deity-cat-item group ${isSelected ? 'active-category' : ''}`}
                                         >
                                             <div className="deity-cat-card">
-                                                <img src={item.img} alt={`${item.name} Marble Murti & Idols - Amol Marble Bhandar Shegaon`} width="64" height="64" loading="eager" />
+                                                <img
+                                                    src={api.getImageUrl(item.img) || '/images/categories/ganpati@2x.png'}
+                                                    onError={(e) => {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = '/images/categories/ganpati@2x.png';
+                                                    }}
+                                                    alt={`${item.name} Marble Murti & Idols - Amol Marble Bhandar Shegaon`}
+                                                    width="64"
+                                                    height="64"
+                                                    loading="eager"
+                                                />
                                             </div>
                                             <span className="deity-cat-label">{item.name}</span>
                                         </div>
@@ -2396,7 +2406,15 @@ export default function App() {
                                                 : 'border-stone-200 bg-white hover:border-[#C69722] text-stone-700 font-medium'
                                         }`}
                                     >
-                                        <img src={cat.img} alt={cat.name} className="w-5 h-5 rounded-full object-cover" />
+                                        <img
+                                            src={api.getImageUrl(cat.img) || '/images/categories/ganpati@2x.png'}
+                                            onError={(e) => {
+                                                e.currentTarget.onerror = null;
+                                                e.currentTarget.src = '/images/categories/ganpati@2x.png';
+                                            }}
+                                            alt={cat.name}
+                                            className="w-5 h-5 rounded-full object-cover"
+                                        />
                                         <span className="pr-1">{cat.name}</span>
                                     </button>
                                 );
