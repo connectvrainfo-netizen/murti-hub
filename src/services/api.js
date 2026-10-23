@@ -71,6 +71,10 @@ class ApiService {
         if (envUrl && typeof envUrl === 'string' && envUrl.trim()) {
             return envUrl.trim().replace(/\/+$/, '');
         }
+        // In production / live hosting (e.g. Vercel), default to the live Render backend
+        if (typeof window !== 'undefined' && window.location?.hostname && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+            return 'https://murti-hub-5.onrender.com';
+        }
         return '';
     }
 

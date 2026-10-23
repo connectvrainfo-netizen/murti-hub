@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     # CORS Origins (Allow explicit, minimal frontend origins)
     CORS_ORIGINS: List[str] = [
         "https://murti-hub.vercel.app",
+        "https://murti-hub-5.onrender.com",
         "https://amolmurtibhandar.com",
         "https://www.amolmurtibhandar.com",
         "http://localhost:5173",
