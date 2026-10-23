@@ -29,6 +29,7 @@ import { useGsapScrollAnimations } from './hooks/useGsapScrollAnimations';
 import { useContinuousScroll } from './hooks/useContinuousScroll';
 import StructuredData from './components/StructuredData';
 import { seoConfig } from './config/seoConfig';
+import brandLogo from './assets/logo.png';
 
 // Helper to determine if current URL is the dedicated admin page
 const checkIsAdminPath = () => {
@@ -892,7 +893,7 @@ export default function App() {
                     {/* Amol Marble Murti Bhandar Brand Logo */}
                     <button onClick={() => navigateTo('home')} className="flex items-center select-none group text-left outline-none focus:outline-none flex-shrink-0 py-0.5">
                         <img
-                            src="/images/logo.png"
+                            src={brandLogo}
                             alt="Amol Marble Murti Bhandar Shegaon - Authentic Marble Idols & Murtis"
                             width="220"
                             height="64"
@@ -1023,7 +1024,7 @@ export default function App() {
                     <div className="lg:hidden bg-[#FAF5E8] border-t border-[#E2D4B7] px-4 py-5 space-y-4 shadow-xl animate-in slide-in-from-top-2 duration-200">
                         <div className="flex items-center justify-center pb-3 border-b border-[#E2D4B7]">
                             <img
-                                src="/images/logo.png"
+                                src={brandLogo}
                                 alt="अमोल मार्बल मूर्ती भंडार"
                                 className="h-14 w-auto object-contain"
                                 width="180"
@@ -2711,7 +2712,7 @@ export default function App() {
                     <div className="lg:col-span-4 space-y-4">
                         <div className="flex items-center gap-2">
                             <img
-                                src="/images/logo.png"
+                                src={brandLogo}
                                 alt="अमोल मार्बल मूर्ती भंडार - Amol Marble Murti Bhandar Shegaon"
                                 width="180"
                                 height="72"
@@ -2824,7 +2825,7 @@ export default function App() {
                         <div className="sm:col-span-5 bg-black text-white p-8 flex flex-col items-center justify-center text-center">
                             <div className="bg-white/95 p-3.5 rounded-2xl mb-5 shadow-xl flex items-center justify-center">
                                 <img
-                                    src="/images/logo.png"
+                                    src={brandLogo}
                                     alt="अमोल मार्बल मूर्ती भंडार"
                                     className="h-16 w-auto object-contain"
                                     width="160"

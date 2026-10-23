@@ -5,10 +5,13 @@ import {
     ExternalLink, ArrowLeft, CheckCircle2, AlertCircle, Lock,
     LogOut, Database, Layers, MessageSquare, CheckSquare, Search,
     Upload, Loader2, Eye, EyeOff, Filter, Send, Link as LinkIcon,
-    AlertTriangle, X, CheckCheck
+    AlertTriangle, X, CheckCheck, ChevronRight, ChevronDown, Sliders,
+    User, Info, ArrowUpRight
 } from 'lucide-react';
 import api from '../services/api';
+import SafeImage from './SafeImage';
 import { deityCategories as defaultCategories, catalog as defaultCatalog } from '../data/catalog';
+import brandLogo from '../assets/logo.png';
 
 // Guarantee all 20 existing products from the store catalog are immediately available on Admin page
 const initialProducts = defaultCatalog.map((item) => ({
@@ -91,40 +94,42 @@ function ProductSelect({ products = [], value, onChange, placeholder = "-- Choos
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-3 py-2 border rounded-xl text-xs bg-white flex items-center justify-between gap-2 hover:border-black transition text-left shadow-2xs"
+                className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white flex items-center justify-between gap-2 hover:border-[#C69722] focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition text-left shadow-2xs"
             >
                 {selectedProduct ? (
                     <div className="flex items-center gap-2.5 truncate">
-                        <img
-                            src={api.getImageUrl(selectedProduct.primary_catalog_image || selectedProduct.img || '/images/products/ram-darbar.png')}
-                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
+                        <SafeImage
+                            src={api.getImageUrl(selectedProduct.primary_catalog_image || selectedProduct.img)}
                             alt=""
-                            className="w-6 h-6 object-contain rounded bg-stone-50 border flex-shrink-0"
+                            className="w-7 h-7 object-contain rounded-lg bg-[#FAF5E8] border border-stone-200 flex-shrink-0 p-0.5"
                         />
                         <span className="font-semibold text-stone-900 truncate">{selectedProduct.title}</span>
-                        <span className="text-[10px] text-stone-500 font-mono flex-shrink-0">₹{selectedProduct.price}</span>
+                        <span className="text-[10px] text-[#8E5B00] font-mono font-bold bg-[#FAF2DE] px-1.5 py-0.5 rounded flex-shrink-0">₹{selectedProduct.price?.toLocaleString('en-IN')}</span>
                     </div>
                 ) : (
-                    <span className="text-stone-400">{placeholder}</span>
+                    <span className="text-stone-400 font-medium">{placeholder}</span>
                 )}
-                <span className="text-stone-400 text-[10px]">▼</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform ${isOpen ? 'rotate-180 text-[#C69722]' : ''}`} />
             </button>
 
             {isOpen && (
-                <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-stone-200 rounded-xl shadow-xl z-50 max-h-60 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
-                    <div className="p-2 border-b bg-stone-50">
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Type to search idols..."
-                            autoFocus
-                            className="w-full px-2.5 py-1.5 border rounded-lg text-xs bg-white focus:outline-none focus:border-black"
-                        />
+                <div className="absolute left-0 right-0 top-full mt-1.5 bg-white border border-stone-200 rounded-2xl shadow-xl z-50 max-h-64 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-2 border-b border-stone-100 bg-stone-50/80">
+                        <div className="relative">
+                            <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search by idol title or deity..."
+                                autoFocus
+                                className="w-full pl-8 pr-3 py-1.5 border border-stone-200 rounded-xl text-xs bg-white focus:outline-none focus:border-[#C69722] focus:ring-1 focus:ring-[#C69722]"
+                            />
+                        </div>
                     </div>
-                    <div className="overflow-y-auto p-1 max-h-48 divide-y divide-stone-100">
+                    <div className="overflow-y-auto p-1 max-h-52 divide-y divide-stone-50">
                         {filtered.length === 0 ? (
-                            <div className="p-3 text-center text-xs text-stone-400">No products found</div>
+                            <div className="p-4 text-center text-xs text-stone-400">No matching idols found</div>
                         ) : (
                             filtered.map(p => (
                                 <button
@@ -135,20 +140,19 @@ function ProductSelect({ products = [], value, onChange, placeholder = "-- Choos
                                         setIsOpen(false);
                                         setSearch('');
                                     }}
-                                    className={`w-full p-2 flex items-center gap-2.5 text-left rounded-lg transition hover:bg-[#FAF5E8] ${selectedProduct?.id === p.id ? 'bg-[#FAF5E8] font-bold' : ''}`}
+                                    className={`w-full p-2 flex items-center gap-2.5 text-left rounded-xl transition hover:bg-[#FAF5E8] ${selectedProduct?.id === p.id ? 'bg-[#FAF5E8] font-bold' : ''}`}
                                 >
-                                    <img
-                                        src={api.getImageUrl(p.primary_catalog_image || p.img || '/images/products/ram-darbar.png')}
-                                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
+                                    <SafeImage
+                                        src={api.getImageUrl(p.primary_catalog_image || p.img)}
                                         alt=""
-                                        className="w-7 h-7 object-contain rounded bg-stone-50 border flex-shrink-0"
+                                        className="w-8 h-8 object-contain rounded-lg bg-stone-50 border border-stone-200 flex-shrink-0 p-0.5"
                                     />
                                     <div className="flex-1 truncate">
-                                        <div className="text-xs text-stone-900 truncate">{p.title}</div>
-                                        <div className="text-[10px] text-stone-400">{p.deity || 'Idol'} • ₹{p.price}</div>
+                                        <div className="text-xs text-stone-900 truncate font-semibold">{p.title}</div>
+                                        <div className="text-[10px] text-stone-400">{p.deity || 'Idol'} • ₹{p.price?.toLocaleString('en-IN')}</div>
                                     </div>
                                     {selectedProduct?.id === p.id && (
-                                        <Check className="w-3.5 h-3.5 text-[#C69722] flex-shrink-0" />
+                                        <Check className="w-4 h-4 text-[#C69722] flex-shrink-0" />
                                     )}
                                 </button>
                             ))
@@ -958,25 +962,33 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     // =========================================================================
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen w-full bg-[#1A1815] flex flex-col justify-between p-4 sm:p-8 font-sans selection:bg-[#F7C600] selection:text-[#161616]">
-                <div className="max-w-md mx-auto w-full flex items-center justify-between text-xs text-stone-400 pt-4">
+            <div className="min-h-screen w-full bg-[#141210] flex flex-col justify-between p-4 sm:p-8 font-sans selection:bg-[#F7C600] selection:text-[#161616] relative overflow-hidden">
+                {/* Decorative gold ambient glow */}
+                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#C69722]/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-10 right-10 w-80 h-80 bg-[#C69722]/5 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="max-w-md mx-auto w-full flex items-center justify-between text-xs text-stone-400 pt-4 relative z-10">
                     <button
                         onClick={onReturnToStore}
-                        className="flex items-center gap-1.5 hover:text-white transition font-bold"
+                        className="flex items-center gap-2 hover:text-[#F7C600] transition font-bold group"
                     >
-                        <ArrowLeft className="w-4 h-4" />
+                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
                         <span>Return to Storefront</span>
                     </button>
-                    <span className="font-mono text-[11px] text-[#C69722]">Amol Murti Admin v2.0</span>
+                    <span className="font-mono text-[11px] text-[#C69722] bg-[#2E2822] border border-[#DFC48D]/30 px-2.5 py-1 rounded-full">
+                        Admin Console v2.4
+                    </span>
                 </div>
 
-                <div className="max-w-md mx-auto w-full bg-[#24201C] rounded-3xl p-7 sm:p-9 border border-[#DFC48D]/30 shadow-2xl space-y-6">
+                <div className="max-w-md mx-auto w-full bg-[#201C18]/95 backdrop-blur-md rounded-3xl p-7 sm:p-9 border border-[#DFC48D]/30 shadow-2xl space-y-6 relative z-10">
                     <div className="text-center space-y-3">
-                        <img
-                            src="/images/logo.png"
-                            alt="अमोल मार्बल मूर्ती भंडार"
-                            className="h-20 sm:h-24 w-auto object-contain mx-auto drop-shadow-md"
-                        />
+                        <div className="inline-block p-2 rounded-2xl bg-[#2A241E] border border-[#DFC48D]/25 shadow-inner">
+                            <img
+                                src={brandLogo}
+                                alt="अमोल मार्बल मूर्ती भंडार"
+                                className="h-20 sm:h-22 w-auto object-contain mx-auto drop-shadow-md"
+                            />
+                        </div>
                         <h1 className="font-serif text-2xl font-bold text-white tracking-wide">
                             Admin Portal
                         </h1>
@@ -986,7 +998,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     </div>
 
                     {authError && (
-                        <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs flex items-start gap-2">
+                        <div className="p-3.5 rounded-xl bg-rose-950/70 border border-rose-500/40 text-rose-300 text-xs flex items-start gap-2.5 animate-in shake">
                             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-400" />
                             <span>{authError}</span>
                         </div>
@@ -994,7 +1006,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
                     <form onSubmit={handleLogin} className="space-y-4 text-left">
                         <div>
-                            <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider block mb-1">
+                            <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider block mb-1.5">
                                 Admin Email
                             </label>
                             <input
@@ -1002,11 +1014,11 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 required
                                 value={loginForm.email}
                                 onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-900/80 text-white text-xs focus:border-[#F7C600] focus:outline-none"
+                                className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-900/90 text-white text-xs focus:border-[#F7C600] focus:ring-2 focus:ring-[#F7C600]/20 focus:outline-none transition-all font-mono"
                             />
                         </div>
                         <div>
-                            <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider block mb-1">
+                            <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider block mb-1.5">
                                 Password
                             </label>
                             <input
@@ -1014,29 +1026,32 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 required
                                 value={loginForm.password}
                                 onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-900/80 text-white text-xs focus:border-[#F7C600] focus:outline-none"
+                                className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-900/90 text-white text-xs focus:border-[#F7C600] focus:ring-2 focus:ring-[#F7C600]/20 focus:outline-none transition-all font-mono"
                             />
                         </div>
 
-                        <div className="p-3 rounded-xl bg-stone-900/60 border border-stone-800 text-[11px] text-stone-400 space-y-1">
-                            <div className="text-stone-300 font-bold">Default Credentials:</div>
-                            <div>Email: <code className="text-[#F7C600]">admin@amolmurtibhandar.com</code></div>
-                            <div>Password: <code className="text-[#F7C600]">admin123</code></div>
+                        <div className="p-3.5 rounded-xl bg-stone-900/70 border border-stone-800 text-[11px] text-stone-400 space-y-1">
+                            <div className="text-stone-300 font-bold flex items-center gap-1.5">
+                                <Lock className="w-3.5 h-3.5 text-[#F7C600]" />
+                                <span>Default Credentials:</span>
+                            </div>
+                            <div>Email: <code className="text-[#F7C600] font-mono bg-black/40 px-1.5 py-0.5 rounded">admin@amolmurtibhandar.com</code></div>
+                            <div>Password: <code className="text-[#F7C600] font-mono bg-black/40 px-1.5 py-0.5 rounded">admin123</code></div>
                         </div>
 
                         <button
                             type="submit"
                             disabled={authLoading}
-                            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-extrabold text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-2 mt-2"
+                            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-extrabold text-xs uppercase tracking-wider transition-all shadow-lg hover:shadow-[#F7C600]/20 flex items-center justify-center gap-2 mt-2 active:scale-98 disabled:opacity-60 cursor-pointer"
                         >
                             {authLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                            <span>SIGN IN TO ADMIN PORTAL</span>
+                            <span>{authLoading ? 'AUTHENTICATING...' : 'SIGN IN TO ADMIN PORTAL'}</span>
                         </button>
 
                         {/* Server Status & Configuration Link */}
                         <div className="pt-2 flex items-center justify-between text-[11px] text-stone-400">
                             <span className="flex items-center gap-1.5 truncate max-w-[210px]" title={api.getBaseUrl() || 'Direct API'}>
-                                <span className={`w-2 h-2 rounded-full shrink-0 ${api.getBaseUrl() ? 'bg-emerald-400' : 'bg-stone-500'}`} />
+                                <span className={`w-2 h-2 rounded-full shrink-0 ${api.getBaseUrl() ? 'bg-emerald-400 animate-pulse' : 'bg-stone-500'}`} />
                                 <span className="truncate font-mono text-[10px] text-stone-400">
                                     {api.getBaseUrl() || 'Default Server'}
                                 </span>
@@ -1052,8 +1067,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     </form>
                 </div>
 
-                <div className="text-center text-[11px] text-stone-500 pb-4">
-                    Amol Marble Murti Bhandar • FastAPI + Supabase Cloud Engine
+                <div className="text-center text-[11px] text-stone-500 pb-4 relative z-10">
+                    Amol Marble Murti Bhandar • Jaipur Karigari E-Commerce Console
                 </div>
             </div>
         );
@@ -1074,7 +1089,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             )}
 
             {/* Dedicated Admin Page Top Navbar */}
-            <header className="flex-shrink-0 z-40 bg-[#1A1815] text-white border-b border-[#DFC48D]/30 px-4 sm:px-8 py-2.5 sm:py-3 flex items-center justify-between">
+            <header className="flex-shrink-0 z-40 bg-[#171512] text-white border-b border-[#DFC48D]/25 px-4 sm:px-8 py-2.5 sm:py-3 flex items-center justify-between backdrop-blur-md shadow-sm">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={onReturnToStore}
@@ -1082,9 +1097,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                         title="Return to Storefront"
                     >
                         <img
-                            src="/images/logo.png"
+                            src={brandLogo}
                             alt="अमोल मार्बल मूर्ती भंडार"
-                            className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform"
+                            className="h-10 sm:h-12 w-auto object-contain group-hover:scale-105 transition-transform drop-shadow"
                         />
                         <div className="hidden sm:block">
                             <div className="flex items-center gap-2">
@@ -1096,17 +1111,17 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 </span>
                             </div>
                             <p className="text-[11px] text-stone-400">
-                                E-Commerce Management Platform
+                                E-Commerce Management Platform • Jaipur Heritage
                             </p>
                         </div>
                     </button>
                 </div>
 
-                <div className="flex items-center gap-2.5 sm:gap-4">
+                <div className="flex items-center gap-2 sm:gap-3">
                     {/* Primary Add Product Quick Action in Header */}
                     <button
                         onClick={handleOpenAddProduct}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] text-xs font-black uppercase tracking-wider transition shadow-sm active:scale-95"
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] text-xs font-black uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 active:scale-95 cursor-pointer"
                         title="Add New Idol to Catalog"
                     >
                         <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -1116,7 +1131,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     {/* Live Storefront Link */}
                     <button
                         onClick={onReturnToStore}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition border border-white/10"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold transition border border-white/10 hover:border-white/20 active:scale-95 cursor-pointer"
                         title="View Customer Storefront"
                     >
                         <span>Live Store</span>
@@ -1127,16 +1142,19 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     <button
                         onClick={refreshAllData}
                         disabled={loading}
-                        className="p-2 text-stone-300 hover:text-white rounded-lg hover:bg-white/10 transition"
+                        className="p-2 text-stone-300 hover:text-white rounded-xl hover:bg-white/10 transition border border-transparent hover:border-white/10 cursor-pointer"
                         title="Refresh data from server"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     </button>
 
+                    <div className="h-5 w-px bg-white/10 mx-1 hidden sm:block" />
+
                     {/* Admin Sign Out */}
                     <button
                         onClick={handleLogout}
-                        className="flex items-center gap-1 text-xs text-rose-300 hover:text-rose-100 font-bold px-3 py-1.5 rounded-lg border border-rose-500/30 hover:bg-rose-950/40 transition"
+                        className="flex items-center gap-1.5 text-xs text-rose-300 hover:text-rose-100 font-bold px-3 py-2 rounded-xl border border-rose-500/30 hover:bg-rose-950/40 hover:border-rose-500/50 transition active:scale-95 cursor-pointer"
+                        title="Log out of Admin Console"
                     >
                         <LogOut className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">Logout</span>
@@ -1147,74 +1165,206 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             {/* Standalone Admin Layout: Sidebar + Main Workspace */}
             <div className="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
 
-                {/* Left Sidebar Menu - Fixed & Sticky, does NOT move while scrolling main content */}
-                <aside className="w-full md:w-72 lg:w-80 bg-[#FAF6EE] border-r border-[#E8DFD0] p-4 flex md:flex-col gap-1.5 overflow-x-auto md:overflow-y-auto no-scrollbar flex-shrink-0 md:h-full md:sticky md:top-0">
-                    {/* Clean Section Header */}
-                    <div className="flex items-center justify-between px-2 pt-1 pb-2 hidden md:flex">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-stone-500">
-                            Navigation
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700 border border-emerald-200">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            Live
-                        </span>
-                    </div>
+                {/* Left Sidebar Menu - Sticky, scrollable, organized by domain */}
+                <aside className="w-full md:w-72 lg:w-80 bg-[#FAF6EE] border-r border-[#E8DFD0] p-3 sm:p-4 flex md:flex-col justify-between overflow-x-auto md:overflow-y-auto no-scrollbar flex-shrink-0 md:h-full md:sticky md:top-0">
+                    <div className="w-full space-y-4">
+                        {/* Status Strip on Desktop */}
+                        <div className="hidden md:flex items-center justify-between px-2 pt-1 pb-1">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-stone-400">
+                                Administration Console
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                {api.getBaseUrl() ? 'Cloud Live' : 'Pre-Seeded'}
+                            </span>
+                        </div>
 
-                    <nav className="flex md:flex-col gap-1 w-full" aria-label="Admin Navigation">
-                        {[
-                            { id: 'dashboard', label: 'Overview Dashboard', icon: Shield },
-                            { id: 'settings', label: 'WhatsApp & Rating', icon: Phone },
-                            { id: 'categories', label: 'Category Images', icon: ImageIcon },
-                            { id: 'products', label: 'Products & Catalog', icon: Package, count: products?.length },
-                            { id: 'sizes', label: 'Master Sizes', icon: Tag, count: sizes?.length },
-                            { id: 'festival', label: 'Festival Area', icon: Sparkles, isFestive: true },
-                            { id: 'reviews', label: 'Customer Reviews', icon: Star, count: reviews?.length },
-                        ].map(tab => {
-                            const Icon = tab.icon;
-                            const isCur = activeTab === tab.id;
-                            return (
+                        {/* Grouped Navigation */}
+                        <nav className="flex md:flex-col gap-3.5 w-full" aria-label="Admin Navigation">
+                            {/* Group 1: Overview */}
+                            <div className="space-y-1">
+                                <div className="hidden md:block px-3 text-[10px] font-extrabold uppercase tracking-wider text-stone-400">
+                                    Overview
+                                </div>
                                 <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`group relative flex-shrink-0 w-auto md:w-full px-3.5 py-2.5 rounded-xl text-left transition-all duration-200 flex items-center justify-between gap-3.5 select-none ${
-                                        isCur
-                                            ? tab.isFestive
-                                                ? 'bg-gradient-to-r from-amber-50 via-white to-white text-stone-900 shadow-xs ring-1 ring-amber-500/20 border-l-4 border-l-amber-500'
-                                                : 'bg-white text-stone-900 shadow-xs ring-1 ring-stone-900/5 border-l-4 border-l-[#C69722]'
+                                    onClick={() => setActiveTab('dashboard')}
+                                    className={`group relative flex-shrink-0 w-auto md:w-full px-3 py-2.5 rounded-xl text-left transition-all duration-200 flex items-center justify-between gap-3 select-none ${
+                                        activeTab === 'dashboard'
+                                            ? 'bg-white text-stone-900 shadow-xs ring-1 ring-stone-900/5 border-l-4 border-l-[#C69722] font-bold'
                                             : 'text-stone-600 hover:bg-white/80 hover:text-stone-900 hover:shadow-2xs'
                                     }`}
                                 >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                        <div
-                                            className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-                                                isCur
-                                                    ? tab.isFestive
-                                                        ? 'bg-amber-100 text-amber-700 shadow-2xs'
-                                                        : 'bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/50 shadow-2xs'
-                                                    : 'bg-stone-200/60 text-stone-500 group-hover:bg-[#FAF2DE] group-hover:text-[#8E5B00]'
-                                            }`}
-                                        >
-                                            <Icon className="w-4 h-4 stroke-[2]" />
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                                            activeTab === 'dashboard'
+                                                ? 'bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/50 shadow-2xs'
+                                                : 'bg-stone-200/60 text-stone-500 group-hover:bg-[#FAF2DE] group-hover:text-[#8E5B00]'
+                                        }`}>
+                                            <Shield className="w-4 h-4 stroke-[2]" />
                                         </div>
-                                        <span className={`text-[13px] whitespace-nowrap tracking-tight ${isCur ? 'font-bold text-stone-900' : 'font-semibold text-stone-700 group-hover:text-stone-900'}`}>
-                                            {tab.label}
+                                        <span className={`text-[13px] whitespace-nowrap tracking-tight ${activeTab === 'dashboard' ? 'font-bold text-stone-900' : 'font-semibold text-stone-700 group-hover:text-stone-900'}`}>
+                                            Overview Cockpit
                                         </span>
                                     </div>
+                                    <ChevronRight className={`w-3.5 h-3.5 text-stone-400 hidden md:block transition-transform ${activeTab === 'dashboard' ? 'text-[#C69722] translate-x-0.5' : 'opacity-0 group-hover:opacity-100'}`} />
+                                </button>
+                            </div>
 
-                                    {/* Count Badge */}
+                            {/* Group 2: Catalog & Inventory */}
+                            <div className="space-y-1">
+                                <div className="hidden md:block px-3 text-[10px] font-extrabold uppercase tracking-wider text-stone-400">
+                                    Catalog & Inventory
+                                </div>
+                                {[
+                                    { id: 'products', label: 'Products & Catalog', icon: Package, count: products?.length },
+                                    { id: 'categories', label: 'Deity Categories', icon: ImageIcon, count: categories?.length },
+                                    { id: 'sizes', label: 'Master Sizes', icon: Tag, count: sizes?.length }
+                                ].map(tab => {
+                                    const Icon = tab.icon;
+                                    const isCur = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`group relative flex-shrink-0 w-auto md:w-full px-3 py-2.5 rounded-xl text-left transition-all duration-200 flex items-center justify-between gap-3 select-none ${
+                                                isCur
+                                                    ? 'bg-white text-stone-900 shadow-xs ring-1 ring-stone-900/5 border-l-4 border-l-[#C69722] font-bold'
+                                                    : 'text-stone-600 hover:bg-white/80 hover:text-stone-900 hover:shadow-2xs'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                                                    isCur
+                                                        ? 'bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/50 shadow-2xs'
+                                                        : 'bg-stone-200/60 text-stone-500 group-hover:bg-[#FAF2DE] group-hover:text-[#8E5B00]'
+                                                }`}>
+                                                    <Icon className="w-4 h-4 stroke-[2]" />
+                                                </div>
+                                                <span className={`text-[13px] whitespace-nowrap tracking-tight ${isCur ? 'font-bold text-stone-900' : 'font-semibold text-stone-700 group-hover:text-stone-900'}`}>
+                                                    {tab.label}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                {tab.count !== undefined && tab.count > 0 && (
+                                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full font-mono transition-colors ${
+                                                        isCur ? 'bg-[#FAF2DE] text-[#8E5B00]' : 'bg-stone-200/70 text-stone-600 group-hover:bg-stone-300'
+                                                    }`}>
+                                                        {tab.count}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Group 3: Marketing & Customer Channels */}
+                            <div className="space-y-1">
+                                <div className="hidden md:block px-3 text-[10px] font-extrabold uppercase tracking-wider text-stone-400">
+                                    Marketing & Channels
+                                </div>
+                                {[
+                                    { id: 'festival', label: 'Festival Area', icon: Sparkles, isFestive: true },
+                                    { id: 'settings', label: 'WhatsApp & Settings', icon: Phone }
+                                ].map(tab => {
+                                    const Icon = tab.icon;
+                                    const isCur = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`group relative flex-shrink-0 w-auto md:w-full px-3 py-2.5 rounded-xl text-left transition-all duration-200 flex items-center justify-between gap-3 select-none ${
+                                                isCur
+                                                    ? tab.isFestive
+                                                        ? 'bg-gradient-to-r from-amber-50 via-white to-white text-stone-900 shadow-xs ring-1 ring-amber-500/20 border-l-4 border-l-amber-500 font-bold'
+                                                        : 'bg-white text-stone-900 shadow-xs ring-1 ring-stone-900/5 border-l-4 border-l-[#C69722] font-bold'
+                                                    : 'text-stone-600 hover:bg-white/80 hover:text-stone-900 hover:shadow-2xs'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                                                    isCur
+                                                        ? tab.isFestive
+                                                            ? 'bg-amber-100 text-amber-700 shadow-2xs'
+                                                            : 'bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/50 shadow-2xs'
+                                                        : 'bg-stone-200/60 text-stone-500 group-hover:bg-[#FAF2DE] group-hover:text-[#8E5B00]'
+                                                }`}>
+                                                    <Icon className="w-4 h-4 stroke-[2]" />
+                                                </div>
+                                                <span className={`text-[13px] whitespace-nowrap tracking-tight ${isCur ? 'font-bold text-stone-900' : 'font-semibold text-stone-700 group-hover:text-stone-900'}`}>
+                                                    {tab.label}
+                                                </span>
+                                            </div>
+                                            {tab.isFestive && (
+                                                <span className="text-[10px] font-bold text-amber-600 bg-amber-100/70 px-1.5 py-0.5 rounded-md hidden md:inline">
+                                                    Special
+                                                </span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Group 4: Devotees & Engagement */}
+                            <div className="space-y-1">
+                                <div className="hidden md:block px-3 text-[10px] font-extrabold uppercase tracking-wider text-stone-400">
+                                    Community
+                                </div>
+                                <button
+                                    onClick={() => setActiveTab('reviews')}
+                                    className={`group relative flex-shrink-0 w-auto md:w-full px-3 py-2.5 rounded-xl text-left transition-all duration-200 flex items-center justify-between gap-3 select-none ${
+                                        activeTab === 'reviews'
+                                            ? 'bg-white text-stone-900 shadow-xs ring-1 ring-stone-900/5 border-l-4 border-l-[#C69722] font-bold'
+                                            : 'text-stone-600 hover:bg-white/80 hover:text-stone-900 hover:shadow-2xs'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                                            activeTab === 'reviews'
+                                                ? 'bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/50 shadow-2xs'
+                                                : 'bg-stone-200/60 text-stone-500 group-hover:bg-[#FAF2DE] group-hover:text-[#8E5B00]'
+                                        }`}>
+                                            <Star className="w-4 h-4 stroke-[2]" />
+                                        </div>
+                                        <span className={`text-[13px] whitespace-nowrap tracking-tight ${activeTab === 'reviews' ? 'font-bold text-stone-900' : 'font-semibold text-stone-700 group-hover:text-stone-900'}`}>
+                                            Customer Reviews
+                                        </span>
+                                    </div>
                                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        {tab.count !== undefined && tab.count > 0 && (
+                                        {reviews?.length > 0 && (
                                             <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full font-mono transition-colors ${
-                                                isCur ? 'bg-[#FAF2DE] text-[#8E5B00]' : 'bg-stone-200/70 text-stone-600 group-hover:bg-stone-300'
+                                                activeTab === 'reviews' ? 'bg-[#FAF2DE] text-[#8E5B00]' : 'bg-stone-200/70 text-stone-600 group-hover:bg-stone-300'
                                             }`}>
-                                                {tab.count}
+                                                {reviews.length}
                                             </span>
                                         )}
                                     </div>
                                 </button>
-                            );
-                        })}
-                    </nav>
+                            </div>
+                        </nav>
+                    </div>
+
+                    {/* Sidebar Footer User Card */}
+                    <div className="hidden md:block pt-3 border-t border-[#E8DFD0]/70 mt-4">
+                        <div className="p-3 bg-white/70 rounded-2xl border border-stone-200/70 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-full bg-[#171512] text-[#F7C600] flex items-center justify-center font-bold text-xs shadow-xs">
+                                    AM
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="text-xs font-bold text-stone-900 truncate">Amol Admin</div>
+                                    <div className="text-[10px] text-stone-500 truncate">Jaipur Karigari Console</div>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsConfiguringServer(true)}
+                                className="p-1.5 text-stone-400 hover:text-[#C69722] hover:bg-[#FAF2DE] rounded-lg transition"
+                                title="Configure Server URL"
+                            >
+                                <Database className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    </div>
                 </aside>
 
                 {/* Main Content Workspace */}
@@ -1236,7 +1386,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
                             <button
                                 onClick={() => setIsConfiguringServer(true)}
-                                className="px-3.5 py-1.5 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider whitespace-nowrap hover:bg-black transition shadow-2xs"
+                                className="px-3.5 py-1.5 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider whitespace-nowrap hover:bg-black transition shadow-2xs cursor-pointer"
                             >
                                 Connect Render Backend
                             </button>

@@ -4,14 +4,14 @@
  * Network-First with offline fallback for APIs, and Background Sync.
  */
 
-const STATIC_CACHE = 'murti-static-v1';
-const IMAGE_CACHE = 'murti-images-v1';
-const API_CACHE = 'murti-api-v1';
+const STATIC_CACHE = 'murti-static-v3';
+const IMAGE_CACHE = 'murti-images-v3';
+const API_CACHE = 'murti-api-v3';
 
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
-  '/images/logo.png',
+  '/images/logo.png?v=3',
   '/images/categories/ram@2x.png',
 ];
 

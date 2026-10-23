@@ -5,6 +5,7 @@ import {
     Sparkles, KeyRound, LogOut, ExternalLink
 } from 'lucide-react';
 import api from '../services/api';
+import brandLogo from '../assets/logo.png';
 
 export default function LoginPage({ onReturnToStore, onLoginSuccess }) {
     const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -156,7 +157,7 @@ export default function LoginPage({ onReturnToStore, onLoginSuccess }) {
 
                     <div className="flex items-center gap-2">
                         <img
-                            src="/images/logo.png"
+                            src={brandLogo}
                             alt="Amol Marble Murti Bhandar"
                             className="h-10 sm:h-12 w-auto object-contain"
                             width="140"

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import { deityCategories as defaultCategories, catalog as defaultCatalog } from '../data/catalog';
+import brandLogo from '../assets/logo.png';
 
 // Guarantee all 20 existing products from the store catalog are immediately available in Admin Portal Modal
 const initialProducts = defaultCatalog.map((item) => ({
@@ -394,7 +395,7 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                 <div className="px-5 sm:px-8 py-3.5 bg-gradient-to-r from-[#1E1B18] via-[#2A241E] to-[#1E1B18] text-white flex items-center justify-between border-b border-[#DFC48D]/30 flex-shrink-0">
                     <div className="flex items-center gap-3">
                         <img
-                            src="/images/logo.png"
+                            src={brandLogo}
                             alt="अमोल मार्बल मूर्ती भंडार"
                             className="h-10 sm:h-12 w-auto object-contain"
                         />
@@ -446,7 +447,7 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                 {!isAuthenticated ? (
                     <div className="flex-1 p-6 sm:p-12 flex flex-col items-center justify-center text-center overflow-y-auto">
                         <img
-                            src="/images/logo.png"
+                            src={brandLogo}
                             alt="अमोल मार्बल मूर्ती भंडार"
                             className="h-20 sm:h-24 w-auto object-contain mx-auto mb-4 drop-shadow-md"
                         />

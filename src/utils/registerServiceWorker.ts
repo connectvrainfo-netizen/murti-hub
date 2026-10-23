@@ -15,6 +15,7 @@ export function registerServiceWorker(): void {
         .register('/service-worker.js', { scope: '/' })
         .then((registration) => {
           console.debug('[ServiceWorker] Active with scope:', registration.scope);
+          registration.update().catch(() => {});
 
           // Listen for background updates
           registration.onupdatefound = () => {
