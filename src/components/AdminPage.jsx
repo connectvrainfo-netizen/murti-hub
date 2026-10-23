@@ -1923,88 +1923,99 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     {/* ========================================================================= */}
                     {activeTab === 'categories' && (
                         <div className="space-y-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/60 pb-4">
                                 <div>
-                                    <h2 className="font-serif text-2xl font-bold text-[#161616]">
-                                        Deity Categories & Hero Banners
-                                    </h2>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
+                                            Deity Categories & Hero Banners
+                                        </h2>
+                                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40 font-mono">
+                                            {categories.length} Categories
+                                        </span>
+                                    </div>
                                     <p className="text-xs text-stone-500 mt-1">
                                         Configure circle deity icons, hero landing banners, route slugs, and active display order
                                     </p>
                                 </div>
                                 <button
                                     onClick={handleOpenAddCategory}
-                                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition flex-shrink-0 shadow-sm active:scale-95"
+                                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-[#F7C600]/25 flex-shrink-0 active:scale-95 cursor-pointer"
                                 >
                                     <Plus className="w-4 h-4 stroke-[2.5]" />
                                     <span>+ Add New Category</span>
                                 </button>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                                 {categories.map(cat => (
                                     <div
                                         key={cat.id}
-                                        className="bg-white rounded-2xl border border-stone-200 p-5 shadow-2xs flex flex-col justify-between space-y-4"
+                                        className="bg-white rounded-3xl border border-stone-200 p-5 shadow-2xs hover:shadow-md hover:border-[#DFC48D] transition-all duration-200 flex flex-col justify-between space-y-4 group"
                                     >
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-14 h-14 rounded-full bg-[#FAF5E8] border border-[#DFC48D] overflow-hidden flex-shrink-0 flex items-center justify-center p-1">
-                                                <img
-                                                    src={api.getImageUrl(cat.img) || '/images/categories/ganpati@2x.png'}
+                                        <div className="flex items-start gap-3.5">
+                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#FAF5E8] to-[#F5ECE0] border border-[#DFC48D]/60 overflow-hidden flex-shrink-0 flex items-center justify-center p-1.5 shadow-2xs group-hover:scale-105 transition-transform">
+                                                <SafeImage
+                                                    src={api.getImageUrl(cat.img)}
                                                     alt={cat.name}
                                                     className="w-full h-full object-contain"
-                                                    onError={(e) => {
-                                                        e.currentTarget.onerror = null;
-                                                        e.currentTarget.src = '/images/categories/ganpati@2x.png';
-                                                    }}
                                                 />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between">
+                                                <div className="flex items-center justify-between gap-1">
                                                     <h3 className="font-serif font-bold text-stone-900 text-sm truncate">{cat.name}</h3>
-                                                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${cat.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-100 text-stone-500'}`}>
+                                                    <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                                        cat.is_active ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-stone-100 text-stone-500 border border-stone-200'
+                                                    }`}>
                                                         {cat.is_active ? 'Active' : 'Draft'}
                                                     </span>
                                                 </div>
-                                                <p className="text-[11px] text-stone-400 font-mono mt-0.5">/{cat.slug}</p>
-                                                <p className="text-[11px] text-[#C69722] font-semibold mt-1">Route: {cat.route}</p>
+                                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                                    <span className="text-[10px] text-stone-500 bg-stone-100 px-2 py-0.5 rounded font-mono border border-stone-200">
+                                                        /{cat.slug}
+                                                    </span>
+                                                    <span className="text-[10px] text-[#8E5B00] bg-[#FAF2DE] px-2 py-0.5 rounded font-semibold border border-[#DFC48D]/40 truncate max-w-[140px]">
+                                                        {cat.route}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
 
                                         {cat.banner_url ? (
-                                            <div className="relative h-20 rounded-xl overflow-hidden border border-stone-200 bg-stone-100">
-                                                <img
+                                            <div className="relative h-24 rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 group/banner shadow-2xs">
+                                                <SafeImage
                                                     src={api.getImageUrl(cat.banner_url)}
-                                                    alt=""
-                                                    className="w-full h-full object-cover"
-                                                    onError={(e) => {
-                                                        e.currentTarget.onerror = null;
-                                                        e.currentTarget.src = api.getImageUrl(cat.img) || '/images/categories/navratri-drop@2x.png';
-                                                    }}
+                                                    alt={cat.name}
+                                                    className="w-full h-full object-cover group-hover/banner:scale-105 transition-transform duration-300"
                                                 />
-                                                <span className="absolute bottom-1 right-2 text-[9px] bg-black/60 text-white px-1.5 py-0.5 rounded font-mono">
-                                                    Hero Banner
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                                                <span className="absolute bottom-2 left-2 text-[10px] bg-black/70 backdrop-blur-xs text-[#F7C600] px-2 py-0.5 rounded-md font-mono font-semibold flex items-center gap-1">
+                                                    <Sparkles className="w-2.5 h-2.5" />
+                                                    <span>Hero Landing Banner</span>
                                                 </span>
                                             </div>
                                         ) : (
-                                            <div className="h-12 rounded-xl border border-dashed border-stone-200 bg-stone-50/60 flex items-center justify-center text-stone-400 text-[10px] font-mono">
-                                                No Hero Banner Configured
+                                            <div className="h-14 rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50/70 flex items-center justify-center text-stone-400 text-xs font-mono gap-1.5">
+                                                <ImageIcon className="w-3.5 h-3.5" />
+                                                <span>No Hero Banner Configured</span>
                                             </div>
                                         )}
 
-                                        <div className="flex items-center justify-between pt-2 border-t border-stone-100">
-                                            <span className="text-[11px] text-stone-400">Order: <strong>{cat.sort_order}</strong></span>
+                                        <div className="flex items-center justify-between pt-3 border-t border-stone-100">
+                                            <span className="text-xs text-stone-500 flex items-center gap-1">
+                                                <span>Display Order:</span>
+                                                <strong className="text-stone-900 bg-stone-100 px-2 py-0.5 rounded font-mono">{cat.sort_order}</strong>
+                                            </span>
                                             <div className="flex items-center gap-1.5">
                                                 <button
                                                     onClick={() => setEditingCategory(cat)}
-                                                    className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-[#161616] hover:text-white text-stone-800 font-bold text-xs transition flex items-center gap-1"
+                                                    className="px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-[#161616] hover:text-white text-stone-800 font-bold text-xs transition flex items-center gap-1 cursor-pointer"
                                                 >
                                                     <Edit3 className="w-3 h-3" />
                                                     <span>Edit</span>
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteCategory(cat.id, cat.name)}
-                                                    className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition"
+                                                    className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition cursor-pointer"
                                                     title="Delete Category"
                                                 >
                                                     <Trash2 className="w-3.5 h-3.5" />
@@ -2022,74 +2033,98 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     {/* ========================================================================= */}
                     {activeTab === 'festival' && (
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="font-serif text-2xl font-bold text-[#161616]">
-                                    Festival Campaign Management
-                                </h2>
-                                <p className="text-xs text-stone-500 mt-1">
-                                    Configure festive banner announcements, badge pills, and link catalog murtis with special festival discounts
-                                </p>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/60 pb-4">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
+                                            Festival Campaign Management
+                                        </h2>
+                                        <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                                            festival?.is_active
+                                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                                : 'bg-stone-100 text-stone-500 border-stone-200'
+                                        }`}>
+                                            {festival?.is_active ? '● Campaign Active' : '○ Inactive'}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-stone-500 mt-1">
+                                        Configure festive banner announcements, badge pills, and link catalog murtis with special festival discounts
+                                    </p>
+                                </div>
                             </div>
 
                             {festival ? (
                                 <div className="space-y-6">
                                     {/* Campaign Settings Form */}
-                                    <form onSubmit={handleSaveFestival} className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 shadow-2xs space-y-5">
-                                        <div className="flex items-center justify-between pb-3 border-b">
-                                            <span className="text-xs font-bold text-stone-800 uppercase tracking-wider">
-                                                FESTIVAL CAMPAIGN CONTROLS
-                                            </span>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-stone-600 font-medium">Campaign Active:</span>
+                                    <form onSubmit={handleSaveFestival} className="bg-white p-6 sm:p-7 rounded-3xl border border-stone-200 shadow-2xs space-y-5">
+                                        <div className="flex items-center justify-between pb-3.5 border-b border-stone-100">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-stone-800 uppercase tracking-wider">
+                                                <Sparkles className="w-4 h-4 text-[#C69722]" />
+                                                <span>Festival Campaign Controls</span>
+                                            </div>
+                                            <label className="flex items-center gap-2.5 cursor-pointer bg-stone-50 px-3 py-1.5 rounded-xl border border-stone-200 hover:bg-stone-100 transition">
+                                                <span className="text-xs text-stone-700 font-bold">Campaign Status:</span>
                                                 <input
                                                     type="checkbox"
                                                     checked={festival.is_active}
                                                     onChange={(e) => setFestival({ ...festival, is_active: e.target.checked })}
-                                                    className="w-4 h-4 accent-[#161616] rounded"
+                                                    className="w-4 h-4 accent-[#161616] rounded cursor-pointer"
                                                 />
-                                            </div>
+                                                <span className={`text-[10px] font-bold uppercase px-2 py-0.2 rounded-full ${
+                                                    festival.is_active ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-200 text-stone-600'
+                                                }`}>
+                                                    {festival.is_active ? 'Active' : 'Draft'}
+                                                </span>
+                                            </label>
                                         </div>
 
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">FESTIVAL TITLE *</label>
+                                                <label className="text-xs font-bold text-stone-700 block mb-1">
+                                                    FESTIVAL TITLE *
+                                                </label>
                                                 <input
                                                     type="text"
                                                     required
                                                     value={festival.title}
                                                     onChange={(e) => setFestival({ ...festival, title: e.target.value })}
-                                                    className="w-full px-3.5 py-2.5 border rounded-xl text-xs font-semibold focus:outline-none focus:border-black"
+                                                    className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition bg-stone-50/50 focus:bg-white"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="text-xs font-bold text-stone-700 block mb-1">BADGE PILL TEXT</label>
+                                                <label className="text-xs font-bold text-stone-700 block mb-1">
+                                                    BADGE PILL TEXT
+                                                </label>
                                                 <input
                                                     type="text"
                                                     value={festival.badge_text || ''}
                                                     onChange={(e) => setFestival({ ...festival, badge_text: e.target.value })}
                                                     placeholder="e.g. Navratri 2026 Special"
-                                                    className="w-full px-3.5 py-2.5 border rounded-xl text-xs focus:outline-none focus:border-black"
+                                                    className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition bg-stone-50/50 focus:bg-white"
                                                 />
                                             </div>
                                         </div>
 
                                         <div>
-                                            <label className="text-xs font-bold text-stone-700 block mb-1">SUBTITLE / ANNOUNCEMENT DESCRIPTION</label>
+                                            <label className="text-xs font-bold text-stone-700 block mb-1">
+                                                SUBTITLE / ANNOUNCEMENT DESCRIPTION
+                                            </label>
                                             <textarea
                                                 rows={2}
                                                 value={festival.subtitle || ''}
                                                 onChange={(e) => setFestival({ ...festival, subtitle: e.target.value })}
-                                                className="w-full px-3.5 py-2.5 border rounded-xl text-xs focus:outline-none focus:border-black"
+                                                className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition bg-stone-50/50 focus:bg-white"
                                             />
                                         </div>
 
                                         {/* Festival Hero Banner with Direct Upload */}
-                                        <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-2">
+                                        <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF8F5] border border-[#DFC48D]/50 space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <label className="text-xs font-bold text-stone-800 uppercase tracking-wider">
-                                                    FESTIVAL HERO BANNER IMAGE
+                                                <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <ImageIcon className="w-3.5 h-3.5 text-[#C69722]" />
+                                                    <span>Festival Hero Banner Image</span>
                                                 </label>
-                                                <label className="cursor-pointer text-xs font-bold text-[#8E5B00] hover:text-black flex items-center gap-1">
+                                                <label className="cursor-pointer text-xs font-bold text-[#8E5B00] hover:text-black flex items-center gap-1 bg-white px-3 py-1 rounded-lg border border-[#DFC48D]/60 hover:bg-[#FAF2DE] transition shadow-2xs">
                                                     <Upload className="w-3.5 h-3.5" />
                                                     <span>{uploadingFestBanner ? 'Uploading...' : 'Upload Banner File'}</span>
                                                     <input
@@ -2116,40 +2151,51 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     value={festival.banner_image || ''}
                                                     onChange={(e) => setFestival({ ...festival, banner_image: e.target.value })}
                                                     placeholder="Banner URL or click Upload Banner File"
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs font-mono bg-white"
+                                                    className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-mono bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                                 />
                                             </div>
                                             {festival.banner_image && (
-                                                <div className="h-24 rounded-lg overflow-hidden border bg-white mt-1">
-                                                    <img src={festival.banner_image} alt="Festival Banner" className="w-full h-full object-cover" />
+                                                <div className="relative h-28 rounded-2xl overflow-hidden border border-stone-200 bg-white mt-1 shadow-2xs">
+                                                    <SafeImage
+                                                        src={api.getImageUrl(festival.banner_image)}
+                                                        alt="Festival Banner"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    <span className="absolute bottom-2 right-2 text-[10px] bg-black/70 backdrop-blur-xs text-[#F7C600] px-2 py-0.5 rounded-md font-mono font-semibold">
+                                                        Banner Preview
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
 
-                                        <button
-                                            type="submit"
-                                            className="px-6 py-2.5 rounded-xl bg-[#161616] hover:bg-[#C69722] text-white font-bold text-xs uppercase tracking-wider transition shadow-md flex items-center gap-2"
-                                        >
-                                            <Check className="w-4 h-4" />
-                                            <span>Save Festival Campaign</span>
-                                        </button>
+                                        <div className="flex items-center justify-end pt-1">
+                                            <button
+                                                type="submit"
+                                                className="px-6 py-2.5 rounded-xl bg-[#161616] hover:bg-[#C69722] text-white font-bold text-xs uppercase tracking-wider transition shadow-md flex items-center gap-2 active:scale-98 cursor-pointer"
+                                            >
+                                                <Check className="w-4 h-4" />
+                                                <span>Save Festival Campaign</span>
+                                            </button>
+                                        </div>
                                     </form>
 
                                     {/* Link New Product to Festival Form */}
-                                    <div className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 shadow-2xs space-y-4">
-                                        <div className="flex items-center justify-between">
+                                    <div className="bg-white p-6 sm:p-7 rounded-3xl border border-stone-200 shadow-2xs space-y-4">
+                                        <div className="flex items-center justify-between pb-2 border-b border-stone-100">
                                             <h3 className="font-serif font-bold text-base text-stone-900 flex items-center gap-2">
                                                 <LinkIcon className="w-4 h-4 text-[#C69722]" />
                                                 <span>Link Product with Festival Discount</span>
                                             </h3>
-                                            <span className="text-[11px] text-stone-500">
-                                                {(festival.items || []).length} products featured
+                                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40 font-mono">
+                                                {(festival.items || []).length} Idols Featured
                                             </span>
                                         </div>
 
-                                        <form onSubmit={handleLinkFestivalItem} className="grid grid-cols-1 sm:grid-cols-4 gap-3 bg-[#FAF8F5] p-4 rounded-xl border border-stone-200">
+                                        <form onSubmit={handleLinkFestivalItem} className="grid grid-cols-1 sm:grid-cols-4 gap-3.5 bg-[#FAF8F5] p-4 sm:p-5 rounded-2xl border border-stone-200">
                                             <div className="sm:col-span-2">
-                                                <label className="text-[11px] font-bold text-stone-600 block mb-1">SELECT IDOL FROM CATALOG</label>
+                                                <label className="text-[11px] font-bold text-stone-600 block mb-1">
+                                                    SELECT IDOL FROM CATALOG *
+                                                </label>
                                                 <ProductSelect
                                                     products={products}
                                                     value={linkingMurtiId}
@@ -2165,74 +2211,81 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             </div>
 
                                             <div>
-                                                <label className="text-[11px] font-bold text-stone-600 block mb-1">FESTIVAL PRICE (₹)</label>
+                                                <label className="text-[11px] font-bold text-stone-600 block mb-1">
+                                                    FESTIVAL PRICE (₹) *
+                                                </label>
                                                 <input
                                                     type="number"
                                                     required
                                                     value={linkingPrice}
                                                     onChange={(e) => setLinkingPrice(e.target.value)}
                                                     placeholder="e.g. 1199"
-                                                    className="w-full px-3 py-2 border rounded-xl text-xs bg-white font-bold text-emerald-700"
+                                                    className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white font-bold text-emerald-700 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                                 />
                                             </div>
 
                                             <div className="flex items-end">
                                                 <button
                                                     type="submit"
-                                                    className="w-full py-2 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-bold text-xs uppercase tracking-wider transition shadow-sm"
+                                                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition shadow-sm active:scale-98 cursor-pointer flex items-center justify-center gap-1.5"
                                                 >
-                                                    + Link Product
+                                                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                                                    <span>Link Product</span>
                                                 </button>
                                             </div>
                                         </form>
 
                                         {/* Currently Linked Products List */}
-                                        <div className="space-y-2.5 pt-2">
+                                        <div className="space-y-3 pt-2">
                                             {(festival.items || []).length === 0 ? (
-                                                <div className="text-center py-6 text-xs text-stone-400 bg-stone-50 rounded-xl border border-dashed">
-                                                    No products currently linked to this festival campaign. Select a product above to add it.
+                                                <div className="text-center py-8 text-xs text-stone-400 bg-stone-50/70 rounded-2xl border-2 border-dashed border-stone-200">
+                                                    No products currently linked to this festival campaign. Select an idol above to feature it with festive pricing.
                                                 </div>
                                             ) : (
-                                                (festival.items || []).map(item => (
-                                                    <div key={item.id} className="flex items-center justify-between bg-white p-3.5 rounded-xl border border-stone-200 hover:border-stone-300 transition">
-                                                        <div className="flex items-center gap-3">
-                                                            <img
-                                                                src={api.getImageUrl(item.murti_image || '/images/products/ram-darbar.png')}
-                                                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
-                                                                alt=""
-                                                                className="w-10 h-10 object-contain rounded-lg bg-stone-50 border p-1 flex-shrink-0"
-                                                            />
-                                                            <div>
-                                                                <div className="font-bold text-stone-900 text-xs">{item.murti_title}</div>
-                                                                <div className="text-[10px] text-stone-400">Regular: ₹{item.original_price?.toLocaleString('en-IN')}</div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {(festival.items || []).map(item => (
+                                                        <div key={item.id} className="flex items-center justify-between bg-white p-4 rounded-2xl border border-stone-200 hover:border-[#DFC48D] transition-all shadow-2xs group">
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <SafeImage
+                                                                    src={api.getImageUrl(item.murti_image || '/images/products/ram-darbar.png')}
+                                                                    alt={item.murti_title}
+                                                                    className="w-12 h-12 object-contain rounded-xl bg-[#FAF5E8] border border-stone-200 p-1 flex-shrink-0 group-hover:scale-105 transition-transform"
+                                                                />
+                                                                <div className="min-w-0">
+                                                                    <div className="font-bold text-stone-900 text-xs truncate max-w-[180px]">{item.murti_title}</div>
+                                                                    <div className="text-[10px] text-stone-400 mt-0.5">Regular: ₹{item.original_price?.toLocaleString('en-IN')}</div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2.5 flex-shrink-0">
+                                                                <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                                                    ₹{item.festival_price?.toLocaleString('en-IN')}
+                                                                </span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleUnlinkFestivalItem(item.murti_id)}
+                                                                    className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                                                                    title="Unlink product"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                                                                Festive: ₹{item.festival_price?.toLocaleString('en-IN')}
-                                                            </span>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleUnlinkFestivalItem(item.murti_id)}
-                                                                className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
-                                                                title="Unlink product"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))
+                                                    ))}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="bg-white p-8 rounded-2xl text-center text-xs text-stone-500 space-y-4 border border-stone-200">
-                                    <p className="text-sm font-semibold text-stone-700">No festival campaign active in the database.</p>
-                                    <p className="text-stone-400 max-w-md mx-auto">
+                                <div className="bg-white p-10 rounded-3xl text-center text-xs text-stone-500 space-y-4 border border-stone-200 shadow-2xs">
+                                    <div className="w-14 h-14 rounded-2xl bg-[#FAF2DE] border border-[#DFC48D] text-[#8E5B00] mx-auto flex items-center justify-center">
+                                        <Sparkles className="w-7 h-7" />
+                                    </div>
+                                    <p className="text-base font-serif font-bold text-stone-900">No festival campaign active in the database.</p>
+                                    <p className="text-stone-400 max-w-md mx-auto leading-relaxed">
                                         Launch a festive promotion (such as Navratri, Diwali, or Janmashtami) to showcase special banner drops and discounted murtis on the storefront.
                                     </p>
-                                    <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                                    <div className="flex flex-wrap items-center justify-center gap-3 pt-3">
                                         <button
                                             type="button"
                                             onClick={() => setFestival({
@@ -2243,14 +2296,15 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 is_active: true,
                                                 items: []
                                             })}
-                                            className="px-5 py-2.5 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs hover:bg-black transition shadow-sm"
+                                            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition shadow-sm active:scale-95 cursor-pointer flex items-center gap-2"
                                         >
-                                            + Create New Festival Campaign
+                                            <Plus className="w-4 h-4 stroke-[2.5]" />
+                                            <span>Create New Festival Campaign</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={handleSeedDatabase}
-                                            className="px-4 py-2.5 rounded-xl border border-stone-300 text-stone-700 font-bold text-xs hover:bg-stone-50 transition"
+                                            className="px-4 py-2.5 rounded-xl border border-stone-300 text-stone-700 font-bold text-xs hover:bg-stone-50 transition cursor-pointer"
                                         >
                                             Seed Default Navratri Campaign
                                         </button>
@@ -2265,21 +2319,29 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     {/* ========================================================================= */}
                     {activeTab === 'sizes' && (
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="font-serif text-2xl font-bold text-[#161616]">
-                                    Master Sizes & Dimensions Management
-                                </h2>
-                                <p className="text-xs text-stone-500 mt-1">
-                                    Create standard idol heights (e.g. 9 cm, 15 cm, 1.5 Feet, 3 Feet) and link them across the murti catalog
-                                </p>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/60 pb-4">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
+                                            Master Sizes & Dimensions
+                                        </h2>
+                                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40 font-mono">
+                                            {sizes.length} Master Sizes
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-stone-500 mt-1">
+                                        Create standard idol heights (e.g. 9 cm, 15 cm, 1.5 Feet, 3 Feet) and link them across the murti catalog
+                                    </p>
+                                </div>
                             </div>
 
                             {/* Add New Size Form */}
-                            <form onSubmit={handleCreateSize} className="bg-white p-6 rounded-2xl border border-stone-200 shadow-2xs space-y-4">
-                                <h3 className="text-xs font-bold text-stone-800 uppercase tracking-wider">
-                                    + Add New Master Size
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+                            <form onSubmit={handleCreateSize} className="bg-white p-6 sm:p-7 rounded-3xl border border-stone-200 shadow-2xs space-y-4">
+                                <div className="flex items-center gap-2 text-xs font-bold text-stone-800 uppercase tracking-wider pb-2 border-b border-stone-100">
+                                    <Tag className="w-4 h-4 text-[#C69722]" />
+                                    <span>Add New Master Size</span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3.5">
                                     <div className="sm:col-span-2">
                                         <label className="text-[11px] font-bold text-stone-600 block mb-1">SIZE LABEL *</label>
                                         <input
@@ -2288,7 +2350,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             placeholder="e.g. 1.5 Feet (18 Inches Mandir)"
                                             value={newSizeForm.label}
                                             onChange={(e) => setNewSizeForm({ ...newSizeForm, label: e.target.value })}
-                                            className="w-full px-3.5 py-2.5 border rounded-xl text-xs"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                         />
                                     </div>
                                     <div>
@@ -2296,7 +2358,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         <select
                                             value={newSizeForm.unit || 'in'}
                                             onChange={(e) => setNewSizeForm({ ...newSizeForm, unit: e.target.value })}
-                                            className="w-full px-3 py-2.5 border rounded-xl text-xs bg-white font-semibold"
+                                            className="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-xs bg-white font-bold text-[#8E5B00] focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition cursor-pointer"
                                         >
                                             <option value="in">Inches (in)</option>
                                             <option value="ft">Feet (ft)</option>
@@ -2320,17 +2382,17 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     height_inches: newSizeForm.unit === 'ft' ? val * 12 : newSizeForm.unit === 'cm' ? val / 2.54 : newSizeForm.unit === 'm' ? val * 39.37 : val
                                                 });
                                             }}
-                                            className="w-full px-3.5 py-2.5 border rounded-xl text-xs font-semibold"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-bold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                         />
                                     </div>
                                     <div>
                                         <label className="text-[11px] font-bold text-stone-600 block mb-1">SORT ORDER</label>
                                         <input
                                             type="number"
-                                            placeholder="Sort Order"
+                                            placeholder="Order"
                                             value={newSizeForm.sort_order}
                                             onChange={(e) => setNewSizeForm({ ...newSizeForm, sort_order: parseInt(e.target.value, 10) || 1 })}
-                                            className="w-full px-3.5 py-2.5 border rounded-xl text-xs"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-mono focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                         />
                                     </div>
                                 </div>
@@ -2340,13 +2402,13 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         placeholder="Guidance text (e.g. Ideal for consecrated home mandir & sacred altar)"
                                         value={newSizeForm.description}
                                         onChange={(e) => setNewSizeForm({ ...newSizeForm, description: e.target.value })}
-                                        className="w-full sm:w-2/3 px-3.5 py-2.5 border rounded-xl text-xs"
+                                        className="w-full sm:w-2/3 px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                     />
                                     <button
                                         type="submit"
-                                        className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition hover:bg-black"
+                                        className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition shadow-sm active:scale-95 cursor-pointer"
                                     >
-                                        <Plus className="w-4 h-4" />
+                                        <Plus className="w-4 h-4 stroke-[2.5]" />
                                         <span>Add Master Size</span>
                                     </button>
                                 </div>
@@ -2355,30 +2417,32 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             {/* Existing Sizes Grid */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {sizes.map(size => (
-                                    <div key={size.id} className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs flex items-center justify-between hover:border-stone-300 transition">
+                                    <div key={size.id} className="bg-white p-5 rounded-3xl border border-stone-200 shadow-2xs flex items-center justify-between hover:border-[#DFC48D] transition-all group">
                                         <div className="min-w-0 pr-3">
                                             <div className="flex items-center gap-2">
                                                 <div className="font-bold text-stone-900 text-sm truncate">{size.label}</div>
-                                                <span className="px-1.5 py-0.5 rounded bg-amber-100 text-[#8E5B00] text-[10px] font-bold uppercase">{size.unit || 'in'}</span>
+                                                <span className="px-2 py-0.5 rounded-md bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40 text-[10px] font-bold uppercase font-mono">
+                                                    {size.unit || 'in'}
+                                                </span>
                                             </div>
                                             <div className="text-xs text-stone-500 mt-1 font-mono">
                                                 {size.height_inches}" height ({size.size_value ? `${size.size_value} ${size.unit || 'in'}` : `${size.height_inches} in`}) • Order: {size.sort_order}
                                             </div>
                                             {size.description && (
-                                                <div className="text-xs text-[#C69722] italic mt-1 line-clamp-1">{size.description}</div>
+                                                <div className="text-xs text-[#C69722] italic mt-1 line-clamp-1">"{size.description}"</div>
                                             )}
                                         </div>
                                         <div className="flex items-center gap-1.5 flex-shrink-0">
                                             <button
                                                 onClick={() => setEditingSize({ ...size, unit: size.unit || 'in', size_value: size.size_value ?? size.height_inches ?? 12.0 })}
-                                                className="p-2 text-stone-500 hover:text-black hover:bg-stone-100 rounded-xl transition"
+                                                className="p-2 text-stone-500 hover:text-black hover:bg-stone-100 rounded-xl transition cursor-pointer"
                                                 title="Edit size"
                                             >
                                                 <Edit3 className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteSize(size.id)}
-                                                className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition"
+                                                className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition cursor-pointer"
                                                 title="Delete master size"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -2395,34 +2459,44 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     {/* ========================================================================= */}
                     {activeTab === 'reviews' && (
                         <div className="space-y-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/60 pb-4">
                                 <div>
-                                    <h2 className="font-serif text-2xl font-bold text-[#161616]">
-                                        Customer Reviews & Seller Responses
-                                    </h2>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
+                                            Customer Reviews & Seller Responses
+                                        </h2>
+                                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40 font-mono">
+                                            {reviews.length} Reviews
+                                        </span>
+                                    </div>
                                     <p className="text-xs text-stone-500 mt-1">
                                         Moderate customer reviews, publish official Jaipur karigar responses, and maintain authentic devotee ratings
                                     </p>
                                 </div>
 
                                 {/* Review Filter Pills */}
-                                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar p-1 bg-stone-100 rounded-xl border border-stone-200/80">
                                     {[
-                                        { id: 'all', label: 'All Reviews' },
-                                        { id: 'pending', label: 'Needs Approval' },
-                                        { id: 'approved', label: 'Approved' },
-                                        { id: 'needs_reply', label: 'Needs Reply' },
+                                        { id: 'all', label: 'All Reviews', count: reviews.length },
+                                        { id: 'pending', label: 'Needs Approval', count: reviews.filter(r => !r.is_approved).length },
+                                        { id: 'approved', label: 'Approved', count: reviews.filter(r => r.is_approved).length },
+                                        { id: 'needs_reply', label: 'Needs Reply', count: reviews.filter(r => !r.seller_reply).length },
                                     ].map(f => (
                                         <button
                                             key={f.id}
                                             onClick={() => setReviewFilter(f.id)}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition ${
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                                                 reviewFilter === f.id
-                                                    ? 'bg-[#161616] text-[#F7C600]'
-                                                    : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
+                                                    ? 'bg-white text-stone-900 shadow-xs font-black'
+                                                    : 'text-stone-600 hover:text-stone-900'
                                             }`}
                                         >
-                                            {f.label}
+                                            <span>{f.label}</span>
+                                            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                                                reviewFilter === f.id ? 'bg-[#FAF2DE] text-[#8E5B00]' : 'bg-stone-200/70 text-stone-500'
+                                            }`}>
+                                                {f.count}
+                                            </span>
                                         </button>
                                     ))}
                                 </div>
@@ -2430,74 +2504,98 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
                             <div className="space-y-4">
                                 {filteredReviews.length === 0 ? (
-                                    <div className="bg-white p-8 rounded-2xl text-center text-xs text-stone-400 border border-stone-200">
-                                        No reviews found matching the selected filter.
+                                    <div className="bg-white p-12 rounded-3xl text-center text-xs text-stone-400 border border-stone-200 shadow-2xs space-y-2">
+                                        <MessageSquare className="w-8 h-8 mx-auto text-stone-300" />
+                                        <p className="text-sm font-semibold text-stone-700">No reviews found matching the selected filter.</p>
+                                        <p className="text-stone-400">All customer feedback in this segment has been processed.</p>
                                     </div>
                                 ) : (
                                     filteredReviews.map(rev => (
-                                        <div key={rev.id} className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-stone-900 text-xs">{rev.author}</span>
-                                                    <span className="text-[10px] text-stone-400">• {rev.location}</span>
-                                                    <div className="flex text-amber-500 text-[10px]">
-                                                        {[...Array(rev.rating)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                                        <div key={rev.id} className="bg-white p-6 rounded-3xl border border-stone-200 shadow-2xs space-y-3.5 hover:border-[#DFC48D] transition-all">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="w-8 h-8 rounded-full bg-[#FAF5E8] border border-[#DFC48D] text-[#8E5B00] font-bold text-xs flex items-center justify-center">
+                                                        {(rev.author || 'D')[0]?.toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-stone-900 text-xs">{rev.author}</span>
+                                                            <span className="text-[11px] text-stone-400">• {rev.location}</span>
+                                                        </div>
+                                                        <div className="flex text-amber-500 text-[11px] mt-0.5">
+                                                            {[...Array(rev.rating || 5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => handleToggleReviewApproval(rev)}
-                                                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition flex items-center gap-1 ${
-                                                            rev.is_approved ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                                                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase transition flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                                                            rev.is_approved
+                                                                ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                                                                : 'bg-rose-100 text-rose-800 hover:bg-rose-200'
                                                         }`}
                                                     >
                                                         {rev.is_approved ? <Check className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                                                        <span>{rev.is_approved ? 'Approved' : 'Hidden'}</span>
+                                                        <span>{rev.is_approved ? 'Approved & Live' : 'Hidden'}</span>
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteReview(rev.id)}
-                                                        className="p-1 text-stone-400 hover:text-rose-600 rounded transition"
+                                                        className="p-1.5 text-stone-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition cursor-pointer"
                                                         title="Delete Review"
                                                     >
-                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <h4 className="font-bold text-stone-800 text-xs">"{rev.title}"</h4>
+                                            {rev.title && <h4 className="font-bold text-stone-900 text-sm">"{rev.title}"</h4>}
                                             <p className="text-xs text-stone-600 leading-relaxed">{rev.content}</p>
 
                                             {/* Seller Reply Box */}
                                             {rev.seller_reply ? (
-                                                <div className="p-3.5 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] text-xs space-y-1">
+                                                <div className="p-4 rounded-2xl bg-[#FAF5E8] border border-[#E6D6B8] text-xs space-y-1.5 shadow-2xs">
                                                     <div className="font-bold text-[#8E5B00] flex items-center justify-between">
-                                                        <span>Official Seller Reply ({rev.seller_reply.author})</span>
-                                                        <span className="text-[10px] text-stone-400">{rev.seller_reply.date}</span>
+                                                        <span className="flex items-center gap-1.5">
+                                                            <Sparkles className="w-3.5 h-3.5 text-[#C69722]" />
+                                                            <span>Official Karigar Reply ({rev.seller_reply.author || 'Amol Marble Studio'})</span>
+                                                        </span>
+                                                        <span className="text-[10px] text-stone-400 font-mono">{rev.seller_reply.date}</span>
                                                     </div>
-                                                    <p className="text-stone-700 italic">{rev.seller_reply.text}</p>
+                                                    <p className="text-stone-700 italic leading-relaxed">{rev.seller_reply.text}</p>
                                                 </div>
                                             ) : (
                                                 replyReviewId === rev.id ? (
-                                                    <div className="space-y-2 pt-2">
+                                                    <div className="space-y-2.5 pt-2 border-t border-stone-100">
                                                         <textarea
                                                             rows={2}
                                                             value={replyText}
                                                             onChange={(e) => setReplyText(e.target.value)}
-                                                            placeholder="Type official response (e.g. Pranam! Thank you for placing your faith in our Jaipur artisans...)"
-                                                            className="w-full px-3.5 py-2 border rounded-xl text-xs"
+                                                            placeholder="Type official response (e.g. Pranam! Thank you for placing your sacred faith in our Jaipur artisans...)"
+                                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                                         />
                                                         <div className="flex items-center justify-end gap-2">
-                                                            <button onClick={() => setReplyReviewId(null)} className="text-xs text-stone-500 font-bold px-3 py-1">Cancel</button>
-                                                            <button onClick={() => handleSendSellerReply(rev.id)} className="px-4 py-1.5 rounded-lg bg-[#161616] text-[#F7C600] text-xs font-bold">Post Response</button>
+                                                            <button
+                                                                onClick={() => setReplyReviewId(null)}
+                                                                className="text-xs text-stone-500 font-bold px-3 py-1.5 hover:text-stone-800 transition cursor-pointer"
+                                                            >
+                                                                Cancel
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleSendSellerReply(rev.id)}
+                                                                className="px-4 py-2 rounded-xl bg-[#161616] text-[#F7C600] text-xs font-bold hover:bg-black transition cursor-pointer shadow-sm"
+                                                            >
+                                                                Post Official Response
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 ) : (
                                                     <button
                                                         onClick={() => { setReplyReviewId(rev.id); setReplyText(''); }}
-                                                        className="text-xs text-[#C69722] hover:underline font-bold flex items-center gap-1.5"
+                                                        className="text-xs text-[#8E5B00] hover:text-[#C69722] font-bold flex items-center gap-1.5 pt-1 cursor-pointer"
                                                     >
                                                         <MessageSquare className="w-3.5 h-3.5" />
-                                                        <span>Add Official Seller Reply</span>
+                                                        <span>+ Add Official Karigar Reply</span>
                                                     </button>
                                                 )
                                             )}
@@ -2513,30 +2611,33 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     {/* ========================================================================= */}
                     {activeTab === 'settings' && (
                         <div className="space-y-6">
-                            <div>
-                                <h2 className="font-serif text-2xl font-bold text-[#161616]">
-                                    WhatsApp & Site Settings
-                                </h2>
-                                <p className="text-xs text-stone-500 mt-1">
-                                    Configure live customer WhatsApp concierge routing and global rating display modes
-                                </p>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/60 pb-4">
+                                <div>
+                                    <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
+                                        WhatsApp & Store Settings
+                                    </h2>
+                                    <p className="text-xs text-stone-500 mt-1">
+                                        Configure live customer WhatsApp concierge routing and global rating display modes
+                                    </p>
+                                </div>
                             </div>
 
-                            <form onSubmit={handleSaveSettings} className="bg-white p-6 sm:p-8 rounded-2xl border border-stone-200 shadow-2xs space-y-6">
+                            <form onSubmit={handleSaveSettings} className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-2xs space-y-7">
                                 {/* WhatsApp Number with Live Test Button */}
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
-                                            WhatsApp Concierge Phone Number
+                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                            <Phone className="w-4 h-4 text-emerald-600" />
+                                            <span>WhatsApp Concierge Phone Number</span>
                                         </label>
                                         <button
                                             type="button"
                                             onClick={handleTestWhatsApp}
-                                            className="text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1"
+                                            className="text-xs font-bold text-emerald-700 hover:text-emerald-900 flex items-center gap-1.5 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200 hover:bg-emerald-100 transition cursor-pointer shadow-2xs"
                                             title="Click to open WhatsApp link preview in new tab"
                                         >
-                                            <Send className="w-3.5 h-3.5" />
-                                            <span>Test Live WhatsApp Link</span>
+                                            <Send className="w-3.5 h-3.5 text-emerald-600" />
+                                            <span>Test Live WhatsApp Routing</span>
                                         </button>
                                     </div>
                                     <input
@@ -2545,15 +2646,15 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         value={settings.whatsapp_number}
                                         onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
                                         placeholder="e.g. +919876543210 or 917020676423"
-                                        className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-stone-50/50 text-xs text-stone-900 font-mono focus:bg-white"
+                                        className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs text-stone-900 font-mono focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                     />
                                     <p className="text-[11px] text-stone-500">
-                                        All "Buy on WhatsApp" and custom inquiry buttons across the storefront route directly to this phone number.
+                                        All "Buy on WhatsApp" and custom inquiry buttons across the storefront route directly to this phone number with pre-filled idol details.
                                     </p>
                                 </div>
 
-                                {/* Default Message */}
-                                <div className="space-y-2">
+                                {/* Default Message with live preview bubble */}
+                                <div className="space-y-3">
                                     <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
                                         Default WhatsApp Inquiry Greeting
                                     </label>
@@ -2561,49 +2662,59 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         rows={2}
                                         value={settings.whatsapp_default_message}
                                         onChange={(e) => setSettings({ ...settings, whatsapp_default_message: e.target.value })}
-                                        className="w-full px-4 py-3 rounded-xl border border-stone-300 bg-stone-50/50 text-xs text-stone-900 focus:bg-white"
+                                        className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition leading-relaxed"
                                     />
+                                    {/* Live chat bubble preview */}
+                                    <div className="p-3.5 rounded-2xl bg-[#EFEAE2] border border-stone-200 flex items-start gap-2.5">
+                                        <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-bold">
+                                            WA
+                                        </div>
+                                        <div className="bg-white p-3 rounded-2xl rounded-tl-none shadow-xs text-xs text-stone-800 max-w-md">
+                                            <div className="text-[10px] text-emerald-700 font-bold mb-0.5">Customer Message Preview</div>
+                                            "{settings.whatsapp_default_message}"
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Global Rating Mode */}
-                                <div className="space-y-3 pt-3 border-t border-stone-100">
+                                <div className="space-y-3 pt-4 border-t border-stone-100">
                                     <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
                                         Global Rating Display Mode
                                     </label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                                         {[
-                                            { id: 'enabled', label: 'Enabled (Interactive)', desc: 'Users can see all reviews AND submit new ratings' },
-                                            { id: 'read_only', label: 'Static (Read-Only Mode)', desc: 'Users can ONLY see existing ratings, cannot add new ones' },
-                                            { id: 'hidden', label: 'Turned Off (Hidden)', desc: 'Rating section is completely hidden from storefront' }
+                                            { id: 'enabled', label: 'Enabled (Interactive)', desc: 'Users can see all reviews AND submit new ratings with photos.' },
+                                            { id: 'read_only', label: 'Static (Read-Only Mode)', desc: 'Users can ONLY see existing ratings, cannot add new ones.' },
+                                            { id: 'hidden', label: 'Turned Off (Hidden)', desc: 'Rating section is completely hidden from customer storefront.' }
                                         ].map(m => {
                                             const isSelected = settings.global_rating_mode === m.id;
                                             return (
                                                 <div
                                                     key={m.id}
                                                     onClick={() => setSettings({ ...settings, global_rating_mode: m.id })}
-                                                    className={`p-4 rounded-xl border cursor-pointer transition flex flex-col justify-between ${
+                                                    className={`p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between ${
                                                         isSelected
-                                                            ? 'border-[#C69722] bg-[#FAF5E8] shadow-xs'
+                                                            ? 'border-[#C69722] bg-[#FAF5E8] shadow-xs ring-2 ring-[#C69722]/30'
                                                             : 'border-stone-200 bg-white hover:border-stone-300'
                                                     }`}
                                                 >
-                                                    <div className="flex items-center justify-between mb-1.5">
+                                                    <div className="flex items-center justify-between mb-2">
                                                         <span className="text-xs font-bold text-stone-900">{m.label}</span>
-                                                        {isSelected && <Check className="w-4 h-4 text-[#C69722]" />}
+                                                        {isSelected && <Check className="w-4 h-4 text-[#8E5B00]" />}
                                                     </div>
-                                                    <span className="text-[11px] text-stone-500 leading-snug">{m.desc}</span>
+                                                    <span className="text-[11px] text-stone-500 leading-relaxed">{m.desc}</span>
                                                 </div>
                                             );
                                         })}
                                     </div>
                                 </div>
 
-                                {/* Featured Sacred Collection Settings (Req #2.1: Editable Collection Content) */}
+                                {/* Featured Sacred Collection Settings */}
                                 <div className="space-y-4 pt-4 border-t border-stone-200">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
-                                                <Sparkles className="w-3.5 h-3.5 text-[#C69722]" />
+                                                <Sparkles className="w-4 h-4 text-[#C69722]" />
                                                 <span>Featured Sacred Collection (Storefront Hero Showcase)</span>
                                             </label>
                                             <span className="text-[11px] text-stone-500">
@@ -2612,7 +2723,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-[#FAF8F5] p-4 sm:p-5 rounded-2xl border border-[#DFC48D]/60">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-[#FAF8F5] p-5 sm:p-6 rounded-3xl border border-[#DFC48D]/60 space-y-0">
                                         <div className="sm:col-span-2">
                                             <label className="text-[11px] font-bold text-stone-700 block mb-1">
                                                 HERO COLLECTION TITLE *
@@ -2623,7 +2734,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 value={settings.collection_title || ''}
                                                 onChange={(e) => setSettings({ ...settings, collection_title: e.target.value })}
                                                 placeholder="e.g. SANCTIFIED SACRED COLLECTION 2026"
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-white text-xs font-bold text-stone-900 focus:outline-none focus:border-black"
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-bold text-stone-900 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                             />
                                         </div>
 
@@ -2636,7 +2747,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 value={settings.collection_badge || ''}
                                                 onChange={(e) => setSettings({ ...settings, collection_badge: e.target.value })}
                                                 placeholder="e.g. HASTASHILP HERITAGE 2026"
-                                                className="w-full px-3 py-2 rounded-xl border border-stone-300 bg-white text-xs font-semibold focus:outline-none focus:border-black"
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                             />
                                         </div>
 
@@ -2649,7 +2760,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 value={settings.collection_subtitle || ''}
                                                 onChange={(e) => setSettings({ ...settings, collection_subtitle: e.target.value })}
                                                 placeholder="e.g. DIVINE BLESSINGS FOR YOUR SACRED SANCTUM"
-                                                className="w-full px-3 py-2 rounded-xl border border-stone-300 bg-white text-xs font-semibold focus:outline-none focus:border-black"
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                             />
                                         </div>
 
@@ -2662,7 +2773,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 value={settings.collection_description || ''}
                                                 onChange={(e) => setSettings({ ...settings, collection_description: e.target.value })}
                                                 placeholder="Hand-sculpted in Makrana white marble by fourth-generation Jaipur sthapatis..."
-                                                className="w-full px-3.5 py-2 rounded-xl border border-stone-300 bg-white text-xs leading-relaxed focus:outline-none focus:border-black"
+                                                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs leading-relaxed focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                             />
                                         </div>
 
@@ -2674,7 +2785,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     value={settings.collection_price_from || ''}
                                                     onChange={(e) => setSettings({ ...settings, collection_price_from: e.target.value })}
                                                     placeholder="1,499"
-                                                    className="w-full px-2.5 py-1.5 rounded-lg border text-xs bg-white font-bold text-stone-900"
+                                                    className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs bg-white font-bold text-stone-900 focus:outline-none focus:border-[#C69722]"
                                                 />
                                             </div>
                                             <div>
@@ -2684,7 +2795,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     value={settings.collection_old_price || ''}
                                                     onChange={(e) => setSettings({ ...settings, collection_old_price: e.target.value })}
                                                     placeholder="2,499"
-                                                    className="w-full px-2.5 py-1.5 rounded-lg border text-xs bg-white text-stone-500"
+                                                    className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs bg-white text-stone-500 focus:outline-none focus:border-[#C69722]"
                                                 />
                                             </div>
                                             <div>
@@ -2694,21 +2805,20 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     value={settings.collection_discount_text || ''}
                                                     onChange={(e) => setSettings({ ...settings, collection_discount_text: e.target.value })}
                                                     placeholder="40% OFF"
-                                                    className="w-full px-2.5 py-1.5 rounded-lg border text-xs bg-white font-bold text-emerald-700"
+                                                    className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs bg-white font-bold text-emerald-700 focus:outline-none focus:border-[#C69722]"
                                                 />
                                             </div>
                                         </div>
 
-                                        <div className="sm:col-span-2 space-y-2 pt-1">
+                                        <div className="sm:col-span-2 space-y-2 pt-2">
                                             <label className="text-[11px] font-bold text-stone-700 block">
                                                 HERO SHOWCASE IMAGE
                                             </label>
-                                            <div className="flex flex-col sm:flex-row items-center gap-3">
+                                            <div className="flex flex-col sm:flex-row items-center gap-3.5">
                                                 {settings.collection_image_url ? (
-                                                    <div className="w-24 h-24 rounded-xl border border-stone-300 bg-white p-1 flex-shrink-0 flex items-center justify-center">
-                                                        <img
+                                                    <div className="w-24 h-24 rounded-2xl border border-stone-300 bg-white p-1.5 flex-shrink-0 flex items-center justify-center shadow-2xs">
+                                                        <SafeImage
                                                             src={api.getImageUrl(settings.collection_image_url)}
-                                                            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
                                                             alt="Hero Preview"
                                                             className="w-full h-full object-contain"
                                                         />
@@ -2734,13 +2844,15 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     </div>
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    className="px-6 py-3 rounded-xl bg-[#161616] hover:bg-[#C69722] text-white font-bold text-xs uppercase tracking-wider transition shadow-md flex items-center gap-2"
-                                >
-                                    <Check className="w-4 h-4" />
-                                    <span>Save Global Settings</span>
-                                </button>
+                                <div className="flex items-center justify-end pt-2">
+                                    <button
+                                        type="submit"
+                                        className="px-8 py-3 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 flex items-center gap-2 active:scale-95 cursor-pointer"
+                                    >
+                                        <Check className="w-4 h-4 stroke-[2.5]" />
+                                        <span>Save Global Settings</span>
+                                    </button>
+                                </div>
                             </form>
                         </div>
                     )}
@@ -2756,59 +2868,64 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             {/* Comprehensive Edit / Add Product Modal (Req #1.2, #1.3, #1.5, #1.6, #3.4, #3.6) */}
             {editingProduct && (
                 <div 
-                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
+                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto"
                     data-lenis-prevent="true"
                     onClick={(e) => { if (e.target === e.currentTarget) setEditingProduct(null); }}
                 >
                     <div 
-                        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200 relative"
+                        className="bg-white rounded-3xl w-full max-w-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200 relative"
                         data-lenis-prevent="true"
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-[#FAF8F5] flex-shrink-0">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200/80 bg-gradient-to-r from-[#FAF8F5] via-white to-[#FAF8F5] flex-shrink-0">
                             <div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 rounded-xl bg-[#FAF2DE] border border-[#DFC48D] flex items-center justify-center text-[#8E5B00]">
+                                        <Package className="w-4 h-4" />
+                                    </div>
                                     <h3 className="font-serif text-lg font-bold text-[#161616]">
-                                        {editingProduct.id ? 'Edit Product & Catalog Images' : 'Add New Product to Catalog'}
+                                        {editingProduct.id ? 'Edit Sanctified Product & Images' : 'Add New Sacred Murti to Catalog'}
                                     </h3>
                                     {editingProduct.id && (
-                                        <span className="px-2 py-0.5 rounded-md bg-stone-200 text-stone-700 text-[10px] font-mono font-bold">
+                                        <span className="px-2.5 py-0.5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40 text-[10px] font-mono font-bold">
                                             {String(editingProduct.id).startsWith('prod-') ? 'CUSTOM IDOL' : 'CATALOG'}
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-[11px] text-stone-500 mt-0.5">
-                                    Organized 6-section product editor with live drag & drop, dimension units, and available sizes
+                                <p className="text-[11px] text-stone-500 mt-1 pl-10.5">
+                                    Complete 6-section product editor with multi-angle gallery, custom dimension units, and available sizes
                                 </p>
                             </div>
                             <button 
                                 type="button" 
                                 onClick={() => setEditingProduct(null)} 
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition"
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition cursor-pointer"
                                 title="Close modal"
                             >
-                                ✕
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
 
                         <form 
                             id="admin-product-edit-form"
                             onSubmit={handleSaveProduct} 
-                            className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5 overscroll-contain"
+                            className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6 overscroll-contain"
                             data-lenis-prevent="true"
                         >
                             {/* SECTION 1: BASIC PRODUCT INFORMATION */}
-                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3">
-                                <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                                    <Package className="w-4 h-4 text-[#C69722]" />
+                            <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-4">
+                                <div className="flex items-center gap-2.5 border-b border-stone-100 pb-3">
+                                    <span className="w-5 h-5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/60 flex items-center justify-center font-mono font-bold text-[10px]">
+                                        1
+                                    </span>
                                     <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
-                                        1. Basic Product Information
+                                        Basic Product Information
                                     </h4>
                                 </div>
 
                                 <div>
                                     <label className="text-xs font-bold text-stone-700 block mb-1">
-                                        PRODUCT NAME / TITLE *
+                                        PRODUCT NAME / SACRED TITLE *
                                     </label>
                                     <input
                                         type="text"
@@ -2816,13 +2933,13 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         value={editingProduct.title || ''}
                                         onChange={(e) => setEditingProduct({ ...editingProduct, title: e.target.value })}
                                         placeholder="e.g. Ram Darbar - Divine Blessings | Ram, Sita, Laxman & Hanuman"
-                                        className="w-full px-3.5 py-2.5 border rounded-xl text-xs font-semibold focus:outline-none focus:border-black"
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition bg-stone-50/50 focus:bg-white"
                                     />
                                 </div>
 
                                 <div>
                                     <label className="text-xs font-bold text-stone-700 block mb-1">
-                                        PRODUCT DESCRIPTION *
+                                        PRODUCT DESCRIPTION & CRAFTSMANSHIP STORY *
                                     </label>
                                     <textarea
                                         rows={3}
@@ -2830,11 +2947,11 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         value={editingProduct.description || ''}
                                         onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
                                         placeholder="Exquisitely hand-sculpted in Makrana white marble by heritage artisans of Jaipur. Finished with pure 24K gold foil (swarna varakh), suitable for consecrated home mandir and sacred altars..."
-                                        className="w-full px-3.5 py-2.5 border rounded-xl text-xs leading-relaxed focus:outline-none focus:border-black"
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs leading-relaxed focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition bg-stone-50/50 focus:bg-white"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                                     <div>
                                         <label className="text-[11px] font-bold text-stone-600 block mb-1">
                                             MATERIAL SPECIFICATION
@@ -2844,7 +2961,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             value={editingProduct.material || 'Pure White Makrana Marble'}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, material: e.target.value })}
                                             placeholder="e.g. Pure White Makrana Marble"
-                                            className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2 border border-stone-200 rounded-xl text-xs focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition bg-stone-50/50 focus:bg-white font-medium"
                                         />
                                     </div>
                                     <div>
@@ -2856,22 +2973,24 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             value={editingProduct.weight || ''}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, weight: e.target.value })}
                                             placeholder="e.g. 1.8 kg / 850 grams"
-                                            className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2 border border-stone-200 rounded-xl text-xs focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition bg-stone-50/50 focus:bg-white font-medium"
                                         />
                                     </div>
                                 </div>
                             </div>
 
                             {/* SECTION 2: CATEGORY & CATALOG DETAILS */}
-                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3">
-                                <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                                    <Layers className="w-4 h-4 text-[#C69722]" />
+                            <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-4">
+                                <div className="flex items-center gap-2.5 border-b border-stone-100 pb-3">
+                                    <span className="w-5 h-5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/60 flex items-center justify-center font-mono font-bold text-[10px]">
+                                        2
+                                    </span>
                                     <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
-                                        2. Category & Catalog Details
+                                        Category & Catalog Details
                                     </h4>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                                     <div>
                                         <label className="text-xs font-bold text-stone-700 block mb-1">DEITY / CATEGORY *</label>
                                         <select
@@ -2897,7 +3016,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     });
                                                 }
                                             }}
-                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black font-semibold cursor-pointer shadow-2xs"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 font-semibold cursor-pointer shadow-2xs transition"
                                         >
                                             <option value="" disabled>-- Select Deity / Category --</option>
                                             {categoryDropdownOptions.map(opt => (
@@ -2916,8 +3035,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     autoFocus
                                                     value={editingProduct.deity || ''}
                                                     onChange={(e) => setEditingProduct({ ...editingProduct, deity: e.target.value })}
-                                                    placeholder="Type custom deity/category name..."
-                                                    className="flex-1 px-3 py-1.5 border rounded-xl text-xs focus:outline-none focus:border-black font-semibold"
+                                                    placeholder="Type custom deity name..."
+                                                    className="flex-1 px-3 py-1.5 border border-stone-300 rounded-xl text-xs focus:outline-none focus:border-[#C69722] font-semibold"
                                                 />
                                                 <button
                                                     type="button"
@@ -2940,7 +3059,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         <select
                                             value={editingProduct.group_tag || 'most-loved'}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, group_tag: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                         >
                                             <option value="most-loved">Most Loved Idols</option>
                                             <option value="navratri">Navratri Drop</option>
@@ -2954,7 +3073,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         <select
                                             value={editingProduct.stock_status || 'in_stock'}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, stock_status: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black font-semibold"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 font-semibold transition"
                                         >
                                             <option value="in_stock">In Stock (Ready to Dispatch)</option>
                                             <option value="made_to_order">Made to Order (7-10 Days Karigari)</option>
@@ -2963,31 +3082,31 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-stone-50 rounded-xl border border-stone-200">
-                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-stone-50 rounded-xl border border-stone-200">
+                                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-stone-700">
                                         <input
                                             type="checkbox"
                                             checked={Boolean(editingProduct.is_active)}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, is_active: e.target.checked })}
-                                            className="w-4 h-4 accent-[#161616] rounded"
+                                            className="w-4 h-4 accent-[#161616] rounded cursor-pointer"
                                         />
                                         <span>Active on Store</span>
                                     </label>
-                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+                                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-stone-700">
                                         <input
                                             type="checkbox"
                                             checked={Boolean(editingProduct.pran_pratishtha_ready)}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, pran_pratishtha_ready: e.target.checked })}
-                                            className="w-4 h-4 accent-[#161616] rounded"
+                                            className="w-4 h-4 accent-[#161616] rounded cursor-pointer"
                                         />
                                         <span>Pran Pratishtha Ready</span>
                                     </label>
-                                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-700">
+                                    <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-stone-700">
                                         <input
                                             type="checkbox"
                                             checked={Boolean(editingProduct.gold_leaf_karigari)}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, gold_leaf_karigari: e.target.checked })}
-                                            className="w-4 h-4 accent-[#161616] rounded"
+                                            className="w-4 h-4 accent-[#161616] rounded cursor-pointer"
                                         />
                                         <span>24K Gold Karigari</span>
                                     </label>
@@ -2995,27 +3114,29 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
 
                             {/* SECTION 3: SIZES & MEASUREMENTS (Req #1.2, #1.3, #1.5) */}
-                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3.5">
-                                <div className="flex items-center justify-between border-b border-stone-100 pb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Tag className="w-4 h-4 text-[#C69722]" />
+                            <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-4">
+                                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="w-5 h-5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/60 flex items-center justify-center font-mono font-bold text-[10px]">
+                                            3
+                                        </span>
                                         <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
-                                            3. Sizes & Measurements
+                                            Sizes & Measurements
                                         </h4>
                                     </div>
-                                    <span className="text-[10px] text-stone-400">Req 1.2, 1.3 & 1.5</span>
+                                    <span className="text-[10px] text-stone-400">Master Sizes & Storefront Selectors</span>
                                 </div>
 
                                 {/* Measurement Units & Master Sizes Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                                     <div>
                                         <label className="text-[11px] font-bold text-stone-700 block mb-1">
-                                            MEASUREMENT UNIT * (Req 1.5)
+                                            MEASUREMENT UNIT *
                                         </label>
                                         <select
                                             value={editingProduct.measurement_unit || 'in'}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, measurement_unit: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white font-bold text-[#8E5B00] focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white font-bold text-[#8E5B00] focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                         >
                                             <option value="in">Inches (in)</option>
                                             <option value="ft">Feet (ft)</option>
@@ -3026,7 +3147,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
                                     <div>
                                         <label className="text-[11px] font-bold text-stone-600 block mb-1">
-                                            LINKED MASTER SIZE TAG (Req 1.2)
+                                            LINKED MASTER SIZE TAG
                                         </label>
                                         <select
                                             value={editingProduct.size_id || ''}
@@ -3038,7 +3159,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     dimensions: selectedSize ? `${selectedSize.height_inches} ${editingProduct.measurement_unit || selectedSize.unit || 'in'} Height • ${selectedSize.label}` : editingProduct.dimensions
                                                 });
                                             }}
-                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                         >
                                             <option value="">-- Choose Master Size --</option>
                                             {sizes.map(s => (
@@ -3058,31 +3179,31 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             value={editingProduct.dimensions || ''}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, dimensions: e.target.value })}
                                             placeholder="e.g. 12 in x 8 in x 4 in"
-                                            className="w-full px-3 py-2 border rounded-xl text-xs focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition bg-stone-50/50 focus:bg-white"
                                         />
                                     </div>
                                 </div>
 
-                                {/* Available Sizes Dropdown & Chips (Req 1.3) */}
-                                <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-stone-200 space-y-2">
+                                {/* Available Sizes Dropdown & Chips */}
+                                <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-stone-200 space-y-2.5">
                                     <div className="flex items-center justify-between">
                                         <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
                                             Available Sizes for Customers (Storefront Selector)
                                         </label>
-                                        <span className="text-[10px] text-stone-500">
-                                            {(editingProduct.available_sizes || []).length} Sizes Selected
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40 font-mono">
+                                            {(editingProduct.available_sizes || []).length} Selected
                                         </span>
                                     </div>
 
                                     {/* Chips */}
-                                    <div className="flex flex-wrap gap-1.5 min-h-[30px] items-center">
+                                    <div className="flex flex-wrap gap-2 min-h-[30px] items-center">
                                         {(editingProduct.available_sizes || []).length === 0 ? (
                                             <span className="text-xs text-stone-400 italic">No available sizes selected yet. Pick from the dropdown below or type custom.</span>
                                         ) : (
                                             (editingProduct.available_sizes || []).map((sz, szIdx) => (
                                                 <span
                                                     key={szIdx}
-                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-300 text-xs font-semibold text-stone-900 shadow-2xs"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-50 border border-amber-300 text-xs font-semibold text-stone-900 shadow-2xs"
                                                 >
                                                     <span>{sz}</span>
                                                     <button
@@ -3091,7 +3212,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                             const updated = (editingProduct.available_sizes || []).filter((_, i) => i !== szIdx);
                                                             setEditingProduct({ ...editingProduct, available_sizes: updated });
                                                         }}
-                                                        className="text-stone-400 hover:text-rose-600 transition font-bold"
+                                                        className="text-stone-400 hover:text-rose-600 transition font-bold cursor-pointer"
                                                         title="Remove size option"
                                                     >
                                                         ✕
@@ -3104,7 +3225,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     {/* Dropdown Selector */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                                         <select
-                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white font-medium focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white font-medium focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                             onChange={(e) => {
                                                 if (!e.target.value) return;
                                                 const current = editingProduct.available_sizes || [];
@@ -3125,13 +3246,13 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             ))}
                                         </select>
 
-                                        <div className="flex gap-1.5">
+                                        <div className="flex gap-2">
                                             <input
                                                 type="text"
                                                 value={customSizeInput}
                                                 onChange={(e) => setCustomSizeInput(e.target.value)}
                                                 placeholder="Or type custom size (e.g. 15 cm Home Mandir)"
-                                                className="flex-1 px-3 py-1.5 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
+                                                className="flex-1 px-3.5 py-2 border border-stone-200 rounded-xl text-xs bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                                 onKeyDown={(e) => {
                                                     if (e.key === 'Enter') {
                                                         e.preventDefault();
@@ -3162,7 +3283,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                         setCustomSizeInput('');
                                                     }
                                                 }}
-                                                className="px-3 py-1.5 rounded-xl bg-[#161616] text-[#F7C600] hover:bg-black text-xs font-bold transition shrink-0"
+                                                className="px-4 py-2 rounded-xl bg-[#161616] text-[#F7C600] hover:bg-black text-xs font-bold transition shrink-0 cursor-pointer shadow-xs active:scale-95"
                                             >
                                                 + Add
                                             </button>
@@ -3171,7 +3292,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 </div>
 
                                 {/* Custom Size Variants & Dynamic Pricing */}
-                                <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 space-y-2">
+                                <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-3">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
@@ -3200,9 +3321,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     ]
                                                 });
                                             }}
-                                            className="px-2.5 py-1 rounded-lg bg-[#161616] text-[#F7C600] hover:bg-black text-xs font-bold transition flex items-center gap-1 shadow-2xs"
+                                            className="px-3 py-1.5 rounded-xl bg-[#161616] text-[#F7C600] hover:bg-black text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer active:scale-95"
                                         >
-                                            <Plus className="w-3 h-3" />
+                                            <Plus className="w-3.5 h-3.5" />
                                             <span>Add Variant</span>
                                         </button>
                                     </div>
@@ -3210,7 +3331,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     {Array.isArray(editingProduct.variants) && editingProduct.variants.length > 0 ? (
                                         <div className="space-y-2">
                                             {editingProduct.variants.map((variant, vIdx) => (
-                                                <div key={vIdx} className="p-2.5 bg-white rounded-lg border border-stone-200 flex flex-col sm:flex-row items-center gap-2">
+                                                <div key={vIdx} className="p-3 bg-white rounded-xl border border-stone-200 flex flex-col sm:flex-row items-center gap-2.5 shadow-2xs">
                                                     <input
                                                         type="text"
                                                         value={variant.variant_name || ''}
@@ -3220,7 +3341,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                             setEditingProduct({ ...editingProduct, variants: updated });
                                                         }}
                                                         placeholder="Variant name"
-                                                        className="flex-1 w-full sm:w-auto px-2.5 py-1.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-black"
+                                                        className="flex-1 w-full sm:w-auto px-3 py-2 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#C69722]"
                                                     />
                                                     <input
                                                         type="number"
@@ -3231,7 +3352,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                             setEditingProduct({ ...editingProduct, variants: updated });
                                                         }}
                                                         placeholder="Price (₹)"
-                                                        className="w-full sm:w-24 px-2 py-1.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-black"
+                                                        className="w-full sm:w-28 px-3 py-2 border border-stone-200 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-[#C69722]"
                                                     />
                                                     <input
                                                         type="number"
@@ -3242,7 +3363,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                             setEditingProduct({ ...editingProduct, variants: updated });
                                                         }}
                                                         placeholder="Old Price (₹)"
-                                                        className="w-full sm:w-24 px-2 py-1.5 border rounded-lg text-xs text-stone-500 focus:outline-none focus:border-black"
+                                                        className="w-full sm:w-28 px-3 py-2 border border-stone-200 rounded-xl text-xs text-stone-500 focus:outline-none focus:border-[#C69722]"
                                                     />
                                                     <button
                                                         type="button"
@@ -3250,10 +3371,10 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                             const updated = editingProduct.variants.filter((_, idx) => idx !== vIdx);
                                                             setEditingProduct({ ...editingProduct, variants: updated });
                                                         }}
-                                                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
+                                                        className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl transition cursor-pointer"
                                                         title="Remove variant"
                                                     >
-                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
                                             ))}
@@ -3263,15 +3384,17 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
 
                             {/* SECTION 4: PRICING & DISCOUNTS */}
-                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3">
-                                <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                                    <Tag className="w-4 h-4 text-[#C69722]" />
+                            <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-4">
+                                <div className="flex items-center gap-2.5 border-b border-stone-100 pb-3">
+                                    <span className="w-5 h-5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/60 flex items-center justify-center font-mono font-bold text-[10px]">
+                                        4
+                                    </span>
                                     <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
-                                        4. Pricing & Discounts
+                                        Pricing & Discounts
                                     </h4>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                                     <div>
                                         <label className="text-xs font-bold text-stone-700 block mb-1">PRICE (₹) *</label>
                                         <input
@@ -3279,7 +3402,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             required
                                             value={editingProduct.price}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
-                                            className="w-full px-3 py-2 border rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                         />
                                     </div>
                                     <div>
@@ -3288,7 +3411,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             type="number"
                                             value={editingProduct.old_price || ''}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, old_price: parseFloat(e.target.value) || 0 })}
-                                            className="w-full px-3 py-2 border rounded-xl text-xs text-stone-500 focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs text-stone-500 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                         />
                                     </div>
                                     <div>
@@ -3298,26 +3421,28 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             value={editingProduct.off_text || ''}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, off_text: e.target.value })}
                                             placeholder="e.g. 40% off"
-                                            className="w-full px-3 py-2 border rounded-xl text-xs font-bold text-emerald-700 focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-bold text-emerald-700 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                         />
                                     </div>
                                 </div>
                             </div>
 
-                            {/* SECTION 5: PRODUCT IMAGES & ALTERNATE ANGLES (Req #1.4, #1.6, #3.4) */}
-                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-4">
-                                <div className="flex items-center justify-between border-b border-stone-100 pb-2">
-                                    <div className="flex items-center gap-2">
-                                        <ImageIcon className="w-4 h-4 text-[#C69722]" />
+                            {/* SECTION 5: PRODUCT IMAGES & ALTERNATE ANGLES */}
+                            <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-4">
+                                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                                    <div className="flex items-center gap-2.5">
+                                        <span className="w-5 h-5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/60 flex items-center justify-center font-mono font-bold text-[10px]">
+                                            5
+                                        </span>
                                         <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
-                                            5. Product Images & Alternate Angles
+                                            Product Images & Alternate Angles
                                         </h4>
                                     </div>
-                                    <span className="text-[10px] text-stone-400">Drag & Drop Ready (Req 1.6)</span>
+                                    <span className="text-[10px] text-stone-400">Drag & Drop Ready with Safe Fallback</span>
                                 </div>
 
                                 {/* Primary Image Uploader */}
-                                <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-stone-200 space-y-2">
+                                <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-stone-200 space-y-2.5">
                                     <div className="flex items-center justify-between">
                                         <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
                                             PRIMARY HERO / THUMBNAIL IMAGE
@@ -3325,27 +3450,26 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         <span className="text-[10px] text-stone-500">Main Storefront Card Image</span>
                                     </div>
 
-                                    <div className="flex flex-col sm:flex-row items-center gap-3">
+                                    <div className="flex flex-col sm:flex-row items-center gap-3.5">
                                         {editingProduct.primary_catalog_image ? (
-                                            <div className="relative group w-20 h-20 rounded-xl overflow-hidden border border-stone-300 bg-white flex-shrink-0 flex items-center justify-center p-1 shadow-2xs">
-                                                <img
+                                            <div className="relative group w-24 h-24 rounded-2xl overflow-hidden border border-stone-300 bg-white flex-shrink-0 flex items-center justify-center p-1.5 shadow-2xs">
+                                                <SafeImage
                                                     src={api.getImageUrl(editingProduct.primary_catalog_image)}
-                                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/products/ram-darbar.png'; }}
                                                     alt="Primary"
                                                     className="w-full h-full object-contain"
                                                 />
                                                 <button
                                                     type="button"
                                                     onClick={() => setEditingProduct({ ...editingProduct, primary_catalog_image: '' })}
-                                                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow"
+                                                    className="absolute top-1 right-1 w-6 h-6 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition shadow cursor-pointer"
                                                     title="Remove"
                                                 >
                                                     ✕
                                                 </button>
                                             </div>
                                         ) : (
-                                            <div className="w-20 h-20 rounded-xl border-2 border-dashed border-stone-300 bg-white/70 flex flex-col items-center justify-center text-stone-400 text-[10px] flex-shrink-0">
-                                                <ImageIcon className="w-6 h-6 stroke-1 mb-0.5 text-stone-400" />
+                                            <div className="w-24 h-24 rounded-2xl border-2 border-dashed border-stone-300 bg-white/70 flex flex-col items-center justify-center text-stone-400 text-[10px] flex-shrink-0">
+                                                <ImageIcon className="w-7 h-7 stroke-1 mb-0.5 text-stone-400" />
                                                 <span>No Image</span>
                                             </div>
                                         )}
@@ -3373,7 +3497,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 </div>
 
                                 {/* Multi-Angle Gallery */}
-                                <div className="p-3.5 bg-[#FAF8F5] rounded-xl border border-stone-200 space-y-3">
+                                <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-stone-200 space-y-3.5">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
@@ -3383,7 +3507,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 Uploaded angles will be displayed on the customer product detail page
                                             </span>
                                         </div>
-                                        <span className="text-xs font-bold text-[#8E5B00]">
+                                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40 font-mono">
                                             {(editingProduct.catalog_images || []).length} Angles
                                         </span>
                                     </div>
@@ -3417,18 +3541,17 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     />
 
                                     {(!editingProduct.catalog_images || editingProduct.catalog_images.length === 0) ? (
-                                        <div className="text-center py-4 text-xs text-stone-400 bg-white rounded-xl border border-dashed border-stone-200">
+                                        <div className="text-center py-6 text-xs text-stone-400 bg-white rounded-2xl border border-dashed border-stone-200">
                                             No additional angles added yet. Drop photos above!
                                         </div>
                                     ) : (
-                                        <div className="space-y-2 max-h-56 overflow-y-auto pr-1" data-lenis-prevent="true">
+                                        <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1" data-lenis-prevent="true">
                                             {editingProduct.catalog_images.map((img, idx) => (
-                                                <div key={idx} className="flex flex-col sm:flex-row items-center gap-2 bg-white p-2.5 rounded-xl border border-stone-200 shadow-2xs">
-                                                    <img
+                                                <div key={idx} className="flex flex-col sm:flex-row items-center gap-2.5 bg-white p-3 rounded-2xl border border-stone-200 shadow-2xs">
+                                                    <SafeImage
                                                         src={api.getImageUrl(img.url)}
-                                                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = editingProduct.primary_catalog_image || '/images/products/ram-darbar.png'; }}
                                                         alt=""
-                                                        className="w-12 h-12 object-contain rounded-lg bg-stone-50 border p-0.5 flex-shrink-0"
+                                                        className="w-14 h-14 object-contain rounded-xl bg-stone-50 border p-1 flex-shrink-0"
                                                     />
                                                     <div className="flex-1 w-full space-y-1">
                                                         <div className="flex items-center gap-2">
@@ -3441,9 +3564,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                                     setEditingProduct({ ...editingProduct, catalog_images: updated });
                                                                 }}
                                                                 placeholder="Caption (e.g. Front Sacred View, 24K Gold Detailing)"
-                                                                className="flex-1 px-2.5 py-1.5 border rounded-lg text-xs font-semibold focus:outline-none focus:border-black"
+                                                                className="flex-1 px-3 py-1.5 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#C69722]"
                                                             />
-                                                            <label className="cursor-pointer px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-bold flex items-center gap-1 transition flex-shrink-0">
+                                                            <label className="cursor-pointer px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-[11px] font-bold flex items-center gap-1 transition flex-shrink-0">
                                                                 <Upload className="w-3 h-3 text-stone-600" />
                                                                 <span>Replace</span>
                                                                 <input
@@ -3469,7 +3592,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveCatalogImage(idx)}
-                                                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition"
+                                                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-xl transition cursor-pointer"
                                                         title="Delete this catalog angle"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
@@ -3482,15 +3605,17 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
 
                             {/* SECTION 6: RATINGS & REVIEW SETTINGS */}
-                            <div className="p-4 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3">
-                                <div className="flex items-center gap-2 border-b border-stone-100 pb-2">
-                                    <Star className="w-4 h-4 text-[#C69722]" />
+                            <div className="p-5 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-4">
+                                <div className="flex items-center gap-2.5 border-b border-stone-100 pb-3">
+                                    <span className="w-5 h-5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/60 flex items-center justify-center font-mono font-bold text-[10px]">
+                                        6
+                                    </span>
                                     <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
-                                        6. Ratings & Review Settings
+                                        Ratings & Review Settings
                                     </h4>
                                 </div>
 
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                                     <div>
                                         <label className="text-xs font-bold text-stone-700 block mb-1">
                                             PRODUCT RATING MODE
@@ -3498,7 +3623,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         <select
                                             value={editingProduct.rating_mode || 'enabled'}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, rating_mode: e.target.value })}
-                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                         >
                                             <option value="enabled">Enabled (View & Submit)</option>
                                             <option value="read_only">Static (Read-Only Mode)</option>
@@ -3516,7 +3641,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             max="5"
                                             value={editingProduct.static_rating_value ?? 5.0}
                                             onChange={(e) => setEditingProduct({ ...editingProduct, static_rating_value: parseFloat(e.target.value) || 5.0 })}
-                                            className="w-full px-3 py-2 border rounded-xl text-xs bg-white focus:outline-none focus:border-black font-bold"
+                                            className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 font-bold transition"
                                         />
                                     </div>
                                 </div>
@@ -3524,20 +3649,21 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                         </form>
 
                         {/* Sticky Footer */}
-                        <div className="flex items-center justify-end gap-2.5 px-6 py-3.5 border-t border-stone-200 bg-stone-50/95 backdrop-blur-xs flex-shrink-0">
+                        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-stone-200 bg-stone-50/95 backdrop-blur-xs flex-shrink-0">
                             <button
                                 type="button"
                                 onClick={() => setEditingProduct(null)}
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-200/70 transition"
+                                className="px-5 py-2.5 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-200/70 transition cursor-pointer"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
                                 form="admin-product-edit-form"
-                                className="px-6 py-2.5 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider hover:bg-black transition shadow-sm active:scale-98"
+                                className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 active:scale-95 cursor-pointer flex items-center gap-1.5"
                             >
-                                {editingProduct.id ? 'Save Changes' : 'Create Product'}
+                                <Check className="w-4 h-4 stroke-[2.5]" />
+                                <span>{editingProduct.id ? 'Save Changes' : 'Create Product'}</span>
                             </button>
                         </div>
                     </div>
@@ -3547,32 +3673,37 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             {/* Hoisted Deity Category Modal (Req #1.1: Add Category Works from Everywhere) */}
             {editingCategory && (
                 <div 
-                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
+                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto"
                     data-lenis-prevent="true"
                     onClick={(e) => { if (e.target === e.currentTarget) setEditingCategory(null); }}
                 >
                     <div 
-                        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
+                        className="bg-white rounded-3xl w-full max-w-lg max-h-[92vh] sm:max-h-[85vh] flex flex-col shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
                         data-lenis-prevent="true"
                     >
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-[#FAF8F5] flex-shrink-0">
-                            <h3 className="font-serif text-lg font-bold text-stone-900">
-                                {editingCategory.id ? 'Edit Category Images & Details' : 'Add New Deity Category'}
-                            </h3>
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-[#FAF8F5] flex-shrink-0">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-[#FAF2DE] border border-[#DFC48D] flex items-center justify-center text-[#8E5B00]">
+                                    <ImageIcon className="w-4 h-4" />
+                                </div>
+                                <h3 className="font-serif text-lg font-bold text-stone-900">
+                                    {editingCategory.id ? 'Edit Category Images & Details' : 'Add New Deity Category'}
+                                </h3>
+                            </div>
                             <button 
                                 type="button" 
                                 onClick={() => setEditingCategory(null)} 
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition"
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition cursor-pointer"
                                 title="Close modal"
                             >
-                                ✕
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
 
                         <form 
                             id="admin-category-edit-form"
                             onSubmit={handleSaveCategory} 
-                            className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4 overscroll-contain"
+                            className="flex-1 overflow-y-auto p-6 space-y-4 overscroll-contain"
                             data-lenis-prevent="true"
                         >
                             <div>
@@ -3583,7 +3714,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     value={editingCategory.name || ''}
                                     onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
                                     placeholder="e.g. Ram Darbar, Radha Krishna, Lord Shiva"
-                                    className="w-full px-3 py-2 border rounded-xl text-xs font-semibold focus:outline-none focus:border-black"
+                                    className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                 />
                             </div>
 
@@ -3592,13 +3723,12 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 <label className="text-xs font-bold text-stone-700 block mb-1">
                                     CIRCLE ICON THUMBNAIL
                                 </label>
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3.5">
                                     {editingCategory.img ? (
-                                        <div className="w-14 h-14 rounded-full border border-stone-300 bg-stone-50 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden">
-                                            <img
+                                        <div className="w-16 h-16 rounded-2xl border border-stone-300 bg-stone-50 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden shadow-2xs">
+                                            <SafeImage
                                                 src={api.getImageUrl(editingCategory.img)}
-                                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/categories/ram.png'; }}
-                                                alt=""
+                                                alt={editingCategory.name}
                                                 className="w-full h-full object-contain"
                                             />
                                         </div>
@@ -3606,7 +3736,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     <div className="flex-1">
                                         <ImageDropzone
                                             label="Upload Category Icon"
-                                            sublabel="Square or round icon for category scroller"
+                                            sublabel="Square or round icon for deity scroller"
                                             isUploading={uploadingCatIcon}
                                             onUpload={async (file) => {
                                                 setUploadingCatIcon(true);
@@ -3626,10 +3756,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 </label>
                                 <div className="space-y-2">
                                     {editingCategory.banner_url ? (
-                                        <div className="h-20 rounded-xl border border-stone-300 overflow-hidden bg-stone-50 flex items-center justify-center">
-                                            <img
+                                        <div className="h-24 rounded-2xl border border-stone-300 overflow-hidden bg-stone-50 flex items-center justify-center shadow-2xs">
+                                            <SafeImage
                                                 src={api.getImageUrl(editingCategory.banner_url)}
-                                                onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/images/categories/navratri-drop@2x.png'; }}
                                                 alt="Banner"
                                                 className="w-full h-full object-cover"
                                             />
@@ -3649,14 +3778,14 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-3.5">
                                 <div>
                                     <label className="text-xs font-bold text-stone-700 block mb-1">SORT ORDER</label>
                                     <input
                                         type="number"
                                         value={editingCategory.sort_order || 0}
                                         onChange={(e) => setEditingCategory({ ...editingCategory, sort_order: parseInt(e.target.value, 10) || 0 })}
-                                        className="w-full px-3 py-2 border rounded-xl text-xs"
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-mono"
                                     />
                                 </div>
                                 <div>
@@ -3664,7 +3793,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     <select
                                         value={editingCategory.is_active ? 'true' : 'false'}
                                         onChange={(e) => setEditingCategory({ ...editingCategory, is_active: e.target.value === 'true' })}
-                                        className="w-full px-3 py-2 border rounded-xl text-xs bg-white"
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs bg-white font-semibold"
                                     >
                                         <option value="true">Active on Store</option>
                                         <option value="false">Hidden / Draft</option>
@@ -3673,20 +3802,21 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
                         </form>
 
-                        <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-stone-200 bg-stone-50/95 flex-shrink-0">
+                        <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-stone-200 bg-stone-50/95 flex-shrink-0">
                             <button 
                                 type="button" 
                                 onClick={() => setEditingCategory(null)} 
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-200/70 transition"
+                                className="px-5 py-2.5 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-200/70 transition cursor-pointer"
                             >
                                 Cancel
                             </button>
                             <button 
                                 type="submit" 
                                 form="admin-category-edit-form"
-                                className="px-5 py-2 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider hover:bg-black transition shadow-sm active:scale-98"
+                                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5"
                             >
-                                {editingCategory.id ? 'Save Category' : 'Create Category'}
+                                <Check className="w-4 h-4 stroke-[2.5]" />
+                                <span>{editingCategory.id ? 'Save Category' : 'Create Category'}</span>
                             </button>
                         </div>
                     </div>
@@ -3696,26 +3826,29 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             {/* Hoisted Master Size Modal (Req #1.2 & #1.5) */}
             {editingSize && (
                 <div 
-                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto"
+                    className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto"
                     data-lenis-prevent="true"
                     onClick={(e) => { if (e.target === e.currentTarget) setEditingSize(null); }}
                 >
                     <div 
-                        className="bg-white rounded-2xl sm:rounded-3xl w-full max-w-md shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
+                        className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
                         data-lenis-prevent="true"
                     >
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-200 bg-[#FAF8F5]">
-                            <h3 className="font-serif text-lg font-bold text-stone-900">Edit Master Size</h3>
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-[#FAF8F5]">
+                            <div className="flex items-center gap-2">
+                                <Tag className="w-4 h-4 text-[#C69722]" />
+                                <h3 className="font-serif text-lg font-bold text-stone-900">Edit Master Size</h3>
+                            </div>
                             <button 
                                 type="button" 
                                 onClick={() => setEditingSize(null)} 
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition"
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition cursor-pointer"
                             >
-                                ✕
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveEditSize} className="p-5 space-y-4">
+                        <form onSubmit={handleSaveEditSize} className="p-6 space-y-4">
                             <div>
                                 <label className="text-xs font-bold text-stone-700 block mb-1">SIZE LABEL *</label>
                                 <input
@@ -3723,17 +3856,17 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     required
                                     value={editingSize.label}
                                     onChange={(e) => setEditingSize({ ...editingSize, label: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-xl text-xs font-semibold"
+                                    className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-3.5">
                                 <div>
-                                    <label className="text-xs font-bold text-stone-700 block mb-1">UNIT * (Req 1.5)</label>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">UNIT *</label>
                                     <select
                                         value={editingSize.unit || 'in'}
                                         onChange={(e) => setEditingSize({ ...editingSize, unit: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-xl text-xs bg-white font-bold text-[#8E5B00]"
+                                        className="w-full px-3 py-2.5 border border-stone-200 rounded-xl text-xs bg-white font-bold text-[#8E5B00] focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                     >
                                         <option value="in">Inches (in)</option>
                                         <option value="ft">Feet (ft)</option>
@@ -3756,12 +3889,12 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 height_inches: editingSize.unit === 'ft' ? val * 12 : editingSize.unit === 'cm' ? val / 2.54 : editingSize.unit === 'm' ? val * 39.37 : val
                                             });
                                         }}
-                                        className="w-full px-3 py-2 border rounded-xl text-xs font-bold"
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-bold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                     />
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-3.5">
                                 <div>
                                     <label className="text-xs font-bold text-stone-700 block mb-1">HEIGHT (INCHES)</label>
                                     <input
@@ -3770,7 +3903,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         required
                                         value={editingSize.height_inches}
                                         onChange={(e) => setEditingSize({ ...editingSize, height_inches: parseFloat(e.target.value) || 0 })}
-                                        className="w-full px-3 py-2 border rounded-xl text-xs"
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-mono"
                                     />
                                 </div>
                                 <div>
@@ -3779,7 +3912,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         type="number"
                                         value={editingSize.sort_order}
                                         onChange={(e) => setEditingSize({ ...editingSize, sort_order: parseInt(e.target.value, 10) || 1 })}
-                                        className="w-full px-3 py-2 border rounded-xl text-xs"
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-mono"
                                     />
                                 </div>
                             </div>
@@ -3790,23 +3923,24 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     type="text"
                                     value={editingSize.description || ''}
                                     onChange={(e) => setEditingSize({ ...editingSize, description: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-xl text-xs"
+                                    className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-100">
                                 <button
                                     type="button"
                                     onClick={() => setEditingSize(null)}
-                                    className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100"
+                                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100 transition cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-5 py-2 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase"
+                                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5"
                                 >
-                                    Save Changes
+                                    <Check className="w-4 h-4 stroke-[2.5]" />
+                                    <span>Save Changes</span>
                                 </button>
                             </div>
                         </form>
@@ -3814,9 +3948,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                 </div>
             )}
 
-{/* Modal: Render Backend Server Connection (Accessible anytime from top navbar) */}
+            {/* Modal: Render Backend Server Connection (Accessible anytime from top navbar) */}
             {isConfiguringServer && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                     <div className="bg-[#24201C] border border-[#DFC48D]/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl text-white space-y-5 animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2.5">
@@ -3834,13 +3968,13 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
                             <button
                                 onClick={() => setIsConfiguringServer(false)}
-                                className="w-8 h-8 rounded-full bg-stone-800 text-stone-400 hover:text-white flex items-center justify-center text-sm"
+                                className="w-8 h-8 rounded-full bg-stone-800 text-stone-400 hover:text-white flex items-center justify-center text-sm transition cursor-pointer"
                             >
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
 
-                        <div className="space-y-3 text-left">
+                        <div className="space-y-3.5 text-left">
                             <label className="text-xs font-bold text-stone-300 uppercase tracking-wider block">
                                 Render Web Service URL
                             </label>
@@ -3856,7 +3990,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     type="button"
                                     onClick={handleTestAndSaveBackend}
                                     disabled={testingConnection || !backendUrlInput.trim()}
-                                    className="px-4 py-2.5 bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] rounded-xl font-bold text-xs uppercase tracking-wider transition disabled:opacity-50 shrink-0 flex items-center gap-1.5"
+                                    className="px-4 py-2.5 bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] rounded-xl font-bold text-xs uppercase tracking-wider transition disabled:opacity-50 shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
                                 >
                                     {testingConnection ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCheck className="w-3.5 h-3.5" />}
                                     <span>{testingConnection ? 'Testing...' : 'Connect'}</span>
@@ -3864,12 +3998,12 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
 
                             {serverStatus && (
-                                <div className={`p-3 rounded-xl text-xs leading-relaxed ${serverStatus.type === 'success' ? 'bg-emerald-950/70 border border-emerald-500/40 text-emerald-300' : serverStatus.type === 'error' ? 'bg-rose-950/70 border border-rose-500/40 text-rose-300' : 'bg-stone-800 text-stone-300'}`}>
+                                <div className={`p-3.5 rounded-xl text-xs leading-relaxed ${serverStatus.type === 'success' ? 'bg-emerald-950/70 border border-emerald-500/40 text-emerald-300' : serverStatus.type === 'error' ? 'bg-rose-950/70 border border-rose-500/40 text-rose-300' : 'bg-stone-800 text-stone-300'}`}>
                                     {serverStatus.message}
                                 </div>
                             )}
 
-                            <div className="p-3 rounded-xl bg-stone-900/60 border border-stone-800 text-[11px] text-stone-400 space-y-1.5">
+                            <div className="p-3.5 rounded-2xl bg-stone-900/60 border border-stone-800 text-[11px] text-stone-400 space-y-1.5 leading-relaxed">
                                 <div className="text-stone-300 font-bold">ℹ️ Render Free Tier Deployment Notes:</div>
                                 <div>• Render web services automatically sleep after 15 minutes of inactivity.</div>
                                 <div>• The first wake-up request may take 30 to 50 seconds to complete.</div>
@@ -3881,7 +4015,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             <button
                                 type="button"
                                 onClick={() => setIsConfiguringServer(false)}
-                                className="px-5 py-2 text-xs font-bold text-stone-300 hover:text-white rounded-xl bg-stone-800/80 hover:bg-stone-800"
+                                className="px-5 py-2 text-xs font-bold text-stone-300 hover:text-white rounded-xl bg-stone-800/80 hover:bg-stone-800 transition cursor-pointer"
                             >
                                 Done
                             </button>
