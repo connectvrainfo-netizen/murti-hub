@@ -2900,9 +2900,10 @@
       "id": "66666666-6666-6666-6666-666666660001",
       "email": "admin@amolmurtibhandar.com",
       "full_name": "Master Sculptor Admin",
-      "password_hash": "$2b$12$dYbz9craDpGeg5j00Uj4Hup6zPAw/WjjHNSvW.1F0ihxe1FEA/LY.",
+      "password_hash": "$2b$12$phdPFGQtW46zlRJz/Unm0Oufvl5haP1RwC6vjtEBhpsdOanSKL5fi",
       "role": "super_admin",
-      "is_active": true
+      "is_active": true,
+      "security_pin_hash": null
     },
     {
       "id": "64343825-1759-44ed-9efc-82153d6ee416",
@@ -2976,5 +2977,80 @@
       "is_active": true,
       "created_at": "2026-10-24T03:21:24.402243+00:00"
     }
-  ]
+  ],
+  "revoked_tokens": [
+    {
+      "jti": "94631045-46fc-47d0-a404-bf01ee0b6e02",
+      "revoked_at": "2026-10-25T09:05:25.480110+00:00",
+      "expires_at": null
+    },
+    {
+      "jti": "a0d0bc1d-b14d-44d6-a292-cffce5607fa2",
+      "revoked_at": "2026-10-25T09:05:28.294438+00:00",
+      "expires_at": "2026-10-25T17:05:27+00:00"
+    },
+    {
+      "jti": "0165d5a0-6693-42aa-92fc-b4bcd5812614",
+      "revoked_at": "2026-10-25T09:05:29.114243+00:00",
+      "expires_at": "2026-10-25T17:05:28+00:00"
+    },
+    {
+      "jti": "b728c3ba-2e7c-44b6-b212-e323b5d961bf",
+      "revoked_at": "2026-10-25T09:06:31.714642+00:00",
+      "expires_at": null
+    },
+    {
+      "jti": "8020fd07-bbb0-4ab6-a8b5-ad8891c4d5fb",
+      "revoked_at": "2026-10-25T09:07:03.996781+00:00",
+      "expires_at": null
+    },
+    {
+      "jti": "cda8a5f8-cbdf-40b2-baa4-5c7b0207d80b",
+      "revoked_at": "2026-10-25T09:07:36.538605+00:00",
+      "expires_at": null
+    },
+    {
+      "jti": "979c752e-910f-47ac-b133-d003c88d1d6b",
+      "revoked_at": "2026-10-25T09:07:39.349752+00:00",
+      "expires_at": "2026-10-25T17:07:38+00:00"
+    },
+    {
+      "jti": "4050c679-329a-4b7f-88d2-393b0aa0a699",
+      "revoked_at": "2026-10-25T09:07:40.171808+00:00",
+      "expires_at": "2026-10-25T17:07:39+00:00"
+    },
+    {
+      "jti": "709eb9b9-5f8a-47a0-9a9f-dc5e415e5c6b",
+      "revoked_at": "2026-10-25T09:07:42.609312+00:00",
+      "expires_at": "2026-10-25T17:07:40+00:00"
+    },
+    {
+      "jti": "e750ac51-f417-4932-aae1-8bb5fa635c19",
+      "revoked_at": "2026-10-25T09:07:42.622960+00:00",
+      "expires_at": null
+    }
+  ],
+  "rate_limits": {
+    "login": {
+      "198.51.6.52": [
+        1792919256.814244,
+        1792919257.0915167,
+        1792919257.365577,
+        1792919257.6341648,
+        1792919257.901737
+      ]
+    },
+    "reset": {
+      "198.53.7.170": [
+        1792919257.9259853,
+        1792919257.9363945
+      ],
+      "198.52.7.193": [
+        1792919257.9464078,
+        1792919257.9582796,
+        1792919257.970563
+      ]
+    },
+    "register": {}
+  }
 }

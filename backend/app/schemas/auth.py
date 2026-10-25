@@ -53,5 +53,14 @@ class AdminUpdateCredentialsRequest(BaseModel):
     current_password: str = Field(..., min_length=1, description="Current administrator password for verification")
     new_email: Optional[str] = Field(None, description="New administrative email or account ID")
     new_password: Optional[str] = Field(None, min_length=8, description="New strong password (min 8 characters)")
+    security_pin: Optional[str] = Field(None, min_length=4, max_length=6, description="4-6 digit Admin Security PIN for step-up verification")
+
+class AdminSecurityPinRequest(BaseModel):
+    current_password: str = Field(..., min_length=1, description="Current administrator password for verification")
+    security_pin: str = Field(..., min_length=4, max_length=6, description="4 to 6 digit security PIN")
+
+class AdminSecurityPinStatusResponse(BaseModel):
+    pin_configured: bool
+    mfa_enabled: bool = False
 
 

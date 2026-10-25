@@ -6,7 +6,7 @@ import {
     LogOut, Database, Layers, MessageSquare, CheckSquare, Search,
     Upload, Loader2, Eye, EyeOff, Filter, Send, Link as LinkIcon,
     AlertTriangle, X, CheckCheck, ChevronRight, ChevronDown, Sliders,
-    User, Info, ArrowUpRight, Key
+    User, Info, ArrowUpRight, Key, ShieldCheck
 } from 'lucide-react';
 import api from '../services/api';
 import SafeImage from './SafeImage';
@@ -272,7 +272,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         current_password: '',
         new_email: '',
         new_password: '',
-        confirm_password: ''
+        confirm_password: '',
+        security_pin: ''
     });
     const [credentialsLoading, setCredentialsLoading] = useState(false);
     const [credentialsError, setCredentialsError] = useState('');
@@ -280,6 +281,14 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [showCurrentPass, setShowCurrentPass] = useState(false);
     const [showNewPass, setShowNewPass] = useState(false);
     const [showConfirmPass, setShowConfirmPass] = useState(false);
+    const [showSecurityPin, setShowSecurityPin] = useState(false);
+
+    // Step-Up MFA & Security PIN States
+    const [isPinConfigured, setIsPinConfigured] = useState(false);
+    const [securityPinForm, setSecurityPinForm] = useState({ current_password: '', security_pin: '', confirm_pin: '' });
+    const [pinLoading, setPinLoading] = useState(false);
+    const [pinError, setPinError] = useState('');
+    const [pinSuccess, setPinSuccess] = useState('');
 
     // Core Data States - Pre-seeded with existing catalog data
     const [loading, setLoading] = useState(false);
@@ -441,6 +450,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     useEffect(() => {
         if (isAuthenticated) {
             refreshAllData();
+            api.getSecurityPinStatus()
+                .then((res) => setIsPinConfigured(Boolean(res?.data?.pin_configured)))
+                .catch(() => {});
         }
     }, [isAuthenticated]);
 
@@ -562,12 +574,18 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             }
         }
 
+        if (isPinConfigured && !credentialsForm.security_pin) {
+            setCredentialsError('Security PIN is required for step-up verification.');
+            return;
+        }
+
         setCredentialsLoading(true);
         try {
             const res = await api.updateAdminCredentials({
                 current_password: credentialsForm.current_password,
                 new_email: newEmail || undefined,
-                new_password: newPass || undefined
+                new_password: newPass || undefined,
+                security_pin: credentialsForm.security_pin || undefined
             });
 
             const updatedUser = res?.data?.admin || api.getCurrentUser();
@@ -579,7 +597,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                 current_password: '',
                 new_email: '',
                 new_password: '',
-                confirm_password: ''
+                confirm_password: '',
+                security_pin: ''
             });
 
             setTimeout(() => {
@@ -590,6 +609,42 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             setCredentialsError(err.message || 'Failed to update credentials. Please check your current password.');
         } finally {
             setCredentialsLoading(false);
+        }
+    };
+
+    // Handler to set or change 4-6 digit Admin Security PIN
+    const handleSetSecurityPin = async (e) => {
+        if (e) e.preventDefault();
+        setPinError('');
+        setPinSuccess('');
+
+        if (!securityPinForm.current_password) {
+            setPinError('Current administrator password is required.');
+            return;
+        }
+
+        const pin = securityPinForm.security_pin.trim();
+        if (!/^\d{4,6}$/.test(pin)) {
+            setPinError('Security PIN must be 4 to 6 numeric digits (e.g., 123456).');
+            return;
+        }
+
+        if (pin !== securityPinForm.confirm_pin.trim()) {
+            setPinError('Security PINs do not match.');
+            return;
+        }
+
+        setPinLoading(true);
+        try {
+            await api.setSecurityPin(securityPinForm.current_password, pin);
+            setIsPinConfigured(true);
+            setPinSuccess('Security PIN configured successfully! Step-up MFA protection is now active.');
+            showToast('Security PIN configured successfully!');
+            setSecurityPinForm({ current_password: '', security_pin: '', confirm_pin: '' });
+        } catch (err) {
+            setPinError(err.message || 'Failed to configure Security PIN.');
+        } finally {
+            setPinLoading(false);
         }
     };
 
@@ -3121,6 +3176,28 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 </div>
                                             )}
                                         </div>
+
+                                        {isPinConfigured && (
+                                            <div className="space-y-1.5 md:col-span-2 bg-amber-500/10 border border-amber-300/50 p-4 rounded-2xl">
+                                                <label className="text-xs font-bold text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
+                                                    <Shield className="w-3.5 h-3.5 text-amber-700" />
+                                                    <span>Step-Up Security PIN * (Required)</span>
+                                                </label>
+                                                <input
+                                                    type="password"
+                                                    inputMode="numeric"
+                                                    maxLength={6}
+                                                    value={credentialsForm.security_pin || ''}
+                                                    onChange={(e) => setCredentialsForm({ ...credentialsForm, security_pin: e.target.value.replace(/\D/g, '') })}
+                                                    placeholder="Enter your 4–6 digit Security PIN"
+                                                    className="w-full px-4 py-2.5 rounded-xl border border-amber-300 bg-white text-xs font-mono tracking-widest text-stone-900 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                                    required={isPinConfigured}
+                                                />
+                                                <p className="text-[11px] text-amber-900/80">
+                                                    Your account has Step-Up 2FA enabled. Enter your Security PIN to authorize administrative updates.
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center justify-end pt-3 border-t border-stone-100">
@@ -3138,6 +3215,112 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 <>
                                                     <Key className="w-4 h-4 text-[#F7C600]" />
                                                     <span>Update Admin Credentials</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            {/* Step-Up Multi-Factor Security PIN Management Card */}
+                            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-200">
+                                <div className="flex items-start justify-between gap-4 mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-400/40 flex items-center justify-center text-amber-700">
+                                            <ShieldCheck className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-serif text-lg font-bold text-[#161616]">
+                                                Step-Up Multi-Factor Security PIN (2FA)
+                                            </h3>
+                                            <p className="text-xs text-stone-500">
+                                                Enforce an additional 4–6 digit security PIN for critical actions like editing administrative credentials.
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                        isPinConfigured ? 'bg-emerald-100 text-emerald-800' : 'bg-stone-100 text-stone-600'
+                                    }`}>
+                                        {isPinConfigured ? 'PIN Protected' : 'Not Configured'}
+                                    </span>
+                                </div>
+
+                                {pinSuccess && (
+                                    <div className="mb-4 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                                        <span className="font-semibold">{pinSuccess}</span>
+                                    </div>
+                                )}
+
+                                {pinError && (
+                                    <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                                        <span className="font-semibold">{pinError}</span>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleSetSecurityPin} className="space-y-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+                                                Current Password *
+                                            </label>
+                                            <input
+                                                type="password"
+                                                required
+                                                value={securityPinForm.current_password}
+                                                onChange={(e) => setSecurityPinForm({ ...securityPinForm, current_password: e.target.value })}
+                                                placeholder="Verify identity"
+                                                className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+                                                {isPinConfigured ? 'New 4–6 Digit PIN' : 'Set 4–6 Digit PIN *'}
+                                            </label>
+                                            <input
+                                                type="password"
+                                                inputMode="numeric"
+                                                maxLength={6}
+                                                required
+                                                value={securityPinForm.security_pin}
+                                                onChange={(e) => setSecurityPinForm({ ...securityPinForm, security_pin: e.target.value.replace(/\D/g, '') })}
+                                                placeholder="4–6 digits"
+                                                className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-mono tracking-widest text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+                                                Confirm PIN *
+                                            </label>
+                                            <input
+                                                type="password"
+                                                inputMode="numeric"
+                                                maxLength={6}
+                                                required
+                                                value={securityPinForm.confirm_pin}
+                                                onChange={(e) => setSecurityPinForm({ ...securityPinForm, confirm_pin: e.target.value.replace(/\D/g, '') })}
+                                                placeholder="Repeat PIN"
+                                                className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-mono tracking-widest text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-end pt-3 border-t border-stone-100">
+                                        <button
+                                            type="submit"
+                                            disabled={pinLoading}
+                                            className="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 active:scale-95 cursor-pointer disabled:opacity-50"
+                                        >
+                                            {pinLoading ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                                    <span>Saving PIN...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <ShieldCheck className="w-4 h-4 text-white" />
+                                                    <span>{isPinConfigured ? 'Update Security PIN' : 'Enable Security PIN'}</span>
                                                 </>
                                             )}
                                         </button>
@@ -3332,6 +3515,28 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         </div>
                                     )}
                                 </div>
+
+                                {isPinConfigured && (
+                                    <div className="space-y-1.5 bg-amber-500/10 border border-amber-300/50 p-3.5 rounded-2xl">
+                                        <label className="text-xs font-bold text-amber-950 uppercase tracking-wider flex items-center gap-1.5">
+                                            <Shield className="w-3.5 h-3.5 text-amber-700" />
+                                            <span>Step-Up Security PIN * (Required)</span>
+                                        </label>
+                                        <input
+                                            type="password"
+                                            inputMode="numeric"
+                                            maxLength={6}
+                                            value={credentialsForm.security_pin || ''}
+                                            onChange={(e) => setCredentialsForm({ ...credentialsForm, security_pin: e.target.value.replace(/\D/g, '') })}
+                                            placeholder="Enter your 4–6 digit Security PIN"
+                                            className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-white text-xs font-mono tracking-widest text-stone-900 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                            required={isPinConfigured}
+                                        />
+                                        <p className="text-[10px] text-amber-900/80">
+                                            Step-Up 2FA is active. Enter your Security PIN to authorize this change.
+                                        </p>
+                                    </div>
+                                )}
 
                                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-100">
                                     <button

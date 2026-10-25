@@ -485,5 +485,33 @@ USING (
 );
 
 -- ==============================================================================
+-- 9. PERSISTENT TOKEN REVOCATION & SECURITY PIN EXTENSIONS
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.revoked_tokens (
+    jti TEXT PRIMARY KEY,
+    revoked_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    expires_at TIMESTAMPTZ
+);
+
+ALTER TABLE public.revoked_tokens ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can manage revoked tokens" ON public.revoked_tokens;
+CREATE POLICY "Admins can manage revoked tokens" ON public.revoked_tokens
+FOR ALL TO authenticated
+USING ((SELECT public.is_admin()))
+WITH CHECK ((SELECT public.is_admin()));
+
+-- Add security_pin_hash column to admin_users if present
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'admin_users'
+    ) THEN
+        ALTER TABLE public.admin_users ADD COLUMN IF NOT EXISTS security_pin_hash TEXT;
+    END IF;
+END $$;
+
+-- ==============================================================================
 -- END OF MIGRATION 20261024000000_security_rls_hardening.sql
 -- ==============================================================================

@@ -70,7 +70,9 @@ class LocalStore:
                 "festival_sections": self.festival_sections,
                 "reviews": self.reviews,
                 "orders": getattr(self, "orders", []),
-                "admin_users": getattr(self, "admin_users", [])
+                "admin_users": getattr(self, "admin_users", []),
+                "revoked_tokens": getattr(self, "revoked_tokens", []),
+                "rate_limits": getattr(self, "rate_limits", {})
             }
             def json_serial(obj):
                 if isinstance(obj, (datetime.datetime, datetime.date)):
@@ -102,6 +104,8 @@ class LocalStore:
                 self.reviews = data["reviews"]
             self.orders = data.get("orders", [])
             self.admin_users = data.get("admin_users", [])
+            self.revoked_tokens = data.get("revoked_tokens", [])
+            self.rate_limits = data.get("rate_limits", {})
             if not self.admin_users:
                 self.admin_users = [
                     {

@@ -2,12 +2,12 @@ import time
 import datetime
 from typing import Dict, List, Optional
 import jwt
-from fastapi import APIRouter, Depends, Request, HTTPException, status
+from fastapi import APIRouter, Depends, Request, Response, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 from app.schemas.auth import (
     AdminLoginRequest, UserRegisterRequest, TokenResponse,
     AdminProfile, UserProfileUpdateRequest, ForgotPasswordRequest, ResetPasswordRequest,
-    AdminUpdateCredentialsRequest
+    AdminUpdateCredentialsRequest, AdminSecurityPinRequest, AdminSecurityPinStatusResponse
 )
 from app.schemas.common import ApiResponse
 from app.auth import verify_password, get_password_hash, create_access_token, decode_access_token, revoke_token, get_current_admin, get_current_user, security_bearer
@@ -18,17 +18,15 @@ from app.errors import UnauthorizedError
 
 router = APIRouter(prefix="/api/auth", tags=["Admin Authentication"])
 
-# Sliding window in-memory rate limiter for login attempts (5 failures / 15 minutes per IP)
+# Sliding window rate limiter configurations (persisted to local_store / database)
 LOGIN_FAILURE_LOG: Dict[str, List[float]] = {}
 MAX_LOGIN_ATTEMPTS = 5
 LOCKOUT_WINDOW_SECONDS = 900  # 15 minutes
 
-# Sliding window in-memory rate limiter for password reset requests (3 requests / 15 minutes per IP)
 PASSWORD_RESET_LOG: Dict[str, List[float]] = {}
 MAX_RESET_ATTEMPTS = 3
 RESET_WINDOW_SECONDS = 900
 
-# Sliding window in-memory rate limiter for user registrations (5 requests / hour per IP)
 REGISTRATION_LOG: Dict[str, List[float]] = {}
 MAX_REGISTRATIONS_PER_HOUR = 5
 REGISTRATION_WINDOW_SECONDS = 3600
@@ -39,10 +37,70 @@ def get_client_ip(request: Request) -> str:
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else "127.0.0.1"
 
+def _get_rate_limit_timestamps(category: str, key: str, window_seconds: float) -> List[float]:
+    now = time.time()
+    try:
+        from app.database import local_store
+        rl = getattr(local_store, "rate_limits", {})
+        cat = rl.get(category, {})
+        timestamps = [t for t in cat.get(key, []) if now - t < window_seconds]
+        cat[key] = timestamps
+        rl[category] = cat
+        local_store.rate_limits = rl
+        return timestamps
+    except Exception:
+        fallback_map = {
+            "login": LOGIN_FAILURE_LOG,
+            "reset": PASSWORD_RESET_LOG,
+            "register": REGISTRATION_LOG
+        }
+        f_log = fallback_map.get(category, {})
+        return [t for t in f_log.get(key, []) if now - t < window_seconds]
+
+def _record_rate_limit_timestamp(category: str, key: str, window_seconds: float):
+    now = time.time()
+    try:
+        from app.database import local_store
+        rl = getattr(local_store, "rate_limits", {})
+        cat = rl.setdefault(category, {})
+        timestamps = [t for t in cat.get(key, []) if now - t < window_seconds]
+        timestamps.append(now)
+        cat[key] = timestamps
+        rl[category] = cat
+        local_store.rate_limits = rl
+        local_store.save()
+    except Exception:
+        fallback_map = {
+            "login": LOGIN_FAILURE_LOG,
+            "reset": PASSWORD_RESET_LOG,
+            "register": REGISTRATION_LOG
+        }
+        f_log = fallback_map.get(category, {})
+        timestamps = [t for t in f_log.get(key, []) if now - t < window_seconds]
+        timestamps.append(now)
+        f_log[key] = timestamps
+
+def _clear_rate_limit_key(category: str, key: str):
+    try:
+        from app.database import local_store
+        rl = getattr(local_store, "rate_limits", {})
+        if category in rl and key in rl[category]:
+            del rl[category][key]
+            local_store.save()
+    except Exception:
+        pass
+    fallback_map = {
+        "login": LOGIN_FAILURE_LOG,
+        "reset": PASSWORD_RESET_LOG,
+        "register": REGISTRATION_LOG
+    }
+    f_log = fallback_map.get(category, {})
+    if key in f_log:
+        del f_log[key]
+
 def check_login_rate_limit(ip: str):
     now = time.time()
-    failures = [t for t in LOGIN_FAILURE_LOG.get(ip, []) if now - t < LOCKOUT_WINDOW_SECONDS]
-    LOGIN_FAILURE_LOG[ip] = failures
+    failures = _get_rate_limit_timestamps("login", ip, LOCKOUT_WINDOW_SECONDS)
     if len(failures) >= MAX_LOGIN_ATTEMPTS:
         oldest = failures[0]
         retry_after = max(1, int(LOCKOUT_WINDOW_SECONDS - (now - oldest)))
@@ -54,19 +112,14 @@ def check_login_rate_limit(ip: str):
         )
 
 def record_login_failure(ip: str):
-    now = time.time()
-    failures = [t for t in LOGIN_FAILURE_LOG.get(ip, []) if now - t < LOCKOUT_WINDOW_SECONDS]
-    failures.append(now)
-    LOGIN_FAILURE_LOG[ip] = failures
+    _record_rate_limit_timestamp("login", ip, LOCKOUT_WINDOW_SECONDS)
 
 def clear_login_failures(ip: str):
-    if ip in LOGIN_FAILURE_LOG:
-        del LOGIN_FAILURE_LOG[ip]
+    _clear_rate_limit_key("login", ip)
 
 def check_reset_rate_limit(ip: str):
     now = time.time()
-    attempts = [t for t in PASSWORD_RESET_LOG.get(ip, []) if now - t < RESET_WINDOW_SECONDS]
-    PASSWORD_RESET_LOG[ip] = attempts
+    attempts = _get_rate_limit_timestamps("reset", ip, RESET_WINDOW_SECONDS)
     if len(attempts) >= MAX_RESET_ATTEMPTS:
         oldest = attempts[0]
         retry_after = max(1, int(RESET_WINDOW_SECONDS - (now - oldest)))
@@ -78,15 +131,11 @@ def check_reset_rate_limit(ip: str):
         )
 
 def record_reset_attempt(ip: str):
-    now = time.time()
-    attempts = [t for t in PASSWORD_RESET_LOG.get(ip, []) if now - t < RESET_WINDOW_SECONDS]
-    attempts.append(now)
-    PASSWORD_RESET_LOG[ip] = attempts
+    _record_rate_limit_timestamp("reset", ip, RESET_WINDOW_SECONDS)
 
 def check_registration_rate_limit(ip: str):
     now = time.time()
-    regs = [t for t in REGISTRATION_LOG.get(ip, []) if now - t < REGISTRATION_WINDOW_SECONDS]
-    REGISTRATION_LOG[ip] = regs
+    regs = _get_rate_limit_timestamps("register", ip, REGISTRATION_WINDOW_SECONDS)
     if len(regs) >= MAX_REGISTRATIONS_PER_HOUR:
         oldest = regs[0]
         retry_after = max(1, int(REGISTRATION_WINDOW_SECONDS - (now - oldest)))
@@ -98,18 +147,16 @@ def check_registration_rate_limit(ip: str):
         )
 
 def record_registration(ip: str):
-    now = time.time()
-    regs = [t for t in REGISTRATION_LOG.get(ip, []) if now - t < REGISTRATION_WINDOW_SECONDS]
-    regs.append(now)
-    REGISTRATION_LOG[ip] = regs
+    _record_rate_limit_timestamp("register", ip, REGISTRATION_WINDOW_SECONDS)
 
 @router.post("/login", response_model=ApiResponse[TokenResponse], summary="Admin login with rate-limiting and verified credentials")
-def admin_login(payload: AdminLoginRequest, request: Request):
+def admin_login(payload: AdminLoginRequest, request: Request, response: Response = None):
     """
     Standard admin operation: Authenticate admin user with strict cryptographic verification.
     - Protected by IP-based rate limiting (5 failed attempts per 15 min).
     - Rejects known default production passwords.
     - Verifies bcrypt hashes; zero plaintext fallback.
+    - Sets HttpOnly, SameSite=Lax cookie for browser session protection against XSS.
     """
     ip = get_client_ip(request)
     check_login_rate_limit(ip)
@@ -200,6 +247,19 @@ def admin_login(payload: AdminLoginRequest, request: Request):
     access_token = create_access_token(admin_data)
     logger.info(f"[AUDIT] Admin user logged in: '{email}' (role={admin_data.get('role')}) from IP: {ip}")
 
+    # Set HttpOnly, SameSite=Lax cookie for browser session protection against XSS
+    if response:
+        is_prod = settings.ENVIRONMENT.lower() in ["production", "prod"]
+        response.set_cookie(
+            key="murti_auth_token",
+            value=access_token,
+            httponly=True,
+            secure=is_prod,
+            samesite="lax",
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            path="/"
+        )
+
     return ApiResponse(
         success=True,
         message="Authenticated successfully",
@@ -211,7 +271,7 @@ def admin_login(payload: AdminLoginRequest, request: Request):
     )
 
 @router.post("/register", response_model=ApiResponse[TokenResponse], status_code=status.HTTP_201_CREATED, summary="Create a new authenticated account")
-def user_register(payload: UserRegisterRequest, request: Request):
+def user_register(payload: UserRegisterRequest, request: Request, response: Response = None):
     """
     Registers a new account securely with bcrypt password hashing in the database.
     - Rate limited to prevent automated spam.
@@ -293,6 +353,19 @@ def user_register(payload: UserRegisterRequest, request: Request):
 
     access_token = create_access_token(user_data)
     logger.info(f"New user registered successfully: '{email}' from IP: {ip}")
+
+    # Set HttpOnly, SameSite=Lax cookie for browser session protection against XSS
+    if response:
+        is_prod = settings.ENVIRONMENT.lower() in ["production", "prod"]
+        response.set_cookie(
+            key="murti_auth_token",
+            value=access_token,
+            httponly=True,
+            secure=is_prod,
+            samesite="lax",
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            path="/"
+        )
 
     return ApiResponse(
         success=True,
@@ -575,6 +648,15 @@ def update_admin_credentials(
             detail="Current administrator password is incorrect. Credential update denied."
         )
 
+    # 1.1 Verify Security PIN Step-Up if configured on this admin account
+    if admin_record and admin_record.get("security_pin_hash"):
+        if not payload.security_pin or not verify_password(payload.security_pin, admin_record["security_pin_hash"]):
+            logger.warning(f"[AUDIT] Step-up verification failed for '{current_email}' from IP: {ip} - invalid or missing Security PIN")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Security PIN step-up verification failed. Please provide your valid 4-6 digit Security PIN."
+            )
+
     # 2. Validate New Email (Admin ID) if provided
     clean_new_email = payload.new_email.strip().lower() if payload.new_email else None
     if clean_new_email:
@@ -607,8 +689,13 @@ def update_admin_credentials(
             raise HTTPException(status_code=400, detail="New password must be at least 8 characters long.")
         new_hash = get_password_hash(payload.new_password)
 
-    if not clean_new_email and not new_hash:
-        raise HTTPException(status_code=400, detail="Please provide either a new Admin ID (email) or a new password to update.")
+    # Optional: Update Security PIN if provided
+    new_pin_hash = None
+    if payload.security_pin and (not admin_record or not admin_record.get("security_pin_hash")):
+        new_pin_hash = get_password_hash(payload.security_pin)
+
+    if not clean_new_email and not new_hash and not new_pin_hash:
+        raise HTTPException(status_code=400, detail="Please provide either a new Admin ID (email), new password, or Security PIN to update.")
 
     updated_email = clean_new_email if clean_new_email else current_email
 
@@ -621,6 +708,8 @@ def update_admin_credentials(
                 update_data["email"] = clean_new_email
             if new_hash:
                 update_data["password_hash"] = new_hash
+            if new_pin_hash:
+                update_data["security_pin_hash"] = new_pin_hash
             client.table("admin_users").update(update_data).eq("email", current_email).execute()
         except Exception as e:
             logger.warning(f"[Supabase] Error updating admin_users credentials: {e}")
@@ -634,6 +723,8 @@ def update_admin_credentials(
                     u["email"] = clean_new_email
                 if new_hash:
                     u["password_hash"] = new_hash
+                if new_pin_hash:
+                    u["security_pin_hash"] = new_pin_hash
                 found = True
                 break
         if not found:
@@ -642,6 +733,7 @@ def update_admin_credentials(
                 "email": updated_email,
                 "full_name": admin.get("full_name", "Master Sculptor Admin"),
                 "password_hash": new_hash if new_hash else get_password_hash(payload.current_password),
+                "security_pin_hash": new_pin_hash,
                 "role": admin.get("role", "super_admin"),
                 "is_active": True
             })
@@ -653,7 +745,13 @@ def update_admin_credentials(
     if payload.new_password:
         settings.ADMIN_PASSWORD = payload.new_password
 
-    # 7. Mint updated JWT Token
+    # 7. Invalidate previous token (Defense-in-depth session revocation)
+    prev_jti = admin.get("jti")
+    if prev_jti:
+        exp = datetime.datetime.fromtimestamp(admin.get("exp"), tz=datetime.timezone.utc) if admin.get("exp") else None
+        revoke_token(prev_jti, expires_at=exp)
+
+    # 8. Mint updated JWT Token
     updated_admin_data = {
         "id": admin_id,
         "email": updated_email,
@@ -677,4 +775,77 @@ def update_admin_credentials(
             admin=updated_admin_data
         )
     )
+
+@router.get("/admin/security-pin", response_model=ApiResponse[AdminSecurityPinStatusResponse], summary="Check Admin Security PIN configuration status")
+def get_security_pin_status(admin: dict = Depends(get_current_admin)):
+    email = (admin.get("email") or admin.get("sub") or "").lower()
+    has_pin = False
+    if hasattr(local_store, "admin_users"):
+        for u in getattr(local_store, "admin_users", []):
+            if u.get("email", "").lower() == email:
+                has_pin = bool(u.get("security_pin_hash"))
+                break
+    return ApiResponse(
+        success=True,
+        message="Security PIN status retrieved",
+        data=AdminSecurityPinStatusResponse(pin_configured=has_pin, mfa_enabled=has_pin)
+    )
+
+@router.post("/admin/security-pin", response_model=ApiResponse[AdminSecurityPinStatusResponse], summary="Set or update Admin 4-6 digit Security PIN")
+def set_security_pin(payload: AdminSecurityPinRequest, request: Request, admin: dict = Depends(get_current_admin)):
+    email = (admin.get("email") or admin.get("sub") or "").lower()
+    ip = get_client_ip(request)
+    
+    user_record = None
+    if hasattr(local_store, "admin_users"):
+        for u in getattr(local_store, "admin_users", []):
+            if u.get("email", "").lower() == email or str(u.get("id")) == str(admin.get("id") or admin.get("sub")):
+                user_record = u
+                break
+
+    if not user_record or not verify_password(payload.current_password, user_record.get("password_hash", "")):
+        logger.warning(f"[AUDIT] Failed security PIN update attempt for '{email}' from IP: {ip} - invalid current password")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current administrator password is incorrect. PIN update denied."
+        )
+
+    pin_hash = get_password_hash(payload.security_pin)
+    user_record["security_pin_hash"] = pin_hash
+    local_store.save()
+    logger.info(f"[AUDIT] Admin Security PIN successfully updated for '{email}' from IP: {ip}")
+    
+    return ApiResponse(
+        success=True,
+        message="Admin Security PIN updated successfully",
+        data=AdminSecurityPinStatusResponse(pin_configured=True, mfa_enabled=True)
+    )
+
+@router.post("/logout", summary="Revoke current token and clear secure session cookies")
+def admin_logout(
+    request: Request,
+    response: Response = None,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer)
+):
+    token = None
+    if credentials and credentials.credentials:
+        token = credentials.credentials
+    elif request and hasattr(request, "cookies") and request.cookies.get("murti_auth_token"):
+        token = request.cookies.get("murti_auth_token")
+
+    if token:
+        try:
+            payload = decode_access_token(token)
+            jti = payload.get("jti")
+            exp = datetime.datetime.fromtimestamp(payload.get("exp"), tz=datetime.timezone.utc) if payload.get("exp") else None
+            if jti:
+                revoke_token(jti, expires_at=exp)
+        except Exception:
+            pass
+
+    if response:
+        response.delete_cookie(key="murti_auth_token", path="/")
+
+    return ApiResponse(success=True, message="Logged out successfully and session token revoked.")
+
 

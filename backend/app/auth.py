@@ -2,7 +2,7 @@ import datetime
 import uuid
 from typing import Optional, Dict, Any, Set
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from passlib.context import CryptContext
 from app.config import settings
@@ -16,12 +16,64 @@ security_bearer = HTTPBearer(auto_error=False)
 # In-memory revocation cache for invalidated tokens (supports session invalidation and logout)
 REVOKED_TOKEN_JTIS: Set[str] = set()
 
-def revoke_token(jti: str) -> None:
-    if jti:
-        REVOKED_TOKEN_JTIS.add(jti)
+def revoke_token(jti: str, expires_at: Optional[datetime.datetime] = None) -> None:
+    if not jti:
+        return
+    REVOKED_TOKEN_JTIS.add(jti)
+    try:
+        from app.database import local_store, get_supabase, is_supabase_connected
+        if hasattr(local_store, "revoked_tokens"):
+            now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            exp_iso = expires_at.isoformat() if expires_at else None
+            unexpired = [
+                t for t in getattr(local_store, "revoked_tokens", [])
+                if t.get("jti") != jti and (not t.get("expires_at") or t.get("expires_at") > now_iso)
+            ]
+            unexpired.append({
+                "jti": jti,
+                "revoked_at": now_iso,
+                "expires_at": exp_iso
+            })
+            local_store.revoked_tokens = unexpired
+            local_store.save()
+            
+        if is_supabase_connected():
+            client = get_supabase()
+            client.table("revoked_tokens").upsert({
+                "jti": jti,
+                "expires_at": expires_at.isoformat() if expires_at else None
+            }).execute()
+    except Exception as e:
+        logger.warning(f"Could not persist revoked token {jti}: {e}")
 
 def is_token_revoked(jti: str) -> bool:
-    return bool(jti and jti in REVOKED_TOKEN_JTIS)
+    if not jti:
+        return False
+    if jti in REVOKED_TOKEN_JTIS:
+        return True
+    try:
+        from app.database import local_store
+        now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        for t in getattr(local_store, "revoked_tokens", []):
+            if t.get("jti") == jti:
+                if not t.get("expires_at") or t.get("expires_at") > now_iso:
+                    REVOKED_TOKEN_JTIS.add(jti)
+                    return True
+    except Exception:
+        pass
+    return False
+
+def sync_revoked_tokens():
+    try:
+        from app.database import local_store
+        now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        for t in getattr(local_store, "revoked_tokens", []):
+            if not t.get("expires_at") or t.get("expires_at") > now_iso:
+                REVOKED_TOKEN_JTIS.add(t.get("jti"))
+    except Exception:
+        pass
+
+sync_revoked_tokens()
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     if not plain_password or not hashed_password:
@@ -77,16 +129,25 @@ def decode_access_token(token: str) -> dict:
         raise jwt.InvalidTokenError("Token has been revoked.")
     return payload
 
-async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer)) -> Dict[str, Any]:
-    if not credentials or not credentials.credentials:
+async def get_current_user(
+    request: Request = None,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer)
+) -> Dict[str, Any]:
+    raw_token = None
+    if credentials and credentials.credentials:
+        raw_token = credentials.credentials
+    elif request and hasattr(request, "cookies") and request.cookies.get("murti_auth_token"):
+        raw_token = request.cookies.get("murti_auth_token")
+
+    if not raw_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required. Please provide a Bearer token.",
+            detail="Authentication required. Please provide a Bearer token or authenticated session cookie.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     try:
-        payload = decode_access_token(credentials.credentials)
+        payload = decode_access_token(raw_token)
         return payload
     except jwt.ExpiredSignatureError:
         logger.warning("Access attempted with expired JWT token")
@@ -112,8 +173,11 @@ async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] =
             headers={"WWW-Authenticate": "Bearer"}
         )
 
-async def get_current_admin(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer)) -> Dict[str, Any]:
-    payload = await get_current_user(credentials)
+async def get_current_admin(
+    request: Request = None,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer)
+) -> Dict[str, Any]:
+    payload = await get_current_user(request, credentials)
     role = payload.get("role")
     if role in ["super_admin", "admin", "editor"]:
         return payload

@@ -242,6 +242,7 @@ class ApiService {
 
         const config = {
             ...options,
+            credentials: options.credentials || 'include',
             signal: options.signal || controller.signal,
             headers: {
                 ...this.getHeaders(isMultipart),
@@ -479,10 +480,11 @@ class ApiService {
         });
     }
 
-    async updateAdminCredentials({ current_password, new_email, new_password }) {
+    async updateAdminCredentials({ current_password, new_email, new_password, security_pin }) {
         const payload = { current_password };
         if (new_email) payload.new_email = new_email.trim().toLowerCase();
         if (new_password) payload.new_password = new_password;
+        if (security_pin) payload.security_pin = security_pin;
 
         const res = await this.request('/auth/admin-credentials', {
             method: 'PUT',
@@ -513,6 +515,17 @@ class ApiService {
         }
 
         return res;
+    }
+
+    async getSecurityPinStatus() {
+        return this.request('/auth/admin/security-pin');
+    }
+
+    async setSecurityPin(current_password, security_pin) {
+        return this.request('/auth/admin/security-pin', {
+            method: 'POST',
+            body: JSON.stringify({ current_password, security_pin })
+        });
     }
 
     async getProfile() {

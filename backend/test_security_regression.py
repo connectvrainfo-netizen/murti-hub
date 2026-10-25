@@ -97,7 +97,7 @@ def test_login_brute_force_rate_limiting():
     print("\n--- TEST: Login Rate-Limiting Protection ---")
     
     # Send 5 failed attempts from a specific unique IP
-    spoofed_ip = "198.51.100.99"
+    spoofed_ip = f"198.51.{int(time.time()) % 250}.{int(time.time() * 1000) % 250}"
     headers = {"X-Forwarded-For": spoofed_ip}
     
     for attempt in range(1, 6):
@@ -198,21 +198,22 @@ def test_password_reset_flow_and_anti_enumeration():
     print("\n--- TEST: Password Reset Flow & Anti-Enumeration ---")
     
     # 1. Anti-enumeration: request reset for nonexistent email
-    res1 = client.post("/api/auth/forgot-password", json={"email": "nonexistent_devotee_9999@example.com"})
+    base_ip = f"198.53.{int(time.time()) % 250}.{int(time.time() * 1000) % 250}"
+    res1 = client.post("/api/auth/forgot-password", json={"email": "nonexistent_devotee_9999@example.com"}, headers={"X-Forwarded-For": base_ip})
     assert res1.status_code == 200, f"Expected 200, got {res1.status_code}"
     body1 = res1.json()
     assert body1["success"] is True
     assert "If an account is associated" in body1["message"]
 
     # 2. Request for existing email - same message
-    res2 = client.post("/api/auth/forgot-password", json={"email": "devotee@example.com"})
+    res2 = client.post("/api/auth/forgot-password", json={"email": "devotee@example.com"}, headers={"X-Forwarded-For": base_ip})
     assert res2.status_code == 200
     body2 = res2.json()
     assert body2["message"] == body1["message"], "Anti-enumeration violation: Different responses for existing vs non-existing emails"
     print("  [PASS] Anti-enumeration confirmed: Identical generic response for existing and non-existing accounts")
 
     # 3. Rate limiting: 4th attempt from same IP is blocked with 429
-    unique_ip = "198.51.100.77"
+    unique_ip = f"198.52.{int(time.time()) % 250}.{int(time.time() * 1000) % 250}"
     headers = {"X-Forwarded-For": unique_ip}
     for _ in range(3):
         client.post("/api/auth/forgot-password", json={"email": "devotee@example.com"}, headers=headers)
@@ -321,7 +322,93 @@ def test_admin_credentials_update_and_reauthentication():
     assert restore_res.status_code == 200
     print("  [PASS] Clean rollback to original test credentials confirmed")
 
+def test_persistent_revocation_cookies_and_step_up_pin():
+    """Verify residual security roadmap items: Persistent revocation, cookie auth, step-up PIN."""
+    print("\n--- TEST: Persistent Revocation, Cookie-Based Auth & Step-Up Security PIN ---")
+    
+    # 1. Login to get a valid token
+    login_res = client.post("/api/auth/login", json={"email": "admin@amolmurtibhandar.com", "password": "admin123"})
+    assert login_res.status_code == 200
+    token = login_res.json()["data"]["access_token"]
+    
+    # Verify cookie was attached in response
+    assert "murti_auth_token" in login_res.cookies, "Login must set HttpOnly murti_auth_token cookie"
+    print("  [PASS] HttpOnly cookie 'murti_auth_token' attached to login response")
+    
+    # 2. Test cookie-based authentication (no Authorization header)
+    cookie_res = client.get("/api/auth/me", cookies={"murti_auth_token": token})
+    assert cookie_res.status_code == 200, f"Cookie authentication failed: {cookie_res.text}"
+    print("  [PASS] Cookie-based authentication accepted via /api/auth/me")
+    
+    # 3. Test Step-Up Security PIN configuration and enforcement
+    set_pin_res = client.post(
+        "/api/auth/admin/security-pin",
+        json={"current_password": "admin123", "security_pin": "543210"},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert set_pin_res.status_code == 200
+    print("  [PASS] Security PIN configured successfully")
+    
+    pin_status = client.get("/api/auth/admin/security-pin", headers={"Authorization": f"Bearer {token}"})
+    assert pin_status.status_code == 200
+    assert pin_status.json()["data"]["pin_configured"] is True
+    print("  [PASS] Security PIN status confirmed active")
+    
+    # Attempt credential update without PIN -> 403 Forbidden
+    no_pin_update = client.put(
+        "/api/auth/admin-credentials",
+        json={"current_password": "admin123", "new_password": "TempPassword123!"},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert no_pin_update.status_code == 403, f"Expected 403 without PIN, got {no_pin_update.status_code}"
+    print("  [PASS] Credential update without Step-Up PIN rejected with 403 Forbidden")
+    
+    # Attempt credential update with wrong PIN -> 403 Forbidden
+    wrong_pin_update = client.put(
+        "/api/auth/admin-credentials",
+        json={"current_password": "admin123", "new_password": "TempPassword123!", "security_pin": "000000"},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert wrong_pin_update.status_code == 403, f"Expected 403 with wrong PIN, got {wrong_pin_update.status_code}"
+    print("  [PASS] Credential update with wrong Step-Up PIN rejected with 403 Forbidden")
+    
+    # Attempt credential update with valid PIN -> 200 OK
+    valid_pin_update = client.put(
+        "/api/auth/admin-credentials",
+        json={"current_password": "admin123", "new_password": "admin123", "security_pin": "543210"},
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    assert valid_pin_update.status_code == 200, f"Expected 200 with valid PIN, got {valid_pin_update.status_code}"
+    updated_token = valid_pin_update.json()["data"]["access_token"]
+    print("  [PASS] Credential update with valid Step-Up PIN authorized successfully")
+    
+    # 4. Invalidate / Logout & check persistence
+    logout_res = client.post("/api/auth/logout", headers={"Authorization": f"Bearer {updated_token}"})
+    assert logout_res.status_code == 200
+    
+    # Verify token is in local_store.revoked_tokens
+    from app.database import local_store
+    assert hasattr(local_store, "revoked_tokens") and len(local_store.revoked_tokens) > 0
+    print("  [PASS] Revoked token JTI persistently recorded in local_store.revoked_tokens")
+    
+    # Subsequent access with that token rejected
+    revoked_check = client.get("/api/auth/me", headers={"Authorization": f"Bearer {updated_token}"})
+    assert revoked_check.status_code == 401
+    print("  [PASS] Access with revoked token rejected with 401")
+    
+    # Clean up PIN for subsequent runs
+    if hasattr(local_store, "admin_users"):
+        for u in getattr(local_store, "admin_users", []):
+            if u.get("email", "").lower() == "admin@amolmurtibhandar.com":
+                u["security_pin_hash"] = None
+        local_store.save()
+
 if __name__ == "__main__":
+    from app.database import local_store
+    if hasattr(local_store, "rate_limits"):
+        local_store.rate_limits = {"login": {}, "reset": {}, "register": {}}
+        local_store.save()
+
     print("======================================================================")
     print("RUNNING SECURITY HARDENING REGRESSION TEST SUITE")
     print("======================================================================")
@@ -330,8 +417,10 @@ if __name__ == "__main__":
     test_login_brute_force_rate_limiting()
     test_password_reset_flow_and_anti_enumeration()
     test_admin_credentials_update_and_reauthentication()
+    test_persistent_revocation_cookies_and_step_up_pin()
     test_order_pii_masking()
     test_security_headers_and_root_leakage()
     print("\n======================================================================")
     print("ALL SECURITY REGRESSION TESTS PASSED 100% SUCCESFULLY!")
     print("======================================================================")
+
