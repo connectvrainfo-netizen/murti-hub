@@ -260,7 +260,7 @@ export default function StructuredData({
     const structuredDataJson = JSON.stringify({
         '@context': 'https://schema.org',
         '@graph': graph
-    });
+    }).replace(/</g, '\\u003c');
 
     return (
         <script

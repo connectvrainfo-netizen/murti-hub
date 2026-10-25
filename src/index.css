@@ -8,15 +8,11 @@
     box-sizing: border-box;
 }
 
-/* Show the full nav on mouse/trackpad (desktop) devices regardless of window
-   width, and the hamburger menu on touch (mobile/tablet) devices regardless
-   of width — so a narrow, un-maximized desktop window still gets the full
-   nav instead of the hamburger. */
-@media (hover: hover) and (pointer: fine) {
+@media (min-width: 1024px) {
     .mobile-hamburger-btn { display: none !important; }
     .desktop-nav-menu { display: flex !important; }
 }
-@media (hover: none), (pointer: coarse) {
+@media (max-width: 1023px) {
     .mobile-hamburger-btn { display: flex !important; }
     .desktop-nav-menu { display: none !important; }
 }
@@ -24,6 +20,8 @@
 html {
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
+    width: 100%;
+    max-width: 100vw;
 }
 
 body {
@@ -33,6 +31,16 @@ body {
     overflow-x: hidden;
     margin: 0;
     line-height: 1.5;
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
+}
+
+#root {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    position: relative;
 }
 
 /* Authentic Golden Diamond Lattice (Jaali) Print from Video */

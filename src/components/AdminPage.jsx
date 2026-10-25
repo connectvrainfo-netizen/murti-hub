@@ -6,7 +6,7 @@ import {
     LogOut, Database, Layers, MessageSquare, CheckSquare, Search,
     Upload, Loader2, Eye, EyeOff, Filter, Send, Link as LinkIcon,
     AlertTriangle, X, CheckCheck, ChevronRight, ChevronDown, Sliders,
-    User, Info, ArrowUpRight
+    User, Info, ArrowUpRight, Key
 } from 'lucide-react';
 import api from '../services/api';
 import SafeImage from './SafeImage';
@@ -260,14 +260,26 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         if (typeof window === 'undefined') return false;
         return Boolean(api.getToken());
     });
-    const [isOfflineMode, setIsOfflineMode] = useState(false);
     const [authLoading, setAuthLoading] = useState(false);
     const [authError, setAuthError] = useState('');
     const [loginForm, setLoginForm] = useState({ email: '', password: '' });
-    const [backendUrlInput, setBackendUrlInput] = useState(api.getBaseUrl() || '');
-    const [isConfiguringServer, setIsConfiguringServer] = useState(false);
-    const [testingConnection, setTestingConnection] = useState(false);
-    const [serverStatus, setServerStatus] = useState(null);
+    const [showLoginPassword, setShowLoginPassword] = useState(false);
+
+    // Admin Credentials Management States
+    const [adminUser, setAdminUser] = useState(() => api.getCurrentUser() || null);
+    const [isEditingCredentials, setIsEditingCredentials] = useState(false);
+    const [credentialsForm, setCredentialsForm] = useState({
+        current_password: '',
+        new_email: '',
+        new_password: '',
+        confirm_password: ''
+    });
+    const [credentialsLoading, setCredentialsLoading] = useState(false);
+    const [credentialsError, setCredentialsError] = useState('');
+    const [credentialsSuccess, setCredentialsSuccess] = useState('');
+    const [showCurrentPass, setShowCurrentPass] = useState(false);
+    const [showNewPass, setShowNewPass] = useState(false);
+    const [showConfirmPass, setShowConfirmPass] = useState(false);
 
     // Core Data States - Pre-seeded with existing catalog data
     const [loading, setLoading] = useState(false);
@@ -340,7 +352,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
     // Lock body scroll when any modal dialog is open
     useEffect(() => {
-        const isAnyModalOpen = Boolean(editingProduct || editingCategory || editingSize || isConfiguringServer);
+        const isAnyModalOpen = Boolean(editingProduct || editingCategory || editingSize || isEditingCredentials);
         if (isAnyModalOpen) {
             document.body.style.overflow = 'hidden';
         } else {
@@ -349,7 +361,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         return () => {
             document.body.style.overflow = '';
         };
-    }, [editingProduct, editingCategory, editingSize, isConfiguringServer]);
+    }, [editingProduct, editingCategory, editingSize, isEditingCredentials]);
 
     // Reusable file upload handler to backend /api/upload
     const handleFileUpload = async (file, folder = 'catalog') => {
@@ -409,17 +421,20 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         const token = api.getToken();
         if (token) {
             api.getMe()
-                .then(() => {
+                .then((meRes) => {
                     setIsAuthenticated(true);
-                    setIsOfflineMode(false);
+                    const user = meRes?.data || meRes?.admin || api.getCurrentUser();
+                    if (user) setAdminUser(user);
                     refreshAllData();
                 })
                 .catch(() => {
                     api.logout();
                     setIsAuthenticated(false);
+                    setAdminUser(null);
                 });
         } else {
             setIsAuthenticated(false);
+            setAdminUser(null);
         }
     }, []);
 
@@ -442,9 +457,10 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         }
 
         try {
-            await api.login(loginForm.email.trim(), loginForm.password);
+            const loginRes = await api.login(loginForm.email.trim(), loginForm.password);
             setIsAuthenticated(true);
-            setIsOfflineMode(false);
+            const user = loginRes?.data?.admin || api.getCurrentUser();
+            if (user) setAdminUser(user);
             showToast('Welcome back, Admin!');
             refreshAllData();
         } catch (err) {
@@ -458,40 +474,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const handleLogout = async () => {
         await api.logout();
         setIsAuthenticated(false);
-        setIsOfflineMode(false);
+        setAdminUser(null);
         showToast('Logged out of Admin Portal');
-    };
-
-    const handleTestAndSaveBackend = async (e) => {
-        if (e) e.preventDefault();
-        setTestingConnection(true);
-        setServerStatus({ type: 'info', message: 'Testing backend connection to /health (wait ~20-30s if Render is waking up)...' });
-        const res = await api.testBackendHealth(backendUrlInput);
-        setTestingConnection(false);
-        if (res.success) {
-            api.setBaseUrl(backendUrlInput);
-            setIsOfflineMode(false);
-            setServerStatus({
-                type: 'success',
-                message: `Connected successfully! (Backend v${res.data?.version || '2.0.0'}, status: ${res.data?.status || 'healthy'})`
-            });
-            showToast('Render backend connected successfully!');
-            setAuthError('');
-            // Attempt auto-login with connected backend
-            try {
-                await api.login(loginForm.email, loginForm.password);
-                setIsAuthenticated(true);
-                if (typeof localStorage !== 'undefined') localStorage.setItem('murti_admin_session', 'active');
-                refreshAllData();
-            } catch (err) {
-                console.log('Login ready for manual sign-in:', err.message);
-            }
-        } else {
-            setServerStatus({
-                type: 'error',
-                message: `Connection failed: ${res.error}. If using Render free tier, wait ~30s and click Connect again.`
-            });
-        }
     };
 
     // =========================================================================
@@ -523,6 +507,90 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         const cleanNumber = (settings.whatsapp_number || '').replace(/[^0-9]/g, '');
         const encoded = encodeURIComponent(settings.whatsapp_default_message || 'Namaste!');
         window.open(`https://wa.me/${cleanNumber}?text=${encoded}`, '_blank');
+    };
+
+    // Password strength evaluator for admin credential forms
+    const getPasswordStrength = (pass) => {
+        if (!pass) return { score: 0, label: '', color: 'bg-stone-200' };
+        let score = 0;
+        if (pass.length >= 8) score += 1;
+        if (pass.length >= 12) score += 1;
+        if (/[0-9]/.test(pass)) score += 1;
+        if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+        if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) score += 1;
+
+        if (score <= 2) return { score, label: 'Weak', color: 'bg-rose-500' };
+        if (score <= 3) return { score, label: 'Fair', color: 'bg-amber-500' };
+        return { score, label: 'Strong', color: 'bg-emerald-500' };
+    };
+
+    // Update Administrator ID (Email) & Password Handler
+    const handleUpdateCredentials = async (e) => {
+        if (e) e.preventDefault();
+        setCredentialsError('');
+        setCredentialsSuccess('');
+
+        if (!credentialsForm.current_password) {
+            setCredentialsError('Current password is required to verify your administrator identity.');
+            return;
+        }
+
+        const newEmail = credentialsForm.new_email.trim();
+        const newPass = credentialsForm.new_password;
+        const confirmPass = credentialsForm.confirm_password;
+
+        if (!newEmail && !newPass) {
+            setCredentialsError('Please provide a new Admin ID (email) or new password to update.');
+            return;
+        }
+
+        if (newEmail) {
+            if (!newEmail.includes('@') || !newEmail.includes('.')) {
+                setCredentialsError('Please enter a valid email address for Admin ID.');
+                return;
+            }
+        }
+
+        if (newPass) {
+            if (newPass.length < 8) {
+                setCredentialsError('New password must be at least 8 characters long.');
+                return;
+            }
+            if (newPass !== confirmPass) {
+                setCredentialsError('New password and confirmation password do not match.');
+                return;
+            }
+        }
+
+        setCredentialsLoading(true);
+        try {
+            const res = await api.updateAdminCredentials({
+                current_password: credentialsForm.current_password,
+                new_email: newEmail || undefined,
+                new_password: newPass || undefined
+            });
+
+            const updatedUser = res?.data?.admin || api.getCurrentUser();
+            if (updatedUser) setAdminUser(updatedUser);
+
+            setCredentialsSuccess('Administrator credentials updated successfully!');
+            showToast('Admin credentials updated successfully!');
+            setCredentialsForm({
+                current_password: '',
+                new_email: '',
+                new_password: '',
+                confirm_password: ''
+            });
+
+            setTimeout(() => {
+                setIsEditingCredentials(false);
+                setCredentialsSuccess('');
+            }, 1800);
+        } catch (err) {
+            setCredentialsError(err.message || 'Failed to update credentials. Please check your current password.');
+        } finally {
+            setCredentialsLoading(false);
+        }
     };
 
     // =========================================================================
@@ -1027,22 +1095,31 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             <label className="text-[11px] font-bold text-stone-300 uppercase tracking-wider block mb-1.5">
                                 Password
                             </label>
-                            <input
-                                type="password"
-                                required
-                                value={loginForm.password}
-                                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-stone-700 bg-stone-900/90 text-white text-xs focus:border-[#F7C600] focus:ring-2 focus:ring-[#F7C600]/20 focus:outline-none transition-all font-mono"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showLoginPassword ? 'text' : 'password'}
+                                    required
+                                    value={loginForm.password}
+                                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                                    className="w-full pl-4 pr-11 py-3 rounded-xl border border-stone-700 bg-stone-900/90 text-white text-xs focus:border-[#F7C600] focus:ring-2 focus:ring-[#F7C600]/20 focus:outline-none transition-all font-mono"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-white p-1 transition"
+                                    aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                                >
+                                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="p-3.5 rounded-xl bg-stone-900/70 border border-stone-800 text-[11px] text-stone-400 space-y-1">
+                        <div className="p-3.5 rounded-xl bg-stone-900/80 border border-stone-800 text-[11px] text-stone-400 space-y-1 shadow-inner">
                             <div className="text-stone-300 font-bold flex items-center gap-1.5">
                                 <Lock className="w-3.5 h-3.5 text-[#F7C600]" />
-                                <span>Default Credentials:</span>
+                                <span>Authorized Access Only:</span>
                             </div>
-                            <div>Email: <code className="text-[#F7C600] font-mono bg-black/40 px-1.5 py-0.5 rounded">admin@amolmurtibhandar.com</code></div>
-                            <div>Password: <code className="text-[#F7C600] font-mono bg-black/40 px-1.5 py-0.5 rounded">admin123</code></div>
+                            <div>Please enter your verified administrator email and password to access the console.</div>
                         </div>
 
                         <button
@@ -1159,6 +1236,20 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
                     <div className="h-5 w-px bg-white/10 mx-1 hidden sm:block" />
 
+                    {/* Admin Credentials & Security */}
+                    <button
+                        onClick={() => {
+                            setCredentialsError('');
+                            setCredentialsSuccess('');
+                            setIsEditingCredentials(true);
+                        }}
+                        className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-100 font-bold px-3 py-2 rounded-xl border border-amber-500/30 hover:bg-amber-950/40 hover:border-amber-500/50 transition active:scale-95 cursor-pointer"
+                        title="Edit Admin ID (Email) and Password"
+                    >
+                        <Key className="w-3.5 h-3.5 text-[#F7C600]" />
+                        <span className="hidden sm:inline">Admin Security</span>
+                    </button>
+
                     {/* Admin Sign Out */}
                     <button
                         onClick={handleLogout}
@@ -1187,7 +1278,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </span>
                             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700 border border-emerald-200">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                {api.getBaseUrl() ? 'Cloud Live' : 'Pre-Seeded'}
+                                Live Console
                             </span>
                         </div>
 
@@ -1361,20 +1452,30 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                         <div className="p-3 bg-white/70 rounded-2xl border border-stone-200/70 flex items-center justify-between">
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <div className="w-8 h-8 rounded-full bg-[#171512] text-[#F7C600] flex items-center justify-center font-bold text-xs shadow-xs">
-                                    AM
+                                    {(adminUser?.full_name || 'Amol Admin').substring(0, 2).toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
-                                    <div className="text-xs font-bold text-stone-900 truncate">Amol Admin</div>
-                                    <div className="text-[10px] text-stone-500 truncate">Jaipur Karigari Console</div>
+                                    <div className="text-xs font-bold text-stone-900 truncate">
+                                        {adminUser?.full_name || 'Amol Admin'}
+                                    </div>
+                                    <div className="text-[10px] text-stone-500 truncate" title={adminUser?.email || 'admin@amolmurtibhandar.com'}>
+                                        {adminUser?.email || 'admin@amolmurtibhandar.com'}
+                                    </div>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setIsConfiguringServer(true)}
-                                className="p-1.5 text-stone-400 hover:text-[#C69722] hover:bg-[#FAF2DE] rounded-lg transition"
-                                title="Configure Server URL"
-                            >
-                                <Database className="w-3.5 h-3.5" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => {
+                                        setCredentialsError('');
+                                        setCredentialsSuccess('');
+                                        setIsEditingCredentials(true);
+                                    }}
+                                    className="p-1.5 text-stone-400 hover:text-[#C69722] hover:bg-[#FAF2DE] rounded-lg transition cursor-pointer"
+                                    title="Edit Admin ID & Password"
+                                >
+                                    <Key className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </aside>
@@ -1386,29 +1487,6 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     tabIndex={0}
                 >
                     <div className="max-w-7xl mx-auto space-y-6 pb-28">
-
-                    {/* Render Cloud Sync Status Banner */}
-                    {(!api.getBaseUrl() || isOfflineMode) && (
-                        <div className="p-4 rounded-2xl bg-[#FAF5E8] border border-[#E5CD96] text-[#7A4F01] text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-                            <div className="flex items-center gap-2.5">
-                                <AlertTriangle className="w-5 h-5 text-[#C69722] flex-shrink-0" />
-                                <div>
-                                    <span className="font-bold block text-stone-900">
-                                        Admin Console Active (Standalone / Pre-Seeded Catalog)
-                                    </span>
-                                    <span className="text-[11px] text-stone-600">
-                                        All Makrana marble products and master sizes are available. Connect your Render URL to sync live database updates.
-                                    </span>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setIsConfiguringServer(true)}
-                                className="px-3.5 py-1.5 rounded-xl bg-[#161616] text-[#F7C600] font-bold text-xs uppercase tracking-wider whitespace-nowrap hover:bg-black transition shadow-2xs cursor-pointer"
-                            >
-                                Connect Render Backend
-                            </button>
-                        </div>
-                    )}
 
                     {/* ========================================================================= */}
                     {/* TAB 1: EXECUTIVE DASHBOARD */}
@@ -2871,6 +2949,201 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     </button>
                                 </div>
                             </form>
+
+                            {/* ========================================================================= */}
+                            {/* ADMINISTRATOR SECURITY & CREDENTIALS MANAGEMENT (EDIT ID & PASSWORD)     */}
+                            {/* ========================================================================= */}
+                            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-2xs space-y-6">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-2xl bg-[#FAF2DE] border border-[#DFC48D] flex items-center justify-center text-[#8E5B00] shadow-2xs">
+                                            <Key className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-serif text-lg sm:text-xl font-bold text-[#161616] flex items-center gap-2">
+                                                <span>Admin ID & Password Security</span>
+                                                <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-mono font-bold">
+                                                    AUTHORIZED
+                                                </span>
+                                            </h3>
+                                            <p className="text-xs text-stone-500 mt-0.5">
+                                                Update your administrator login identifier (email address) and master access password
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-stone-50 border border-stone-200 text-xs">
+                                        <span className="text-stone-500">Active Admin ID:</span>
+                                        <span className="font-mono font-bold text-stone-800">{adminUser?.email || 'admin@amolmurtibhandar.com'}</span>
+                                    </div>
+                                </div>
+
+                                {credentialsSuccess && (
+                                    <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2.5 animate-in fade-in">
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                                        <span className="font-semibold">{credentialsSuccess}</span>
+                                    </div>
+                                )}
+
+                                {credentialsError && (
+                                    <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2.5 animate-in fade-in">
+                                        <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                                        <span className="font-semibold">{credentialsError}</span>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleUpdateCredentials} className="space-y-5">
+                                    {/* Re-Authentication: Current Password */}
+                                    <div className="space-y-1.5 bg-[#FAF8F5] p-4 sm:p-5 rounded-2xl border border-amber-200/60">
+                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                            <Lock className="w-3.5 h-3.5 text-[#C69722]" />
+                                            <span>Current Password * (Verification Required)</span>
+                                        </label>
+                                        <div className="relative">
+                                            <input
+                                                type={showCurrentPass ? 'text' : 'password'}
+                                                required
+                                                value={credentialsForm.current_password}
+                                                onChange={(e) => setCredentialsForm({ ...credentialsForm, current_password: e.target.value })}
+                                                placeholder="Enter current password to authorize changes"
+                                                className="w-full px-4 py-2.5 pr-11 rounded-xl border border-stone-200 bg-white text-xs font-mono text-stone-900 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCurrentPass(!showCurrentPass)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                                            >
+                                                {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                        <p className="text-[11px] text-stone-500">
+                                            Re-authentication is required by security policy before modifying sensitive administrator credentials.
+                                        </p>
+                                    </div>
+
+                                    {/* Edit Admin ID & Password Grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {/* New Admin ID (Email) */}
+                                        <div className="space-y-1.5 sm:col-span-2">
+                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                                <User className="w-3.5 h-3.5 text-stone-500" />
+                                                <span>New Admin ID (Email) — Leave blank to keep current</span>
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={credentialsForm.new_email}
+                                                onChange={(e) => setCredentialsForm({ ...credentialsForm, new_email: e.target.value })}
+                                                placeholder={`Current: ${adminUser?.email || 'admin@amolmurtibhandar.com'}`}
+                                                className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50/50 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                            />
+                                            <p className="text-[10px] text-stone-400">
+                                                This will be your new login email identifier for both the web dashboard and API access.
+                                            </p>
+                                        </div>
+
+                                        {/* New Password */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                                <Key className="w-3.5 h-3.5 text-stone-500" />
+                                                <span>New Password (Min 8 Characters)</span>
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showNewPass ? 'text' : 'password'}
+                                                    value={credentialsForm.new_password}
+                                                    onChange={(e) => setCredentialsForm({ ...credentialsForm, new_password: e.target.value })}
+                                                    placeholder="Leave blank to keep existing password"
+                                                    className="w-full px-4 py-2.5 pr-11 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowNewPass(!showNewPass)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                                                >
+                                                    {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
+                                            </div>
+                                            {credentialsForm.new_password && (
+                                                <div className="space-y-1 pt-1">
+                                                    <div className="flex items-center justify-between text-[10px]">
+                                                        <span className="text-stone-500">Password Strength:</span>
+                                                        <span className="font-bold text-stone-700">{getPasswordStrength(credentialsForm.new_password).label}</span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden flex gap-1">
+                                                        {[1, 2, 3, 4, 5].map((lvl) => (
+                                                            <div
+                                                                key={lvl}
+                                                                className={`h-full flex-1 transition-all duration-300 ${
+                                                                    lvl <= getPasswordStrength(credentialsForm.new_password).score
+                                                                        ? getPasswordStrength(credentialsForm.new_password).color
+                                                                        : 'bg-stone-200'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Confirm New Password */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                                <CheckSquare className="w-3.5 h-3.5 text-stone-500" />
+                                                <span>Confirm New Password</span>
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type={showConfirmPass ? 'text' : 'password'}
+                                                    value={credentialsForm.confirm_password}
+                                                    onChange={(e) => setCredentialsForm({ ...credentialsForm, confirm_password: e.target.value })}
+                                                    placeholder="Re-type new password"
+                                                    disabled={!credentialsForm.new_password}
+                                                    className="w-full px-4 py-2.5 pr-11 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition disabled:opacity-50"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowConfirmPass(!showConfirmPass)}
+                                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                                                >
+                                                    {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
+                                            </div>
+                                            {credentialsForm.new_password && credentialsForm.confirm_password && (
+                                                <div className="text-[11px] flex items-center gap-1 pt-1">
+                                                    {credentialsForm.new_password === credentialsForm.confirm_password ? (
+                                                        <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                                                            <Check className="w-3.5 h-3.5" /> Passwords match
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-rose-600 font-semibold flex items-center gap-1">
+                                                            <X className="w-3.5 h-3.5" /> Passwords do not match
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-end pt-3 border-t border-stone-100">
+                                        <button
+                                            type="submit"
+                                            disabled={credentialsLoading}
+                                            className="px-6 py-2.5 rounded-xl bg-[#161616] hover:bg-black text-[#F7C600] font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 active:scale-95 cursor-pointer disabled:opacity-50"
+                                        >
+                                            {credentialsLoading ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin text-[#F7C600]" />
+                                                    <span>Updating Credentials...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Key className="w-4 h-4 text-[#F7C600]" />
+                                                    <span>Update Admin Credentials</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     )}
                     </div>
@@ -2879,8 +3152,218 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
             
             {/* ========================================================================= */}
-            {/* GLOBAL HOISTED MODALS: PRODUCT, CATEGORY, MASTER SIZE                     */}
+            {/* GLOBAL HOISTED MODALS: PRODUCT, CATEGORY, MASTER SIZE, CREDENTIALS        */}
             {/* ========================================================================= */}
+
+            {/* Hoisted Modal: Edit Admin ID & Password */}
+            {isEditingCredentials && (
+                <div 
+                    className="fixed inset-0 z-[115] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setIsEditingCredentials(false); }}
+                >
+                    <div 
+                        className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200 relative"
+                        data-lenis-prevent="true"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200/80 bg-gradient-to-r from-[#FAF8F5] via-white to-[#FAF8F5]">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-[#FAF2DE] border border-[#DFC48D] flex items-center justify-center text-[#8E5B00]">
+                                    <Key className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <h3 className="font-serif text-lg font-bold text-[#161616]">
+                                        Edit Admin ID & Password
+                                    </h3>
+                                    <p className="text-[11px] text-stone-500">
+                                        Update administrative email identifier and access password
+                                    </p>
+                                </div>
+                            </div>
+                            <button 
+                                type="button" 
+                                onClick={() => setIsEditingCredentials(false)} 
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition cursor-pointer"
+                                title="Close modal"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-5">
+                            {credentialsSuccess && (
+                                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                                    <span className="font-semibold">{credentialsSuccess}</span>
+                                </div>
+                            )}
+
+                            {credentialsError && (
+                                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                                    <span className="font-semibold">{credentialsError}</span>
+                                </div>
+                            )}
+
+                            <form onSubmit={handleUpdateCredentials} className="space-y-4">
+                                {/* Current Password Verification */}
+                                <div className="space-y-1.5 bg-[#FAF8F5] p-3.5 rounded-2xl border border-amber-200/60">
+                                    <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <Lock className="w-3.5 h-3.5 text-[#C69722]" />
+                                        <span>Current Password * (Verification Required)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type={showCurrentPass ? 'text' : 'password'}
+                                            required
+                                            value={credentialsForm.current_password}
+                                            onChange={(e) => setCredentialsForm({ ...credentialsForm, current_password: e.target.value })}
+                                            placeholder="Enter current password"
+                                            className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-stone-200 bg-white text-xs font-mono text-stone-900 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCurrentPass(!showCurrentPass)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                                        >
+                                            {showCurrentPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* New Admin ID / Email */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <User className="w-3.5 h-3.5 text-stone-500" />
+                                        <span>New Admin ID (Email)</span>
+                                    </label>
+                                    <input
+                                        type="email"
+                                        value={credentialsForm.new_email}
+                                        onChange={(e) => setCredentialsForm({ ...credentialsForm, new_email: e.target.value })}
+                                        placeholder={`Current: ${adminUser?.email || 'admin@amolmurtibhandar.com'}`}
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-stone-50/50 text-xs text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                    />
+                                    <p className="text-[10px] text-stone-400">
+                                        Leave blank to keep current identifier.
+                                    </p>
+                                </div>
+
+                                {/* New Password */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <Key className="w-3.5 h-3.5 text-stone-500" />
+                                        <span>New Password (Min 8 Characters)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type={showNewPass ? 'text' : 'password'}
+                                            value={credentialsForm.new_password}
+                                            onChange={(e) => setCredentialsForm({ ...credentialsForm, new_password: e.target.value })}
+                                            placeholder="Leave blank to keep existing password"
+                                            className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNewPass(!showNewPass)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                                        >
+                                            {showNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
+                                    </div>
+                                    {credentialsForm.new_password && (
+                                        <div className="space-y-1 pt-0.5">
+                                            <div className="flex items-center justify-between text-[10px]">
+                                                <span className="text-stone-500">Strength:</span>
+                                                <span className="font-bold text-stone-700">{getPasswordStrength(credentialsForm.new_password).label}</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden flex gap-1">
+                                                {[1, 2, 3, 4, 5].map((lvl) => (
+                                                    <div
+                                                        key={lvl}
+                                                        className={`h-full flex-1 transition-all duration-300 ${
+                                                            lvl <= getPasswordStrength(credentialsForm.new_password).score
+                                                                ? getPasswordStrength(credentialsForm.new_password).color
+                                                                : 'bg-stone-200'
+                                                        }`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Confirm New Password */}
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <CheckSquare className="w-3.5 h-3.5 text-stone-500" />
+                                        <span>Confirm New Password</span>
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type={showConfirmPass ? 'text' : 'password'}
+                                            value={credentialsForm.confirm_password}
+                                            onChange={(e) => setCredentialsForm({ ...credentialsForm, confirm_password: e.target.value })}
+                                            placeholder="Repeat new password"
+                                            disabled={!credentialsForm.new_password}
+                                            className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-mono text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition disabled:opacity-50"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPass(!showConfirmPass)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                                        >
+                                            {showConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
+                                    </div>
+                                    {credentialsForm.new_password && credentialsForm.confirm_password && (
+                                        <div className="text-[11px] flex items-center gap-1 pt-0.5">
+                                            {credentialsForm.new_password === credentialsForm.confirm_password ? (
+                                                <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                                                    <Check className="w-3.5 h-3.5" /> Passwords match
+                                                </span>
+                                            ) : (
+                                                <span className="text-rose-600 font-semibold flex items-center gap-1">
+                                                    <X className="w-3.5 h-3.5" /> Passwords do not match
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center justify-end gap-3 pt-4 border-t border-stone-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditingCredentials(false)}
+                                        className="px-4 py-2.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-xs font-semibold text-stone-700 cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={credentialsLoading}
+                                        className="px-6 py-2.5 rounded-xl bg-[#161616] hover:bg-black text-[#F7C600] font-bold text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 active:scale-95 cursor-pointer disabled:opacity-50"
+                                    >
+                                        {credentialsLoading ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin text-[#F7C600]" />
+                                                <span>Updating...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Key className="w-4 h-4 text-[#F7C600]" />
+                                                <span>Save Credentials</span>
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Comprehensive Edit / Add Product Modal (Req #1.2, #1.3, #1.5, #1.6, #3.4, #3.6) */}
             {editingProduct && (
@@ -3965,81 +4448,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                 </div>
             )}
 
-            {/* Modal: Render Backend Server Connection (Accessible anytime from top navbar) */}
-            {isConfiguringServer && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                    <div className="bg-[#24201C] border border-[#DFC48D]/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl text-white space-y-5 animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-xl bg-[#F7C600] text-[#161616] flex items-center justify-center font-bold">
-                                    <Database className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <h3 className="font-serif text-lg font-bold text-white">
-                                        Render Backend Connection
-                                    </h3>
-                                    <p className="text-[11px] text-stone-400">
-                                        Connect your FastAPI server deployed on Render
-                                    </p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => setIsConfiguringServer(false)}
-                                className="w-8 h-8 rounded-full bg-stone-800 text-stone-400 hover:text-white flex items-center justify-center text-sm transition cursor-pointer"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
 
-                        <div className="space-y-3.5 text-left">
-                            <label className="text-xs font-bold text-stone-300 uppercase tracking-wider block">
-                                Render Web Service URL
-                            </label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="url"
-                                    placeholder="https://your-service.onrender.com"
-                                    value={backendUrlInput}
-                                    onChange={(e) => setBackendUrlInput(e.target.value)}
-                                    className="flex-1 px-3.5 py-2.5 text-xs rounded-xl border border-stone-700 bg-stone-950 text-white font-mono focus:border-[#F7C600] focus:outline-none"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleTestAndSaveBackend}
-                                    disabled={testingConnection || !backendUrlInput.trim()}
-                                    className="px-4 py-2.5 bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] rounded-xl font-bold text-xs uppercase tracking-wider transition disabled:opacity-50 shrink-0 flex items-center gap-1.5 cursor-pointer active:scale-95"
-                                >
-                                    {testingConnection ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCheck className="w-3.5 h-3.5" />}
-                                    <span>{testingConnection ? 'Testing...' : 'Connect'}</span>
-                                </button>
-                            </div>
-
-                            {serverStatus && (
-                                <div className={`p-3.5 rounded-xl text-xs leading-relaxed ${serverStatus.type === 'success' ? 'bg-emerald-950/70 border border-emerald-500/40 text-emerald-300' : serverStatus.type === 'error' ? 'bg-rose-950/70 border border-rose-500/40 text-rose-300' : 'bg-stone-800 text-stone-300'}`}>
-                                    {serverStatus.message}
-                                </div>
-                            )}
-
-                            <div className="p-3.5 rounded-2xl bg-stone-900/60 border border-stone-800 text-[11px] text-stone-400 space-y-1.5 leading-relaxed">
-                                <div className="text-stone-300 font-bold">ℹ️ Render Free Tier Deployment Notes:</div>
-                                <div>• Render web services automatically sleep after 15 minutes of inactivity.</div>
-                                <div>• The first wake-up request may take 30 to 50 seconds to complete.</div>
-                                <div>• Ensure your Render URL starts with <code className="text-[#F7C600]">https://</code> (e.g. <code className="text-[#F7C600]">https://murti-hub.onrender.com</code>).</div>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-800">
-                            <button
-                                type="button"
-                                onClick={() => setIsConfiguringServer(false)}
-                                className="px-5 py-2 text-xs font-bold text-stone-300 hover:text-white rounded-xl bg-stone-800/80 hover:bg-stone-800 transition cursor-pointer"
-                            >
-                                Done
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

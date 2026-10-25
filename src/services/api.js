@@ -2,6 +2,7 @@
  * Amol Marble Murti Bhandar - FastAPI & Supabase Client API Service
  * Handles all 7 Admin Operations & Storefront Data Fetching
  */
+import { supabase } from '../utils/supabase';
 
 export class ApiError extends Error {
     constructor({ message, status, errorCode, details, data }) {
@@ -167,6 +168,57 @@ class ApiService {
         return this.token || (typeof localStorage !== 'undefined' ? localStorage.getItem('murti_admin_token') : null);
     }
 
+    getCurrentUser() {
+        if (typeof localStorage === 'undefined') return null;
+        try {
+            const raw = localStorage.getItem('murti_admin_session') || localStorage.getItem('murti_user_session');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    }
+
+    setCurrentUser(user) {
+        if (typeof localStorage !== 'undefined') {
+            if (user) {
+                const serialized = JSON.stringify(user);
+                localStorage.setItem('murti_admin_session', serialized);
+                localStorage.setItem('murti_user_session', serialized);
+            } else {
+                localStorage.removeItem('murti_admin_session');
+                localStorage.removeItem('murti_user_session');
+            }
+        }
+        this.notifyAuthChanged(user);
+    }
+
+    notifyAuthChanged(user = null) {
+        if (typeof window !== 'undefined') {
+            try {
+                window.dispatchEvent(new CustomEvent('murti-auth-changed', {
+                    detail: {
+                        user: user || this.getCurrentUser(),
+                        token: this.getToken(),
+                        isAuthenticated: Boolean(this.getToken() && (user || this.getCurrentUser()))
+                    }
+                }));
+            } catch {
+                // Ignore SSR/non-browser environment errors
+            }
+        }
+    }
+
+    isAuthenticated() {
+        return Boolean(this.getToken() && this.getCurrentUser());
+    }
+
+    isAdmin() {
+        const user = this.getCurrentUser();
+        if (!user) return false;
+        const role = String(user.role || '').toLowerCase();
+        return ['super_admin', 'admin', 'editor', 'staff'].includes(role);
+    }
+
     getHeaders(isMultipart = false) {
         const headers = {};
         if (!isMultipart) {
@@ -210,8 +262,15 @@ class ApiService {
             } else {
                 const text = await res.text().catch(() => '');
                 if (text.trim().startsWith('<!DOCTYPE') || text.includes('<html')) {
+                    const currentBase = this.getBaseUrl();
+                    const liveBackend = 'https://murti-hub-5.onrender.com';
+                    if (!currentBase.includes('onrender.com') && !isRetry) {
+                        console.warn(`[API Proxy HTML Fallback] Received HTML from local proxy. Automatically routing to cloud backend ${liveBackend}...`);
+                        this.setBaseUrl(liveBackend);
+                        return this.request(endpoint, options, true, retryCount);
+                    }
                     throw new ApiError({
-                        message: `Frontend called ${url} and received HTML instead of JSON. Ensure your Render backend URL is configured (VITE_API_URL or via Admin login settings).`,
+                        message: `Connecting to ${currentBase || 'server'} returned an HTML page instead of JSON. The backend may still be starting up.`,
                         status: res.status,
                         errorCode: 'HTML_RESPONSE_MISMATCH',
                         data: null
@@ -225,13 +284,19 @@ class ApiService {
             }
 
             if (!res.ok) {
+                // If local proxy failed with 5xx (e.g. ECONNREFUSED from Vite dev proxy), fall back to live cloud backend
+                const currentBase = this.getBaseUrl();
+                const liveBackend = 'https://murti-hub-5.onrender.com';
+                if (res.status >= 500 && !currentBase.includes('onrender.com') && !isRetry) {
+                    console.warn(`[API Proxy Fallback] Received HTTP ${res.status} from local proxy. Retrying with live backend ${liveBackend}...`);
+                    this.setBaseUrl(liveBackend);
+                    return this.request(endpoint, options, true, retryCount);
+                }
+
                 // If token is invalid or expired, immediately clear active session
                 if (res.status === 401 && !endpoint.includes('/auth/login')) {
                     this.setToken(null);
-                    if (typeof localStorage !== 'undefined') {
-                        localStorage.removeItem('murti_admin_session');
-                        localStorage.removeItem('murti_admin_token');
-                    }
+                    this.setCurrentUser(null);
                 }
 
                 // Transient 5xx or 429 Rate Limit Retry with Exponential Backoff (excluding auth routes)
@@ -263,7 +328,16 @@ class ApiService {
                 throw err;
             }
 
-            // Handle AbortController Timeout (Checklist Section 2 & 3: Handle timeouts)
+            // If network failed on local proxy, retry on live Render cloud backend
+            const currentBase = this.getBaseUrl();
+            const liveBackend = 'https://murti-hub-5.onrender.com';
+            if (!currentBase.includes('onrender.com') && !isRetry) {
+                console.warn(`[API Network Fallback] Failed connecting to local proxy. Retrying with live backend ${liveBackend}...`);
+                this.setBaseUrl(liveBackend);
+                return this.request(endpoint, options, true, retryCount);
+            }
+
+            // Handle AbortController Timeout
             if (err.name === 'AbortError') {
                 const timeoutError = new ApiError({
                     message: `Request to ${url} timed out after ${timeoutMs / 1000}s. Please verify your Render backend server is awake and try again.`,
@@ -276,7 +350,6 @@ class ApiService {
 
             // Handle network / offline / connection errors cleanly
             const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
-            const currentBase = this.getBaseUrl();
             const netMsg = isOffline
                 ? 'You appear to be offline. Please verify your internet connection.'
                 : currentBase
@@ -297,37 +370,77 @@ class ApiService {
     // =========================================================================
     // 1. AUTHENTICATION & ADMIN SESSION
     // =========================================================================
-    async login(email, password) {
-        const res = await this.request('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ email, password })
-        });
-        const token = res?.data?.access_token || res?.access_token;
-        if (token) {
-            this.setToken(token);
-            if (typeof localStorage !== 'undefined') {
-                localStorage.setItem('murti_admin_session', JSON.stringify(res.data?.admin || { email }));
+    async login(email, password, rememberMe = true) {
+        const cleanEmail = (email || '').trim().toLowerCase();
+        let res;
+        try {
+            res = await this.request('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ email: cleanEmail, password })
+            });
+        } catch (err) {
+            // Prevent user enumeration by masking specific backend errors
+            if (err.status === 401 || err.status === 403 || err.status === 404) {
+                throw new ApiError({
+                    message: 'Invalid email or password. Please verify your credentials.',
+                    status: 401,
+                    errorCode: 'INVALID_CREDENTIALS'
+                });
             }
+            throw err;
+        }
+
+        const token = res?.data?.access_token || res?.access_token;
+        const user = res?.data?.admin || res?.data?.user || res?.admin;
+        if (token && user) {
+            this.setToken(token);
+            this.setCurrentUser(user);
+            this.notifyAuthChanged(user);
+
+            // Synchronize with Supabase Auth session if configured
+            if (supabase?.auth?.signInWithPassword) {
+                try {
+                    await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+                } catch {
+                    // Supabase sync notice
+                }
+            }
+
             return res.data || res;
         }
         throw new ApiError({
-            message: res?.message || 'Authentication succeeded but no access token was returned.',
+            message: 'Authentication failed. Please verify your credentials.',
             status: 401,
             errorCode: 'INVALID_AUTH_RESPONSE'
         });
     }
 
-    async register(email, password, fullName = 'Devotee Member') {
+    async register(email, password, fullName = 'Devotee Member', role = 'devotee') {
+        const cleanEmail = (email || '').trim().toLowerCase();
         const res = await this.request('/auth/register', {
             method: 'POST',
-            body: JSON.stringify({ email, password, full_name: fullName })
+            body: JSON.stringify({ email: cleanEmail, password, full_name: fullName, role })
         });
+
         const token = res?.data?.access_token || res?.access_token;
+        const user = res?.data?.admin || res?.data?.user || res?.admin || { email: cleanEmail, full_name: fullName, role };
         if (token) {
             this.setToken(token);
-            if (typeof localStorage !== 'undefined') {
-                localStorage.setItem('murti_admin_session', JSON.stringify(res.data?.admin || { email, full_name: fullName }));
+            this.setCurrentUser(user);
+            this.notifyAuthChanged(user);
+
+            if (supabase?.auth?.signUp) {
+                try {
+                    await supabase.auth.signUp({
+                        email: cleanEmail,
+                        password,
+                        options: { data: { full_name: fullName } }
+                    });
+                } catch {
+                    // Supabase signup sync notice
+                }
             }
+
             return res.data || res;
         }
         return res.data || res;
@@ -337,14 +450,187 @@ class ApiService {
         return this.request('/auth/me');
     }
 
+    async requestPasswordReset(email) {
+        const cleanEmail = (email || '').trim().toLowerCase();
+        // 1. Attempt Supabase Auth password reset if configured
+        if (supabase?.auth?.resetPasswordForEmail) {
+            try {
+                const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+                    redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/login` : undefined
+                });
+                if (!error) {
+                    return { success: true, message: 'Password reset link sent to your registered email address.' };
+                }
+            } catch (err) {
+                console.warn('[Supabase Auth reset notice]', err);
+            }
+        }
+        // 2. Authoritative backend password reset endpoint
+        return this.request('/auth/forgot-password', {
+            method: 'POST',
+            body: JSON.stringify({ email: cleanEmail })
+        });
+    }
+
+    async resetPasswordWithToken(token, newPassword) {
+        return this.request('/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify({ token, new_password: newPassword })
+        });
+    }
+
+    async updateAdminCredentials({ current_password, new_email, new_password }) {
+        const payload = { current_password };
+        if (new_email) payload.new_email = new_email.trim().toLowerCase();
+        if (new_password) payload.new_password = new_password;
+
+        const res = await this.request('/auth/admin-credentials', {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+        });
+
+        const token = res?.data?.access_token || res?.access_token;
+        const admin = res?.data?.admin || res?.admin;
+
+        if (token) {
+            this.setToken(token);
+        }
+        if (admin) {
+            const cur = this.getCurrentUser() || {};
+            const merged = { ...cur, ...admin };
+            this.setCurrentUser(merged);
+        }
+
+        if (supabase && (payload.new_email || payload.new_password)) {
+            try {
+                const updateAttrs = {};
+                if (payload.new_email) updateAttrs.email = payload.new_email;
+                if (payload.new_password) updateAttrs.password = payload.new_password;
+                await supabase.auth.updateUser(updateAttrs);
+            } catch (err) {
+                console.warn('[Supabase Auth updateUser notice]', err);
+            }
+        }
+
+        return res;
+    }
+
+    async getProfile() {
+        try {
+            const res = await this.request('/auth/profile');
+            const profile = res?.data || res;
+            if (profile) {
+                const cur = this.getCurrentUser() || {};
+                const merged = { ...cur, ...profile };
+                this.setCurrentUser(merged);
+                return merged;
+            }
+        } catch (err) {
+            try {
+                const meRes = await this.getMe();
+                const me = meRes?.data || meRes?.admin || meRes;
+                if (me) {
+                    const cur = this.getCurrentUser() || {};
+                    const merged = { ...cur, ...me };
+                    this.setCurrentUser(merged);
+                    return merged;
+                }
+            } catch {
+                // Fall back to local user session
+            }
+        }
+        return this.getCurrentUser();
+    }
+
+    async updateProfile(profileData) {
+        let updatedUser = { ...(this.getCurrentUser() || {}), ...profileData };
+        try {
+            const res = await this.request('/auth/profile', {
+                method: 'PUT',
+                body: JSON.stringify(profileData)
+            });
+            if (res?.data) {
+                updatedUser = { ...updatedUser, ...res.data };
+            }
+        } catch (err) {
+            console.warn('[API] updateProfile remote fallback:', err.message);
+        }
+
+        // Always persist locally & sync across tabs
+        this.setCurrentUser(updatedUser);
+        return updatedUser;
+    }
+
+    async getMyOrders() {
+        let serverOrders = [];
+        try {
+            const res = await this.request('/orders/my');
+            if (Array.isArray(res?.data)) {
+                serverOrders = res.data;
+            }
+        } catch (err) {
+            console.warn('[API] getMyOrders server fetch fallback:', err.message);
+        }
+
+        // Merge with local placed orders
+        const localOrders = this.getUserOrders();
+        const mergedMap = new Map();
+        
+        [...serverOrders, ...localOrders].forEach(ord => {
+            const id = ord.order_id || ord.orderId;
+            if (id && !mergedMap.has(id)) {
+                mergedMap.set(id, ord);
+            }
+        });
+
+        return Array.from(mergedMap.values());
+    }
+
+    saveUserOrder(order) {
+        if (!order || typeof localStorage === 'undefined') return;
+        try {
+            const existing = this.getUserOrders();
+            const orderId = order.order_id || order.orderId;
+            const filtered = existing.filter(o => (o.order_id || o.orderId) !== orderId);
+            filtered.unshift(order);
+            localStorage.setItem('murti_recent_orders', JSON.stringify(filtered.slice(0, 20)));
+        } catch (err) {
+            console.warn('[API] Could not save order to local storage:', err);
+        }
+    }
+
+    getUserOrders() {
+        if (typeof localStorage === 'undefined') return [];
+        try {
+            const raw = localStorage.getItem('murti_recent_orders');
+            return raw ? JSON.parse(raw) : [];
+        } catch {
+            return [];
+        }
+    }
+
     async logout() {
         try {
             await this.request('/auth/logout', { method: 'POST' }).catch(() => {});
         } finally {
+            try {
+                if (typeof window !== 'undefined' && window.supabaseClient?.auth?.signOut) {
+                    await window.supabaseClient.auth.signOut();
+                }
+            } catch {
+                // Ignore supabase cleanup errors
+            }
             this.setToken(null);
+            this.setCurrentUser(null);
             if (typeof localStorage !== 'undefined') {
                 localStorage.removeItem('murti_admin_session');
+                localStorage.removeItem('murti_user_session');
                 localStorage.removeItem('murti_admin_token');
+                localStorage.removeItem('murti_cart_cache');
+                localStorage.removeItem('murti_recent_orders');
+            }
+            if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('murti-auth-changed', { detail: { user: null } }));
             }
         }
     }
@@ -575,6 +861,27 @@ class ApiService {
     // 8. MEDIA UPLOADS & ADMIN DASHBOARD METRICS
     // =========================================================================
     async uploadImage(file, folder = 'catalog') {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+        const maxSize = 5 * 1024 * 1024; // 5 MB
+
+        if (!file) {
+            throw new ApiError({ message: 'No file provided for upload.', status: 400 });
+        }
+        if (!allowedTypes.includes(file.type)) {
+            throw new ApiError({
+                message: `Invalid file type (${file.type}). Only JPEG, PNG, WebP, and AVIF are permitted.`,
+                status: 400,
+                errorCode: 'INVALID_FILE_TYPE'
+            });
+        }
+        if (file.size > maxSize) {
+            throw new ApiError({
+                message: `File size exceeds the 5MB limit (${(file.size / (1024 * 1024)).toFixed(2)} MB). Please optimize before uploading.`,
+                status: 413,
+                errorCode: 'FILE_TOO_LARGE'
+            });
+        }
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('folder', folder);

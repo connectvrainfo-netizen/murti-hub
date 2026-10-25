@@ -57,13 +57,19 @@ export function useLenisSmoothScroll({ isModalOpen = false, currentPage = 'home'
         };
     }, []);
 
-    // Stop / resume scrolling when modal is active or on standalone dedicated pages
+    // Stop / resume scrolling when modal is active or on standalone dedicated admin page
     useEffect(() => {
         if (!lenisRef.current) return;
-        if (isModalOpen || currentPage === 'admin' || currentPage === 'login') {
+        if (isModalOpen || currentPage === 'admin') {
             lenisRef.current.stop();
         } else {
             lenisRef.current.start();
+            if (typeof document !== 'undefined') {
+                document.documentElement.classList.remove('lenis-stopped');
+                document.body.classList.remove('lenis-stopped');
+                document.documentElement.style.overflow = '';
+                document.body.style.overflow = '';
+            }
         }
     }, [isModalOpen, currentPage]);
 

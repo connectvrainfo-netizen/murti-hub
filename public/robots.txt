@@ -11,6 +11,9 @@ Disallow: /admin/
 Disallow: /api/
 Disallow: /checkout
 Disallow: /cart
+Disallow: /account
+Disallow: /account/
+Disallow: /login
 
 # Sitemap location
 Sitemap: https://amolmurtibhandar.com/sitemap.xml

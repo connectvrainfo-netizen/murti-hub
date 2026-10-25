@@ -137,15 +137,8 @@
       "prefetch": [
         {
           "source": "list",
-          "urls": ["/cart", "/checkout", "/admin"],
+          "urls": ["/cart"],
           "eagerness": "moderate"
-        }
-      ],
-      "prerender": [
-        {
-          "source": "list",
-          "urls": ["/checkout"],
-          "eagerness": "conservative"
         }
       ]
     }
@@ -158,43 +151,7 @@
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Noto+Serif+Devanagari:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
-    <!-- Tailwind CSS (with seamless warning suppression for development and instant live styling) -->
-    <script>
-        (function() {
-            var _warn = console.warn;
-            console.warn = function() {
-                if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].indexOf('cdn.tailwindcss.com') !== -1) return;
-                _warn.apply(console, arguments);
-            };
-        })();
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        mh: {
-                            header: '#FAF5E8',
-                            cream: '#FDFBF5',
-                            jaali: '#F9F1DF',
-                            gold: '#C69722',
-                            goldLight: '#F7C600',
-                            goldOlive: '#7C6A24',
-                            dark: '#161616',
-                            charcoal: '#1F1F1F',
-                            border: '#E6D6B8'
-                        }
-                    },
-                    fontFamily: {
-                        serif: ['"Cormorant Garamond"', '"Noto Serif Devanagari"', 'Georgia', 'serif'],
-                        devanagari: ['"Noto Serif Devanagari"', 'serif'],
-                        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-                    }
-                }
-            }
-        };
-    </script>
+
 </head>
 
 <body class="selection:bg-mh-gold selection:text-white">

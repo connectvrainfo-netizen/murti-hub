@@ -41,6 +41,7 @@ class Settings(BaseSettings):
     # CORS Origins (Allow explicit, minimal frontend origins)
     CORS_ORIGINS: List[str] = [
         "https://murti-hub.vercel.app",
+        "https://murti-hub-neon.vercel.app",
         "https://murti-hub-5.onrender.com",
         "https://amolmurtibhandar.com",
         "https://www.amolmurtibhandar.com",
@@ -61,7 +62,7 @@ class Settings(BaseSettings):
         return v
     
     class Config:
-        env_file = ".env"
+        env_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env")
         env_file_encoding = "utf-8"
         extra = "allow"
 

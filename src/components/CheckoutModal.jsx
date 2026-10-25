@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle2, ShieldCheck, Truck, CreditCard, Banknote, QrCode, Tag, ArrowRight, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import api from '../services/api';
+import { checkoutSchema } from '../lib/validation';
 
 export default function CheckoutModal({
     isOpen,
@@ -20,15 +21,17 @@ export default function CheckoutModal({
     const [couponError, setCouponError] = useState('');
     const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
     const [orderErrorMessage, setOrderErrorMessage] = useState('');
+    const [addressError, setAddressError] = useState('');
 
+    const activeUser = api.getCurrentUser();
     const [shipping, setShipping] = useState({
-        fullName: '',
-        phone: '',
-        email: '',
-        address: '',
-        city: '',
-        state: 'Rajasthan',
-        pincode: '',
+        fullName: activeUser?.full_name || '',
+        phone: activeUser?.phone || '',
+        email: activeUser?.email || '',
+        address: activeUser?.address || '',
+        city: activeUser?.city || 'Jaipur',
+        state: activeUser?.state || 'Rajasthan',
+        pincode: activeUser?.pincode || '',
         notes: ''
     });
 
@@ -49,10 +52,24 @@ export default function CheckoutModal({
 
     const handleAddressSubmit = (e) => {
         e.preventDefault();
-        if (!shipping.fullName || !shipping.phone || !shipping.address || !shipping.pincode) {
-            alert('Please fill all required delivery details.');
+        setAddressError('');
+        const validation = checkoutSchema.safeParse({
+            fullName: shipping.fullName,
+            phone: shipping.phone,
+            email: shipping.email,
+            addressLine1: shipping.address,
+            city: shipping.city || 'Jaipur',
+            state: shipping.state || 'Rajasthan',
+            pincode: shipping.pincode,
+            notes: shipping.notes
+        });
+
+        if (!validation.success) {
+            const firstErr = validation.error.errors[0]?.message || 'Please fill all required delivery details properly.';
+            setAddressError(firstErr);
             return;
         }
+
         setStep(2);
     };
 
@@ -98,6 +115,7 @@ export default function CheckoutModal({
             };
 
             setOrderInfo(confirmedOrderData);
+            api.saveUserOrder(confirmedOrderData);
             onOrderPlaced(confirmedOrderData);
             setStep(3);
         } catch (err) {
@@ -109,8 +127,8 @@ export default function CheckoutModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
-            <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden my-6 border border-[#E6D6B8] animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
+            <div className="relative w-full max-w-[calc(100vw-1rem)] sm:max-w-2xl max-h-[90dvh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden my-auto border border-[#E6D6B8] animate-in fade-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="p-5 border-b border-[#E6D6B8] bg-[#FAF5E8] flex items-center justify-between">
                     <div>
@@ -146,6 +164,12 @@ export default function CheckoutModal({
                 {/* Step 1: Address Form */}
                 {step === 1 && (
                     <form onSubmit={handleAddressSubmit} className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto safe-bottom-pad">
+                        {addressError && (
+                            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                                <span>{addressError}</span>
+                            </div>
+                        )}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="checkout-fullname" className="block text-xs font-bold text-[#161616] mb-1">Full Name *</label>

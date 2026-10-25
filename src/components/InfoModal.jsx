@@ -72,19 +72,31 @@ export default function InfoModal({ contentKey, onClose }) {
                                 <strong className="text-black">care@amolmurtibhandar.com</strong>
                             </div>
                         </div>
-                        <div className="p-3.5 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center gap-3">
-                            <MapPin className="w-5 h-5 text-[#C69722]" />
-                            <div>
-                                <span className="text-[11px] text-stone-500 block">Flagship Showroom & Studio</span>
-                                <strong className="text-black">Amol Marble Murti Bhandar, Bus Stand Road, Near Murarka High School, Shegaon, Buldhana District, Maharashtra 444203</strong>
-                                <a 
-                                    href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="block mt-1 text-xs text-[#8E5B00] hover:underline font-bold"
-                                >
-                                    📍 View on Google Maps (4.9★ Rated) →
-                                </a>
+                        <div className="p-3.5 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8]">
+                            <div className="flex items-start gap-3">
+                                <MapPin className="w-5 h-5 text-[#C69722] flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <span className="text-[11px] text-stone-500 block">Flagship Showroom & Studio</span>
+                                    <strong className="text-black">Amol Marble Murti Bhandar, Bus Stand Road, Near Murarka High School, Shegaon, Buldhana District, Maharashtra 444203</strong>
+                                    <a 
+                                        href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="block mt-1 text-xs text-[#8E5B00] hover:underline font-bold"
+                                    >
+                                        📍 Open in Google Maps App (4.9★ Rated) →
+                                    </a>
+                                </div>
+                            </div>
+                            <div className="mt-3 rounded-lg overflow-hidden border border-[#E6D6B8] h-36 w-full">
+                                <iframe
+                                    title="Showroom Location Map"
+                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1864.5!2d76.694611!3d20.793694!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjDCsDQ3JzM3LjMiTiA3NsKwNDEnNDAuNiJF!5e0!3m2!1sen!2sin!4v1700000000000"
+                                    className="w-full h-full border-0"
+                                    loading="lazy"
+                                    allowFullScreen
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                />
                             </div>
                         </div>
                     </div>
@@ -130,23 +142,24 @@ export default function InfoModal({ contentKey, onClose }) {
     const IconComponent = data.icon;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
-            <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden my-6 border border-[#E6D6B8] animate-in fade-in zoom-in-95 duration-200">
-                <div className="p-5 border-b border-[#E6D6B8] bg-[#FAF5E8] flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white border border-[#E6D6B8] flex items-center justify-center text-[#C69722]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
+            <div className="relative w-full max-w-[calc(100vw-1rem)] sm:max-w-xl max-h-[90dvh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden my-auto border border-[#E6D6B8] animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-4 sm:p-5 border-b border-[#E6D6B8] bg-[#FAF5E8] flex items-center justify-between gap-3 shrink-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-white border border-[#E6D6B8] flex items-center justify-center text-[#C69722] shrink-0">
                             <IconComponent className="w-5 h-5" />
                         </div>
-                        <div>
-                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#C69722]">✦ {data.tag} ✦</span>
-                            <h3 className="font-serif text-xl font-bold text-[#161616]">{data.title}</h3>
+                        <div className="min-w-0">
+                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#C69722] truncate block">✦ {data.tag} ✦</span>
+                            <h3 className="font-serif text-lg sm:text-xl font-bold text-[#161616] truncate">{data.title}</h3>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-8 h-8 rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-500 hover:text-black transition"
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-500 hover:text-black transition shrink-0"
+                        aria-label="Close information modal"
                     >
-                        <X className="w-4 h-4" />
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
 

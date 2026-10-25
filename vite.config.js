@@ -14,6 +14,8 @@ export default defineConfig({
           'vendor-animation': ['gsap', '@gsap/react', 'lenis'],
           'vendor-virtual': ['@tanstack/react-virtual', 'idb'],
           'vendor-icons': ['lucide-react'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-validation': ['zod'],
         },
       },
     },
@@ -24,28 +26,34 @@ export default defineConfig({
     open: false,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://murti-hub-5.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
       '/uploads': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://murti-hub-5.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
       '/health': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://murti-hub-5.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
       '/uptimerobot': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://murti-hub-5.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
       '/ping': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://murti-hub-5.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
       '/healthz': {
-        target: 'http://127.0.0.1:8000',
+        target: 'https://murti-hub-5.onrender.com',
         changeOrigin: true,
+        secure: false,
       },
     },
     watch: {

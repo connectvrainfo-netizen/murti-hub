@@ -29,6 +29,9 @@ pnpm-debug.log*
 
 # Temporary test/defect captures
 defect/
+playwright-report/
+test-results/
+*.zip
 
 .vercel
 

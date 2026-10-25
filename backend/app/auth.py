@@ -77,35 +77,29 @@ def decode_access_token(token: str) -> dict:
         raise jwt.InvalidTokenError("Token has been revoked.")
     return payload
 
-async def get_current_admin(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer)) -> Dict[str, Any]:
+async def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer)) -> Dict[str, Any]:
     if not credentials or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Admin authentication required. Please provide a Bearer token.",
+            detail="Authentication required. Please provide a Bearer token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     try:
         payload = decode_access_token(credentials.credentials)
-        role = payload.get("role")
-        if role in ["super_admin", "admin", "editor"]:
-            return payload
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Insufficient admin privileges to perform this operation."
-        )
+        return payload
     except jwt.ExpiredSignatureError:
-        logger.warning("Admin access attempted with expired JWT token")
+        logger.warning("Access attempted with expired JWT token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Admin session token has expired. Please log in again.",
+            detail="Session token has expired. Please log in again.",
             headers={"WWW-Authenticate": 'Bearer error="token_expired"'}
         )
     except jwt.InvalidTokenError as e:
-        logger.warning(f"Admin access attempted with invalid JWT token: {e}")
+        logger.warning(f"Access attempted with invalid JWT token: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid admin authentication token: {e}",
+            detail=f"Invalid authentication token: {e}",
             headers={"WWW-Authenticate": 'Bearer error="invalid_token"'}
         )
     except HTTPException:
@@ -117,3 +111,13 @@ async def get_current_admin(credentials: Optional[HTTPAuthorizationCredentials] 
             detail="Could not validate credentials.",
             headers={"WWW-Authenticate": "Bearer"}
         )
+
+async def get_current_admin(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_bearer)) -> Dict[str, Any]:
+    payload = await get_current_user(credentials)
+    role = payload.get("role")
+    if role in ["super_admin", "admin", "editor"]:
+        return payload
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Insufficient admin privileges to perform this operation."
+    )

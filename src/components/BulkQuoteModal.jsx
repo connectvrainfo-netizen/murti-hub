@@ -16,15 +16,30 @@ export default function BulkQuoteModal({ isOpen, onClose, onQuoteSubmitted }) {
         notes: ''
     });
 
-    const handleSubmit = (e) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [quoteError, setQuoteError] = useState('');
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitted(true);
-        if (onQuoteSubmitted) onQuoteSubmitted(form);
+        setQuoteError('');
+        if (form.phone.length !== 10) {
+            setQuoteError('Please enter a valid 10-digit Indian mobile number.');
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            if (onQuoteSubmitted) await onQuoteSubmitted(form);
+            setIsSubmitted(true);
+        } catch (err) {
+            setQuoteError(err?.message || 'Failed to submit quote request. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
-            <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden my-6 border border-[#E6D6B8] animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
+            <div className="relative w-full max-w-[calc(100vw-1rem)] sm:max-w-xl max-h-[90dvh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden my-auto border border-[#E6D6B8] animate-in fade-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="p-5 border-b border-[#E6D6B8] bg-[#FAF5E8] flex items-center justify-between">
                     <div>
@@ -169,12 +184,19 @@ export default function BulkQuoteModal({ isOpen, onClose, onQuoteSubmitted }) {
                             ></textarea>
                         </div>
 
+                        {quoteError && (
+                            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                                {quoteError}
+                            </div>
+                        )}
+
                         <div className="pt-2">
                             <button
                                 type="submit"
-                                className="w-full min-h-[50px] py-4 rounded-xl bg-[#C69722] hover:bg-[#A67B14] text-white text-xs font-bold tracking-wider uppercase transition shadow-lg tap-target-48 active:scale-98"
+                                disabled={isSubmitting}
+                                className="w-full min-h-[50px] py-4 rounded-xl bg-[#C69722] hover:bg-[#A67B14] disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold tracking-wider uppercase transition shadow-lg tap-target-48 active:scale-98 flex items-center justify-center gap-2"
                             >
-                                SUBMIT QUOTE REQUEST ➔
+                                <span>{isSubmitting ? 'SUBMITTING REQUEST...' : 'SUBMIT QUOTE REQUEST ➔'}</span>
                             </button>
                         </div>
                     </form>

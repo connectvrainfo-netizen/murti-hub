@@ -61,8 +61,8 @@ export default function OrderTrackingModal({ isOpen, onClose, initialOrderId = '
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
-            <div className="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl overflow-hidden my-6 border border-[#E6D6B8] animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto">
+            <div className="relative w-full max-w-[calc(100vw-1rem)] sm:max-w-xl max-h-[90dvh] flex flex-col bg-white rounded-3xl shadow-2xl overflow-hidden my-auto border border-[#E6D6B8] animate-in fade-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="p-5 border-b border-[#E6D6B8] bg-[#FAF5E8] flex items-center justify-between">
                     <div>

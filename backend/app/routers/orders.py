@@ -11,7 +11,7 @@ from app.schemas.orders import (
 )
 from app.schemas.common import ApiResponse
 from app.database import get_supabase, is_supabase_connected, local_store
-from app.auth import get_current_admin
+from app.auth import get_current_admin, get_current_user
 from app.errors import BadRequestError, NotFoundError
 
 logger = logging.getLogger("amol_murti_api")
@@ -247,7 +247,33 @@ def create_authoritative_order(payload: OrderCreateRequest, response: Response):
     )
 
 # ============================================================================
-# 3. ORDER TRACKING LOOKUP (Authoritative Status Verification)
+# 3. USER ORDER HISTORY (Logged-in Devotee)
+# ============================================================================
+@router.get("/my", response_model=ApiResponse[List[OrderOut]], summary="Get orders placed by the current authenticated user")
+def get_my_orders(user: dict = Depends(get_current_user)):
+    email = (user.get("email") or "").lower()
+    user_id = str(user.get("id") or "")
+    orders = getattr(local_store, "orders", [])
+    
+    user_orders = []
+    for order in orders:
+        s_email = (order.get("shipping", {}).get("email") or "").lower()
+        o_user_id = str(order.get("user_id") or "")
+        if (email and s_email == email) or (user_id and o_user_id == user_id):
+            user_orders.append(order)
+            
+    # If no orders specific to user, return empty list or sample if demo devotee
+    if not user_orders and email == "devotee@example.com":
+        user_orders = orders[:2]
+        
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(user_orders)} orders for user",
+        data=user_orders
+    )
+
+# ============================================================================
+# 4. ORDER TRACKING LOOKUP (Authoritative Status Verification)
 # ============================================================================
 @router.get("/{order_id}", response_model=ApiResponse[OrderOut], summary="Authoritative order tracking by ID with privacy protection")
 def get_order_by_id(order_id: str):

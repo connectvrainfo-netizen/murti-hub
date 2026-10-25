@@ -5,11 +5,11 @@ import {
     Truck, PackageCheck, Award, CheckCircle2, Pause,
     Play, Volume2, VolumeX, Columns, LayoutGrid, Grid, Instagram,
     Youtube, Gem, Heart, SlidersHorizontal, RotateCcw, Percent, Check, Star, Menu, X,
-    MapPin, Clock, Banknote, Eye
+    MapPin, Clock, Banknote, Eye, Lock, LogOut, ChevronDown, ExternalLink
 } from 'lucide-react';
 import { deityCategories, catalog, overlayCards, pageMeta, faqs } from './data/catalog';
-import ProductDetailPage from './components/ProductDetailPage';
 import ErrorBoundary from './components/ErrorBoundary';
+const ProductDetailPage = React.lazy(() => import('./components/ProductDetailPage'));
 import ProductDetailModal from './components/ProductDetailModal';
 import CheckoutModal from './components/CheckoutModal';
 import OrderTrackingModal from './components/OrderTrackingModal';
@@ -19,9 +19,11 @@ import InfoModal from './components/InfoModal';
 import FilterDrawer from './components/FilterDrawer';
 import IntroAnimation from './components/IntroAnimation';
 import ScrollProgress from './components/ScrollProgress';
-import AdminPage from './components/AdminPage';
-import LoginPage from './components/LoginPage';
+import AdminRouteGuard from './components/AdminRouteGuard';
 import SafeImage from './components/SafeImage';
+const AdminPage = React.lazy(() => import('./components/AdminPage'));
+const LoginPage = React.lazy(() => import('./components/LoginPage'));
+const UserProfilePage = React.lazy(() => import('./components/UserProfilePage'));
 import api from './services/api';
 import { supabase } from './utils/supabase';
 import { useLenisSmoothScroll } from './hooks/useLenisSmoothScroll';
@@ -36,9 +38,17 @@ const checkIsAdminPath = () => {
     if (typeof window === 'undefined') return false;
     const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
     const hash = window.location.hash.toLowerCase();
-    const search = window.location.search.toLowerCase();
     const params = new URLSearchParams(window.location.search);
-    return path === '/admin' || path.startsWith('/admin') || hash === '#admin' || hash.startsWith('#admin') || params.get('page') === 'admin' || search.includes('admin');
+    return path === '/admin' || path.startsWith('/admin') || hash === '#admin' || hash.startsWith('#admin') || params.get('page') === 'admin';
+};
+
+// Helper to determine if current URL is the dedicated customer profile page
+const checkIsProfilePath = () => {
+    if (typeof window === 'undefined') return false;
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+    const hash = window.location.hash.toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    return path === '/profile' || path.startsWith('/profile') || hash === '#profile' || hash.startsWith('#profile') || params.get('page') === 'profile';
 };
 
 // Helper to determine if current URL is the dedicated customer login page
@@ -54,15 +64,32 @@ const checkIsLoginPath = () => {
 const getInitialNavigation = () => {
     if (typeof window === 'undefined') return { page: 'home', product: null, deity: null };
     if (checkIsAdminPath()) return { page: 'admin', product: null, deity: null };
+    if (checkIsProfilePath()) return { page: 'profile', product: null, deity: null };
     if (checkIsLoginPath()) return { page: 'login', product: null, deity: null };
     
     try {
         const searchParams = new URLSearchParams(window.location.search);
-        const productParam = searchParams.get('product');
+        const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+        const productParam = searchParams.get('product') || searchParams.get('id');
+        
+        // 1. Direct product detail query param (?product=1 or ?id=1)
         if (productParam) {
             const found = catalog.find(p => String(p.id) === String(productParam) || String(p.legacy_id) === String(productParam));
             return { page: 'product', product: found || null, deity: null };
         }
+
+        // 2. Direct product detail clean path (/product/123 or /product?product=123)
+        if (path.startsWith('/product/') || path === '/product') {
+            const segments = path.split('/').filter(Boolean);
+            const idFromPath = segments[1] || productParam;
+            if (idFromPath) {
+                const found = catalog.find(p => String(p.id) === String(idFromPath) || String(p.legacy_id) === String(idFromPath));
+                return { page: 'product', product: found || null, deity: null };
+            }
+            return { page: 'shop-all', product: null, deity: null };
+        }
+
+        // 3. Clean pathnames for collections & pages
         const pageParam = searchParams.get('page');
         const categoryParam = searchParams.get('category');
         if (pageParam) {
@@ -70,6 +97,22 @@ const getInitialNavigation = () => {
         }
         if (categoryParam) {
             return { page: 'shop-all', product: null, deity: categoryParam };
+        }
+
+        if (path === '/shop-all' || path === '/shop' || path === '/catalog' || path === '/products') {
+            return { page: 'shop-all', product: null, deity: null };
+        }
+        if (path === '/navratri') {
+            return { page: 'navratri', product: null, deity: null };
+        }
+        if (path === '/sacred') {
+            return { page: 'sacred', product: null, deity: null };
+        }
+        if (path === '/baal-roop') {
+            return { page: 'baal-roop', product: null, deity: null };
+        }
+        if (path === '/cart') {
+            return { page: 'home', product: null, deity: null };
         }
     } catch {
         // Fallback to home
@@ -198,7 +241,16 @@ export default function App() {
     const [isBulkQuoteOpen, setIsBulkQuoteOpen] = useState(false);
     const [infoModalKey, setInfoModalKey] = useState(null);
     const [inquiryProduct, setInquiryProduct] = useState(null);
-    const [isCartOpen, setIsCartOpen] = useState(false);
+    const [isCartOpen, setIsCartOpen] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        try {
+            const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+            const params = new URLSearchParams(window.location.search);
+            return path === '/cart' || params.get('cart') === 'true' || window.location.hash === '#cart';
+        } catch {
+            return false;
+        }
+    });
     const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isKwikPassOpen, setIsKwikPassOpen] = useState(false);
@@ -210,6 +262,34 @@ export default function App() {
     const [filterPriceRange, setFilterPriceRange] = useState('all');
     const [filterPlacement, setFilterPlacement] = useState('all');
     const [filterAvailability, setFilterAvailability] = useState('all');
+    const [showroomMapMode, setShowroomMapMode] = useState('pin'); // 'pin' | 'satellite' | 'clean'
+
+    // 2.1 Reactive User Authentication State & Dropdown
+    const [currentUser, setCurrentUser] = useState(() => api.getCurrentUser());
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const userMenuRef = useRef(null);
+
+    // Sync auth state across components and listen for auth-changed events
+    useEffect(() => {
+        const handleAuthUpdate = (e) => {
+            setCurrentUser(e?.detail?.user || api.getCurrentUser());
+        };
+        window.addEventListener('murti-auth-changed', handleAuthUpdate);
+        window.addEventListener('storage', handleAuthUpdate);
+
+        const handleClickOutside = (e) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+                setIsUserMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+
+        return () => {
+            window.removeEventListener('murti-auth-changed', handleAuthUpdate);
+            window.removeEventListener('storage', handleAuthUpdate);
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     // 3. Browser Forward/Back Button & History Synchronization
     useEffect(() => {
@@ -263,7 +343,14 @@ export default function App() {
                 return;
             }
 
-            // 2b. Dedicated Login path
+            // 2b. Dedicated Profile path
+            if (checkIsProfilePath()) {
+                setCurrentPage('profile');
+                setSelectedProduct(null);
+                return;
+            }
+
+            // 2c. Dedicated Login path
             if (checkIsLoginPath()) {
                 setCurrentPage('login');
                 setSelectedProduct(null);
@@ -273,7 +360,8 @@ export default function App() {
             // 3. Inspect URL query params and history state for products
             const state = event?.state;
             const searchParams = new URLSearchParams(window.location.search);
-            const productParam = searchParams.get('product') || (state?.page === 'product' ? state.productId : null);
+            const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+            const productParam = searchParams.get('product') || searchParams.get('id') || (state?.page === 'product' ? state.productId : null);
 
             if (productParam) {
                 const allItems = (liveProducts && liveProducts.length > 0) ? liveProducts : catalog;
@@ -286,11 +374,38 @@ export default function App() {
                 }
             }
 
+            // Path-based product detail URL: /product/123
+            if (path.startsWith('/product/') || path === '/product') {
+                const segments = path.split('/').filter(Boolean);
+                const idFromPath = segments[1] || productParam;
+                if (idFromPath) {
+                    const allItems = (liveProducts && liveProducts.length > 0) ? liveProducts : catalog;
+                    const found = allItems.find(p => String(p.id) === String(idFromPath) || String(p.legacy_id) === String(idFromPath));
+                    if (found) {
+                        setSelectedProduct(found);
+                        setCurrentPage('product');
+                        scrollTo(0);
+                        return;
+                    }
+                }
+            }
+
             // 4. Page and category restoration
             const pageParam = searchParams.get('page');
             const categoryParam = searchParams.get('category');
-            const targetPage = pageParam || state?.page || 'home';
+            let targetPage = pageParam || state?.page;
+            if (!targetPage) {
+                if (path === '/shop-all' || path === '/shop' || path === '/catalog' || path === '/products') targetPage = 'shop-all';
+                else if (path === '/navratri') targetPage = 'navratri';
+                else if (path === '/sacred') targetPage = 'sacred';
+                else if (path === '/baal-roop') targetPage = 'baal-roop';
+                else targetPage = 'home';
+            }
             const targetDeity = categoryParam || state?.deity || null;
+
+            if (path === '/cart') {
+                setIsCartOpen(true);
+            }
 
             setSelectedProduct(null);
             setCurrentPage(targetPage);
@@ -535,6 +650,17 @@ export default function App() {
             return;
         }
 
+        if (pageKey === 'profile') {
+            if (pushToHistory && typeof window !== 'undefined') {
+                window.history.pushState({ page: 'profile' }, '', '/profile');
+            }
+            setCurrentPage('profile');
+            setSelectedProduct(null);
+            setIsMobileMenuOpen(false);
+            scrollTo(0);
+            return;
+        }
+
         if (pageKey === 'login') {
             if (pushToHistory && typeof window !== 'undefined') {
                 window.history.pushState({ page: 'login' }, '', '/login');
@@ -731,30 +857,34 @@ export default function App() {
         }
     };
 
-    // Collection Items Computation with multi-filters
+    // Collection Items Computation with multi-filters (Fully defensive against null/undefined)
     const getFilteredCollectionItems = () => {
-        let items = [...liveProducts];
+        let items = Array.isArray(liveProducts) ? [...liveProducts] : [];
         if (currentPage !== 'home' && currentPage !== 'shop-all') {
             if (currentPage === 'navratri') {
-                items = liveProducts.filter(p => p.group === 'navratri' || p.group_tag === 'navratri' || p.deity?.toLowerCase().includes('durga'));
+                items = items.filter(p => p?.group === 'navratri' || p?.group_tag === 'navratri' || String(p?.deity || '').toLowerCase().includes('durga'));
             } else if (currentPage === 'sacred') {
-                items = liveProducts.filter(p => p.group === 'sacred' || p.group_tag === 'sacred');
+                items = items.filter(p => p?.group === 'sacred' || p?.group_tag === 'sacred');
             } else if (currentPage === 'baal-roop') {
-                items = liveProducts.filter(p => p.group === 'baal-roop' || p.group_tag === 'baal-roop');
+                items = items.filter(p => p?.group === 'baal-roop' || p?.group_tag === 'baal-roop');
             } else {
                 const meta = pageMeta[currentPage];
-                if (meta && typeof meta.getItems === 'function') items = meta.getItems();
+                if (meta && typeof meta.getItems === 'function') {
+                    const fetched = meta.getItems();
+                    if (Array.isArray(fetched)) items = fetched;
+                }
             }
         }
 
         if (isWishlistFilterActive) {
-            items = items.filter(p => wishlist.includes(p.id));
+            items = items.filter(p => p && wishlist.includes(p.id));
         }
 
         if (activeDeityFilter) {
+            const filterLower = String(activeDeityFilter).toLowerCase();
             items = items.filter(p =>
-                p.deity?.toLowerCase().includes(activeDeityFilter.toLowerCase()) ||
-                p.title.toLowerCase().includes(activeDeityFilter.toLowerCase())
+                String(p?.deity || '').toLowerCase().includes(filterLower) ||
+                String(p?.title || '').toLowerCase().includes(filterLower)
             );
         }
 
@@ -777,42 +907,43 @@ export default function App() {
         if (filterPlacement !== 'all') {
             if (filterPlacement === 'home-mandir') {
                 items = items.filter(p => {
-                    const desc = (p.description || '').toLowerCase();
-                    const title = (p.title || '').toLowerCase();
-                    const dim = (p.dimensions || '').toLowerCase();
+                    const desc = String(p?.description || '').toLowerCase();
+                    const title = String(p?.title || '').toLowerCase();
+                    const dim = String(p?.dimensions || '').toLowerCase();
                     return desc.includes('mandir') || desc.includes('altar') || desc.includes('pooja') || desc.includes('temple') ||
                            title.includes('mandir') || !desc.includes('desk') || dim.includes('12') || dim.includes('15') || dim.includes('18');
                 });
             } else if (filterPlacement === 'office-desk') {
                 items = items.filter(p => {
-                    const desc = (p.description || '').toLowerCase();
-                    const title = (p.title || '').toLowerCase();
-                    const dim = (p.dimensions || '').toLowerCase();
-                    const weight = (p.weight || '').toLowerCase();
+                    const desc = String(p?.description || '').toLowerCase();
+                    const title = String(p?.title || '').toLowerCase();
+                    const dim = String(p?.dimensions || '').toLowerCase();
+                    const weight = String(p?.weight || '').toLowerCase();
                     return desc.includes('desk') || desc.includes('office') || desc.includes('compact') ||
                            dim.includes('6') || dim.includes('9') || weight.includes('1.') || weight.includes('2.');
                 });
             } else {
+                const placementLower = String(filterPlacement).toLowerCase();
                 items = items.filter(p =>
-                    p.title.toLowerCase().includes(filterPlacement.toLowerCase()) ||
-                    p.deity?.toLowerCase().includes(filterPlacement.toLowerCase())
+                    String(p?.title || '').toLowerCase().includes(placementLower) ||
+                    String(p?.deity || '').toLowerCase().includes(placementLower)
                 );
             }
         }
 
         if (filterAvailability === 'in_stock') {
-            items = items.filter(p => p.stock_status === 'in_stock' || !p.stock_status || p.stock_status === 'active');
+            items = items.filter(p => p?.stock_status === 'in_stock' || !p?.stock_status || p?.stock_status === 'active');
         }
 
-        if (searchQuery.trim()) {
+        if (searchQuery && typeof searchQuery === 'string' && searchQuery.trim()) {
             const q = searchQuery.toLowerCase().trim();
             items = items.filter(p =>
-                p.title.toLowerCase().includes(q) ||
-                p.deity?.toLowerCase().includes(q)
+                String(p?.title || '').toLowerCase().includes(q) ||
+                String(p?.deity || '').toLowerCase().includes(q)
             );
         }
 
-        if (sortBy === 'az') items.sort((a, b) => a.title.localeCompare(b.title));
+        if (sortBy === 'az') items.sort((a, b) => String(a?.title || '').localeCompare(String(b?.title || '')));
         if (sortBy === 'low') items.sort((a, b) => getNumericPrice(a) - getNumericPrice(b));
         if (sortBy === 'high') items.sort((a, b) => getNumericPrice(b) - getNumericPrice(a));
 
@@ -836,13 +967,71 @@ export default function App() {
     // =========================================================================
     if (currentPage === 'admin') {
         return (
-            <AdminPage
+            <AdminRouteGuard
                 onReturnToStore={() => {
                     window.history.pushState(null, '', '/');
                     navigateTo('home');
                 }}
-                onDataChanged={loadBackendData}
-            />
+                onRedirectToLogin={() => {
+                    window.history.pushState(null, '', '/login?redirect=/admin');
+                    navigateTo('login');
+                }}
+            >
+                <React.Suspense fallback={
+                    <div className="min-h-screen w-full bg-[#141210] flex items-center justify-center p-6 text-stone-300">
+                        <div className="p-8 rounded-3xl bg-[#201C18] border border-[#DFC48D]/30 shadow-2xl flex items-center gap-3">
+                            <span className="w-5 h-5 border-2 border-[#F7C600] border-t-transparent rounded-full animate-spin" />
+                            <span className="text-xs font-bold tracking-wider uppercase text-white">Loading Admin Console...</span>
+                        </div>
+                    </div>
+                }>
+                    <AdminPage
+                        onReturnToStore={() => {
+                            window.history.pushState(null, '', '/');
+                            navigateTo('home');
+                        }}
+                        onDataChanged={loadBackendData}
+                    />
+                </React.Suspense>
+            </AdminRouteGuard>
+        );
+    }
+
+    // =========================================================================
+    // DEDICATED DEVOTEE USER PROFILE & ORDERS ROUTE (/profile or #profile)
+    // =========================================================================
+    if (currentPage === 'profile') {
+        return (
+            <React.Suspense fallback={
+                <div className="min-h-screen w-full bg-[#FAF5E8] flex items-center justify-center p-6 text-stone-700">
+                    <span className="w-6 h-6 border-2 border-[#C69722] border-t-transparent rounded-full animate-spin" />
+                </div>
+            }>
+                <UserProfilePage
+                    currentUser={currentUser}
+                    wishlist={wishlist}
+                    allProducts={liveProducts && liveProducts.length > 0 ? liveProducts : catalog}
+                    onReturnToStore={() => {
+                        window.history.pushState(null, '', '/');
+                        navigateTo('home');
+                    }}
+                    onNavigateToAdmin={() => navigateTo('admin')}
+                    onOpenTracking={(orderId) => openTrackingModal(orderId)}
+                    onAddToCart={addToCart}
+                    onSelectProduct={(p) => openProductModal(p)}
+                    onUpdateUser={(updated) => {
+                        setCurrentUser(updated);
+                        api.setCurrentUser(updated);
+                    }}
+                    onLogout={async () => {
+                        await api.logout();
+                        setCurrentUser(null);
+                        showToast('Signed out of account successfully');
+                        navigateTo('home');
+                    }}
+                    onRedirectToLogin={() => navigateTo('login')}
+                />
+            </React.Suspense>
         );
     }
 
@@ -852,19 +1041,33 @@ export default function App() {
     // =========================================================================
     if (currentPage === 'login') {
         return (
-            <LoginPage
-                onReturnToStore={() => {
-                    window.history.pushState(null, '', '/');
-                    navigateTo('home');
-                }}
-                onLoginSuccess={(userData) => {
-                    if (userData?.role === 'admin') {
-                        navigateTo('admin');
-                    } else {
+            <React.Suspense fallback={
+                <div className="min-h-screen w-full bg-[#FAF5E8] flex items-center justify-center p-6 text-stone-700">
+                    <span className="w-6 h-6 border-2 border-[#C69722] border-t-transparent rounded-full animate-spin" />
+                </div>
+            }>
+                <LoginPage
+                    onReturnToStore={() => {
+                        window.history.pushState(null, '', '/');
                         navigateTo('home');
-                    }
-                }}
-            />
+                    }}
+                    onNavigateToProfile={() => navigateTo('profile')}
+                    onNavigateToAdmin={() => navigateTo('admin')}
+                    onLoginSuccess={(userData) => {
+                        const user = userData || api.getCurrentUser();
+                        setCurrentUser(user);
+                        const role = String(user?.role || '').toLowerCase();
+                        const isSuperAdmin = ['admin', 'super_admin', 'editor', 'staff'].includes(role);
+                        if (isSuperAdmin) {
+                            showToast(`Welcome back, Administrator! Opening Admin Console...`);
+                            navigateTo('admin');
+                        } else {
+                            showToast(`Welcome, ${user?.full_name || 'Devotee'}! Blessed shopping 🙏`);
+                            navigateTo('profile');
+                        }
+                    }}
+                />
+            </React.Suspense>
         );
     }
 
@@ -888,16 +1091,20 @@ export default function App() {
 
             {/* ================= 2. STICKY NAVIGATION HEADER ================= */}
             <header className="sticky top-0 z-40 bg-[#FAF5E8]/95 backdrop-blur-md border-b border-[#E8DEC8] transition-shadow duration-300">
-                <div className="w-full px-4 sm:px-8 lg:px-10 xl:px-12 2xl:px-16 py-3.5 flex items-center justify-between gap-4">
+                <div className="w-full px-2.5 sm:px-8 lg:px-10 xl:px-12 2xl:px-16 py-2.5 sm:py-3.5 flex items-center justify-between gap-1.5 sm:gap-4 max-w-full">
 
                     {/* Amol Marble Murti Bhandar Brand Logo */}
-                    <button onClick={() => navigateTo('home')} className="flex items-center select-none group text-left outline-none focus:outline-none flex-shrink-0 py-0.5">
+                    <button 
+                        onClick={() => navigateTo('home')} 
+                        aria-label="Amol Marble Murti Bhandar Home"
+                        className="flex items-center select-none group text-left outline-none focus:outline-none flex-shrink-0 py-0.5"
+                    >
                         <img
                             src={brandLogo}
                             alt="Amol Marble Murti Bhandar Shegaon - Authentic Marble Idols & Murtis"
                             width="220"
                             height="64"
-                            className="h-12 sm:h-14 md:h-16 w-auto object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
+                            className="h-10 sm:h-14 md:h-16 w-auto object-contain filter drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
                         />
                     </button>
 
@@ -927,18 +1134,6 @@ export default function App() {
 
                     {/* Right Utility Icons */}
                     <div className="flex items-center space-x-1 sm:space-x-2 text-[#1C1C1C] flex-shrink-0">
-                        {/* Mobile & Tablet Darshan Intro Replay Badge */}
-                        <button
-                            type="button"
-                            onClick={() => setShowIntro(true)}
-                            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 min-h-[38px] rounded-full text-[10.5px] sm:text-[11px] font-bold text-[#9D6809] bg-[#FAF2DE] hover:bg-[#F4E3BF] border border-[#E5CD96] transition-all active:scale-95 shadow-2xs"
-                            title="Replay Sacred Intro Animation"
-                            aria-label="Replay Sacred Intro Animation"
-                        >
-                            <Sparkles className="w-3.5 h-3.5 text-[#C69722]" />
-                            <span className="hidden min-[390px]:inline">दर्शन Intro</span>
-                        </button>
-
                         {/* Search Toggle Button */}
                         <button
                             type="button"
@@ -950,16 +1145,128 @@ export default function App() {
                             <Search className="w-5 h-5 stroke-[1.8]" />
                         </button>
 
-                        {/* Account Login Button (Desktop & Tablet) */}
-                        <button
-                            type="button"
-                            onClick={() => navigateTo('login')}
-                            className="hidden md:flex w-auto px-3 h-10 items-center justify-center gap-1.5 rounded-full text-stone-800 hover:text-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition text-xs font-semibold"
-                            aria-label="Account Login"
-                        >
-                            <User className="w-4.5 h-4.5 stroke-[1.8]" />
-                            <span className="text-[11px] font-semibold tracking-wider">LOGIN</span>
-                        </button>
+                        {/* Account Portal Button & Interactive Dropdown (Desktop & Tablet) */}
+                        <div className="relative hidden md:block" ref={userMenuRef}>
+                            {currentUser ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                                    className="flex items-center gap-2 h-10 pl-2 pr-3 rounded-full bg-white border border-[#E6D6B8] hover:border-[#C69722] text-stone-800 hover:text-[#C69722] shadow-2xs active:scale-95 transition text-xs font-bold cursor-pointer"
+                                    aria-expanded={isUserMenuOpen}
+                                    aria-haspopup="true"
+                                    aria-label="User Account Menu"
+                                >
+                                    <div className="w-6.5 h-6.5 rounded-full bg-[#161616] text-[#F7C600] flex items-center justify-center font-black text-[11px] shadow-xs">
+                                        {(currentUser.full_name || currentUser.email || 'U')[0].toUpperCase()}
+                                    </div>
+                                    <span className="text-[11px] font-bold tracking-tight max-w-[95px] truncate">
+                                        {currentUser.full_name ? currentUser.full_name.split(' ')[0] : 'Devotee'}
+                                    </span>
+                                    {['admin', 'super_admin', 'editor', 'staff'].includes(String(currentUser.role || '').toLowerCase()) && (
+                                        <span className="text-[9px] bg-[#161616] text-[#F7C600] px-1.5 py-0.5 rounded font-extrabold uppercase tracking-wider">
+                                            Admin
+                                        </span>
+                                    )}
+                                    <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => navigateTo('login')}
+                                    className="flex w-auto px-3.5 h-10 items-center justify-center gap-1.5 rounded-full bg-white/90 border border-stone-200 text-stone-800 hover:text-[#C69722] hover:border-[#C69722] hover:bg-[#FAF2DE]/50 active:scale-95 transition text-xs font-bold shadow-2xs cursor-pointer"
+                                    aria-label="Account Login"
+                                >
+                                    <User className="w-4 h-4 stroke-[2] text-[#C69722]" />
+                                    <span className="text-[11px] font-extrabold tracking-wider">SIGN IN</span>
+                                </button>
+                            )}
+
+                            {/* Flyout Account Dropdown */}
+                            {currentUser && isUserMenuOpen && (
+                                <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#E6D6B8] py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                                    <div className="px-4 py-3 border-b border-stone-100 bg-[#FAF5E8]/60">
+                                        <p className="text-xs font-bold text-[#161616] truncate">
+                                            {currentUser.full_name || 'Devotee Member'}
+                                        </p>
+                                        <p className="text-[11px] text-stone-500 truncate font-mono mt-0.5">
+                                            {currentUser.email}
+                                        </p>
+                                        <span className="inline-block mt-1.5 text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#161616] text-[#F7C600]">
+                                            {['admin', 'super_admin', 'editor', 'staff'].includes(String(currentUser.role || '').toLowerCase()) ? 'Master Admin' : 'Devotee Customer'}
+                                        </span>
+                                    </div>
+
+                                    <div className="py-1 text-xs">
+                                        {['admin', 'super_admin', 'editor', 'staff'].includes(String(currentUser.role || '').toLowerCase()) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setIsUserMenuOpen(false); navigateTo('admin'); }}
+                                                className="w-full px-4 py-2 text-left flex items-center gap-2.5 font-bold text-[#8E5B00] hover:bg-[#FAF5E8] transition cursor-pointer"
+                                            >
+                                                <Lock className="w-4 h-4 text-[#C69722]" />
+                                                <span>Store Admin Console</span>
+                                            </button>
+                                        )}
+
+                                        <button
+                                            type="button"
+                                            onClick={() => { setIsUserMenuOpen(false); navigateTo('profile'); }}
+                                            className="w-full px-4 py-2 text-left flex items-center gap-2.5 text-stone-700 hover:bg-stone-50 transition font-semibold cursor-pointer"
+                                        >
+                                            <User className="w-4 h-4 text-[#C69722]" />
+                                            <span>My Sacred Profile & Orders</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsUserMenuOpen(false);
+                                                setIsWishlistFilterActive(true);
+                                                setCurrentPage('shop-all');
+                                                setActiveDeityFilter(null);
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                            className="w-full px-4 py-2 text-left flex items-center justify-between text-stone-700 hover:bg-stone-50 transition font-semibold cursor-pointer"
+                                        >
+                                            <div className="flex items-center gap-2.5">
+                                                <Heart className="w-4 h-4 text-rose-500" />
+                                                <span>Sacred Wishlist</span>
+                                            </div>
+                                            {wishlist.length > 0 && (
+                                                <span className="bg-rose-100 text-rose-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                                                    {wishlist.length}
+                                                </span>
+                                            )}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => { setIsUserMenuOpen(false); setIsTrackingModalOpen(true); }}
+                                            className="w-full px-4 py-2 text-left flex items-center gap-2.5 text-stone-700 hover:bg-stone-50 transition font-semibold cursor-pointer"
+                                        >
+                                            <Truck className="w-4 h-4 text-stone-400" />
+                                            <span>Track My Order</span>
+                                        </button>
+
+                                        <div className="border-t border-stone-100 my-1" />
+
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                setIsUserMenuOpen(false);
+                                                await api.logout();
+                                                setCurrentUser(null);
+                                                showToast('Signed out of your account successfully.');
+                                            }}
+                                            className="w-full px-4 py-2 text-left flex items-center gap-2.5 text-rose-600 hover:bg-rose-50 transition font-bold cursor-pointer"
+                                        >
+                                            <LogOut className="w-4 h-4 text-rose-500" />
+                                            <span>Sign Out</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                         {/* Wishlist Button with Live Counter Badge */}
                         <button
@@ -1069,14 +1376,66 @@ export default function App() {
                             </button>
                         </div>
                         <div className="pt-2 border-t border-[#E2D4B7] flex flex-col gap-2 text-xs">
-                            <button
-                                type="button"
-                                onClick={() => { setIsMobileMenuOpen(false); navigateTo('login'); }}
-                                className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-white border border-stone-200 text-stone-800 font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition shadow-xs"
-                            >
-                                <User className="w-4 h-4 text-[#C69722]" />
-                                <span>Sign In / My Account</span>
-                            </button>
+                            {currentUser ? (
+                                <div className="p-3 bg-white rounded-2xl border border-[#E6D6B8] shadow-xs space-y-2">
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-9 h-9 rounded-full bg-[#161616] text-[#F7C600] font-black text-xs flex items-center justify-center">
+                                            {(currentUser.full_name || currentUser.email || 'U')[0].toUpperCase()}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-xs font-bold text-stone-900 truncate">
+                                                {currentUser.full_name || 'Devotee Member'}
+                                            </div>
+                                            <div className="text-[10px] text-stone-500 truncate font-mono">
+                                                {currentUser.email}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-1.5 pt-1">
+                                        {['admin', 'super_admin', 'editor', 'staff'].includes(String(currentUser.role || '').toLowerCase()) ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setIsMobileMenuOpen(false); navigateTo('admin'); }}
+                                                className="py-2 px-2.5 rounded-lg bg-[#FAF5E8] border border-[#E8DEC8] text-[#8E5B00] font-bold text-[11px] flex items-center justify-center gap-1 active:scale-95"
+                                            >
+                                                <Lock className="w-3 h-3 text-[#C69722]" />
+                                                <span>Admin Console</span>
+                                            </button>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => { setIsMobileMenuOpen(false); navigateTo('profile'); }}
+                                                className="py-2 px-2.5 rounded-lg bg-stone-50 border border-stone-200 text-stone-700 font-bold text-[11px] flex items-center justify-center gap-1 active:scale-95"
+                                            >
+                                                <User className="w-3 h-3 text-[#C69722]" />
+                                                <span>My Profile & Orders</span>
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={async () => {
+                                                setIsMobileMenuOpen(false);
+                                                await api.logout();
+                                                setCurrentUser(null);
+                                                showToast('Signed out of account successfully');
+                                            }}
+                                            className="py-2 px-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 font-bold text-[11px] flex items-center justify-center gap-1 active:scale-95"
+                                        >
+                                            <LogOut className="w-3 h-3 text-rose-600" />
+                                            <span>Sign Out</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => { setIsMobileMenuOpen(false); navigateTo('login'); }}
+                                    className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-white border border-stone-200 text-stone-800 font-bold text-center flex items-center justify-center gap-2 active:scale-98 transition shadow-xs"
+                                >
+                                    <User className="w-4 h-4 text-[#C69722]" />
+                                    <span>Sign In / Create Account</span>
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => { setIsMobileMenuOpen(false); setShowIntro(true); }}
@@ -1098,13 +1457,6 @@ export default function App() {
                                 className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-white border border-stone-200 text-stone-700 font-semibold text-center flex items-center justify-center active:scale-98 transition shadow-xs"
                             >
                                 Track My Order
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => { setIsMobileMenuOpen(false); navigateTo('admin'); }}
-                                className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-[#FAF5E8] border border-[#E8DEC8] text-[#8E5B00] font-bold text-center flex items-center justify-center gap-1.5 active:scale-98 transition shadow-xs"
-                            >
-                                <span>🔒 Staff / Admin Console</span>
                             </button>
                         </div>
                     </div>
@@ -1477,7 +1829,7 @@ export default function App() {
                                 <button
                                     type="button"
                                     onClick={() => setActiveHeroSlide(0)}
-                                    className="min-w-[40px] min-h-[40px] flex items-center justify-center tap-target-48"
+                                    className="min-w-[44px] min-h-[44px] flex items-center justify-center tap-target-48 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F7C600]"
                                     aria-label="Slide 1: Featured Showcase"
                                 >
                                     <span className={`h-2 rounded-full transition-all duration-300 ${activeHeroSlide === 0 ? 'w-7 sm:w-8 bg-[#F7C600]' : 'w-2 bg-white/50'}`}></span>
@@ -1485,7 +1837,7 @@ export default function App() {
                                 <button
                                     type="button"
                                     onClick={() => setActiveHeroSlide(1)}
-                                    className="min-w-[40px] min-h-[40px] flex items-center justify-center tap-target-48"
+                                    className="min-w-[44px] min-h-[44px] flex items-center justify-center tap-target-48 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F7C600]"
                                     aria-label="Slide 2: Showroom Walkthrough"
                                 >
                                     <span className={`h-2 rounded-full transition-all duration-300 ${activeHeroSlide === 1 ? 'w-7 sm:w-8 bg-[#F7C600]' : 'w-2 bg-white/50'}`}></span>
@@ -1493,7 +1845,7 @@ export default function App() {
                                 <button
                                     type="button"
                                     onClick={() => setActiveHeroSlide(2)}
-                                    className="min-w-[40px] min-h-[40px] flex items-center justify-center tap-target-48"
+                                    className="min-w-[44px] min-h-[44px] flex items-center justify-center tap-target-48 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F7C600]"
                                     aria-label="Slide 3: New Arrivals"
                                 >
                                     <span className={`h-2 rounded-full transition-all duration-300 ${activeHeroSlide === 2 ? 'w-7 sm:w-8 bg-[#F7C600]' : 'w-2 bg-white/50'}`}></span>
@@ -1581,8 +1933,10 @@ export default function App() {
 
                             <div className="relative">
                                 <button
+                                    type="button"
                                     onClick={() => scrollTrack('most-loved-track', -320)}
-                                    className="hidden sm:flex absolute -left-4 top-[36%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-xl border border-stone-200 items-center justify-center hover:scale-110 transition text-stone-800"
+                                    aria-label="Scroll previous most loved products"
+                                    className="hidden sm:flex absolute left-1 sm:left-2 top-[36%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white shadow-xl border border-stone-200 items-center justify-center hover:scale-110 transition text-stone-800 tap-target-44"
                                 >
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>
@@ -1671,8 +2025,10 @@ export default function App() {
                             </div>
 
                                 <button
+                                    type="button"
                                     onClick={() => scrollTrack('most-loved-track', 320)}
-                                    className="hidden sm:flex absolute -right-4 top-[36%] -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white shadow-xl border border-stone-200 items-center justify-center hover:scale-110 transition text-stone-800"
+                                    aria-label="Scroll next most loved products"
+                                    className="hidden sm:flex absolute right-1 sm:right-2 top-[36%] -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white shadow-xl border border-stone-200 items-center justify-center hover:scale-110 transition text-stone-800 tap-target-44"
                                 >
                                     <ChevronRight className="w-5 h-5" />
                                 </button>
@@ -1948,16 +2304,20 @@ export default function App() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button
+                                        type="button"
                                         onClick={() => scrollTrack('dark-overlay-track', -300)}
-                                        className="w-9 h-9 rounded-full bg-stone-800 text-white flex items-center justify-center hover:bg-[#F7C600] hover:text-black transition"
+                                        aria-label="Previous sacred altar idols"
+                                        className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-stone-800 text-white flex items-center justify-center hover:bg-[#F7C600] hover:text-black transition"
                                     >
-                                        <ChevronLeft className="w-4 h-4" />
+                                        <ChevronLeft className="w-5 h-5" />
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={() => scrollTrack('dark-overlay-track', 300)}
-                                        className="w-9 h-9 rounded-full bg-stone-800 text-white flex items-center justify-center hover:bg-[#F7C600] hover:text-black transition"
+                                        aria-label="Next sacred altar idols"
+                                        className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-stone-800 text-white flex items-center justify-center hover:bg-[#F7C600] hover:text-black transition"
                                     >
-                                        <ChevronRight className="w-4 h-4" />
+                                        <ChevronRight className="w-5 h-5" />
                                     </button>
                                 </div>
                             </div>
@@ -2201,13 +2561,6 @@ export default function App() {
                                         </button>
                                     </div>
                                 </div>
-
-                                <div className="mt-1 sm:mt-0">
-                                    <span className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#2B2927] text-white text-[11px] sm:text-xs font-medium shadow-xs">
-                                        <span className="w-4 h-4 rounded-full bg-[#C69722]/30 text-[#F7C600] flex items-center justify-center text-[10px]">✓</span>
-                                        Trusted by 500+ Indian Businesses
-                                    </span>
-                                </div>
                             </div>
 
                             <div className="mt-6 sm:mt-10 p-3.5 sm:p-5 rounded-2xl border border-[#E6D6B8] bg-[#FAF5E8]/60 grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
@@ -2397,31 +2750,121 @@ export default function App() {
                                     </div>
                                 </div>
 
-                                {/* Stylized Visual Map Card with Direct Google Maps CTA */}
-                                <div className="md:w-1/2 bg-[#F3EAD3] min-h-[220px] sm:min-h-[320px] relative overflow-hidden flex items-center justify-center p-4 sm:p-6 border-t md:border-t-0 md:border-l border-[#E6D6B8]">
-                                    <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#8E5B00_1px,transparent_1px)] [background-size:20px_20px]"></div>
-                                    <div className="relative text-center p-5 sm:p-8 rounded-xl sm:rounded-2xl bg-white/95 backdrop-blur-sm border border-[#E6D6B8] shadow-md max-w-sm">
-                                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#FAF5E8] border border-[#C69722] mx-auto flex items-center justify-center text-[#8E5B00] mb-2 sm:mb-2.5 shadow-xs">
-                                            <MapPin className="w-5 h-5 sm:w-6 sm:h-6" />
+                                {/* Interactive Showroom Map - Locked to Single Exclusive Showroom Pin */}
+                                <div className="md:w-1/2 min-h-[420px] sm:min-h-[460px] md:min-h-[500px] relative overflow-hidden flex flex-col border-t md:border-t-0 md:border-l border-[#E6D6B8] bg-[#FAF5E8]">
+                                    {/* Map Loading / Fallback Background */}
+                                    <div className="absolute inset-0 flex items-center justify-center bg-[#F3EAD3]">
+                                        <div className="absolute inset-0 opacity-25 bg-[radial-gradient(#8E5B00_1px,transparent_1px)] [background-size:18px_18px]"></div>
+                                        <div className="relative text-center p-4">
+                                            <div className="w-10 h-10 rounded-full bg-white/90 border border-[#C69722] mx-auto flex items-center justify-center text-[#8E5B00] mb-2 shadow-sm animate-pulse">
+                                                <MapPin className="w-5 h-5 text-[#8E5B00]" />
+                                            </div>
+                                            <p className="text-xs font-serif font-bold text-stone-800">Loading Showroom Pin...</p>
+                                            <p className="text-[10.5px] text-stone-600 mt-0.5">Amol Marble Murti Bhandar, Shegaon</p>
                                         </div>
-                                        <h3 className="font-serif font-bold text-[#161616] text-base sm:text-lg">Amol Marble Murti Bhandar</h3>
-                                        <p className="text-[10.5px] sm:text-xs text-stone-600 mt-1">Bus Stand Road, Near Murarka High School, Shegaon, Maharashtra 444203</p>
-                                        <div className="mt-2.5 sm:mt-3 flex items-center justify-center gap-2">
-                                            <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-800 rounded-full text-[10px] sm:text-[10.5px] font-bold border border-emerald-200">
-                                                ● Open Today: 8 AM – 8 PM
-                                            </span>
-                                            <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-800 rounded-full text-[10px] sm:text-[10.5px] font-bold border border-amber-200">
-                                                <Star className="w-3 h-3 fill-amber-400 text-amber-500" /> 4.9★ (50+)
-                                            </span>
-                                        </div>
-                                        <a
-                                            href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="mt-3.5 inline-flex items-center gap-1.5 text-xs text-[#8E5B00] hover:text-black font-bold uppercase tracking-wider hover:underline"
+                                    </div>
+
+                                    {/* Map View Toggle Pills (Exclusive Showroom Pin) */}
+                                    <div className="absolute top-2.5 right-2.5 sm:top-3 sm:right-3 z-30 flex items-center gap-1 bg-white/95 backdrop-blur-md p-1 rounded-xl border border-[#E6D6B8] shadow-md">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowroomMapMode('pin')}
+                                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                                                showroomMapMode === 'pin'
+                                                    ? 'bg-[#161616] text-[#F7C600] shadow-xs'
+                                                    : 'text-stone-600 hover:text-black hover:bg-stone-100'
+                                            }`}
+                                            title="Standard Google Map with exclusive showroom pin"
                                         >
-                                            <span>Open in Google Maps App →</span>
-                                        </a>
+                                            📍 Google Pin
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowroomMapMode('satellite')}
+                                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                                                showroomMapMode === 'satellite'
+                                                    ? 'bg-[#161616] text-[#F7C600] shadow-xs'
+                                                    : 'text-stone-600 hover:text-black hover:bg-stone-100'
+                                            }`}
+                                            title="Satellite aerial view without commercial shop clutter"
+                                        >
+                                            🛰️ Satellite
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowroomMapMode('clean')}
+                                            className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                                                showroomMapMode === 'clean'
+                                                    ? 'bg-[#161616] text-[#F7C600] shadow-xs'
+                                                    : 'text-stone-600 hover:text-black hover:bg-stone-100'
+                                            }`}
+                                            title="Distraction-free clean map with zero other shops"
+                                        >
+                                            🌿 Clean Map
+                                        </button>
+                                    </div>
+
+                                    {/* Live Map with Locked Exclusive Coordinate Pin (No search query / competitor POIs) */}
+                                    <iframe
+                                        key={showroomMapMode}
+                                        title="Amol Marble Murti Bhandar Locked Location Pin"
+                                        src={
+                                            showroomMapMode === 'satellite'
+                                                ? 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1864.5!2d76.694611!3d20.793694!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjDCsDQ3JzM3LjMiTiA3NsKwNDEnNDAuNiJF!5e1!3m2!1sen!2sin!4v1700000000000'
+                                                : showroomMapMode === 'clean'
+                                                ? 'https://www.openstreetmap.org/export/embed.html?bbox=76.6900%2C20.7895%2C76.6990%2C20.7975&layer=mapnik&marker=20.793694%2C76.694611'
+                                                : 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1864.5!2d76.694611!3d20.793694!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjDCsDQ3JzM3LjMiTiA3NsKwNDEnNDAuNiJF!5e0!3m2!1sen!2sin!4v1700000000000'
+                                        }
+                                        className="w-full h-full min-h-[420px] sm:min-h-[460px] md:min-h-[500px] relative z-10 border-0"
+                                        loading="lazy"
+                                        allowFullScreen
+                                        referrerPolicy="no-referrer-when-downgrade"
+                                        aria-label="Direct Pinned Location of Amol Marble Murti Bhandar Shegaon"
+                                    ></iframe>
+
+                                    {/* Floating Showroom Location Card Overlay */}
+                                    <div className="absolute top-12 sm:top-14 left-2.5 sm:left-3 right-2.5 sm:right-auto sm:max-w-xs z-20 pointer-events-none">
+                                        <div className="pointer-events-auto bg-white/95 backdrop-blur-md rounded-xl p-3 sm:p-3.5 border border-[#E6D6B8] shadow-lg flex items-start gap-2.5 transition-all hover:shadow-xl">
+                                            <div className="w-8 h-8 rounded-full bg-[#FAF5E8] border border-[#C69722] flex items-center justify-center text-[#8E5B00] flex-shrink-0 mt-0.5">
+                                                <MapPin className="w-4 h-4 text-[#C69722]" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <h4 className="font-serif font-bold text-[#161616] text-xs leading-snug truncate">
+                                                        Amol Marble Murti Bhandar
+                                                    </h4>
+                                                    <span className="inline-flex items-center gap-0.5 text-[9.5px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                                        <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-500" /> 4.9★
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-stone-600 truncate mt-0.5">
+                                                    Bus Stand Road, Near Murarka High School, Shegaon
+                                                </p>
+                                                <div className="mt-1.5 flex items-center gap-2">
+                                                    <span className="text-[9.5px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                                        ● Open: 8 AM – 8 PM
+                                                    </span>
+                                                    <a
+                                                        href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-[10px] font-bold text-[#8E5B00] hover:text-black inline-flex items-center gap-1 hover:underline ml-auto"
+                                                        aria-label="Open exclusive pinned location in Google Maps app"
+                                                    >
+                                                        <span>Open App</span>
+                                                        <ExternalLink className="w-2.5 h-2.5" />
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom Verified Pin Anchor Badge */}
+                                    <div className="absolute bottom-3 left-3 z-20 pointer-events-none hidden sm:block">
+                                        <div className="pointer-events-auto inline-flex items-center gap-1.5 bg-black/85 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-[10px] font-semibold border border-white/20 shadow-md">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                                            <span>📍 Exclusive Showroom Pin (Shegaon 444203)</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2435,18 +2878,27 @@ export default function App() {
             {/* ========================================================================= */}
             {currentPage === 'product' && (
                 <ErrorBoundary onReset={handleBackFromProduct}>
-                    <ProductDetailPage
-                        product={selectedProduct || liveProducts[0]}
-                        onBack={handleBackFromProduct}
-                        onAddToCart={addToCart}
-                        onBuyNow={(prod) => buyOnWhatsApp(prod)}
-                        isWishlisted={wishlist.includes((selectedProduct || liveProducts[0])?.id)}
-                        onToggleWishlist={toggleWishlist}
-                        onSelectProduct={openProductPage}
-                        globalRatingMode={siteSettings?.global_rating_mode || 'enabled'}
-                        masterSizes={masterSizes}
-                        allProducts={liveProducts}
-                    />
+                    <React.Suspense fallback={
+                        <div className="min-h-[70vh] flex items-center justify-center p-8 bg-[#FDFBF7]">
+                            <div className="flex flex-col items-center gap-3">
+                                <span className="w-8 h-8 border-3 border-[#C69722] border-t-transparent rounded-full animate-spin" />
+                                <span className="text-xs font-serif font-bold text-stone-600">Loading Sacred Murti View...</span>
+                            </div>
+                        </div>
+                    }>
+                        <ProductDetailPage
+                            product={selectedProduct || liveProducts[0]}
+                            onBack={handleBackFromProduct}
+                            onAddToCart={addToCart}
+                            onBuyNow={(prod) => buyOnWhatsApp(prod)}
+                            isWishlisted={wishlist.includes((selectedProduct || liveProducts[0])?.id)}
+                            onToggleWishlist={toggleWishlist}
+                            onSelectProduct={openProductPage}
+                            globalRatingMode={siteSettings?.global_rating_mode || 'enabled'}
+                            masterSizes={masterSizes}
+                            allProducts={liveProducts}
+                        />
+                    </React.Suspense>
                 </ErrorBoundary>
             )}
 
@@ -2605,16 +3057,18 @@ export default function App() {
                                     No idols match your selected filters. Try clearing some filters or searching for another deity.
                                 </p>
                                 <button
+                                    id="reset-all-filters-btn"
                                     onClick={() => {
                                         setActiveDeityFilter(null);
                                         setFilterPriceRange('all');
                                         setFilterPlacement('all');
                                         setFilterAvailability('all');
                                         setSearchQuery('');
+                                        setIsWishlistFilterActive(false);
                                     }}
-                                    className="mt-5 px-6 py-2.5 rounded-full bg-[#161616] hover:bg-[#C69722] text-white text-xs font-semibold uppercase tracking-wider transition"
+                                    className="mt-5 px-6 py-2.5 rounded-full bg-[#161616] hover:bg-[#C69722] text-white text-xs font-semibold uppercase tracking-wider transition min-h-[44px] inline-flex items-center justify-center cursor-pointer"
                                 >
-                                    Clear All Filters
+                                    Reset All Filters
                                 </button>
                             </div>
                         ) : (
@@ -2764,9 +3218,8 @@ export default function App() {
                             }} className="hover:text-black">Our Showroom Story</button></li>
                             <li><button onClick={() => setIsBulkQuoteOpen(true)} className="hover:text-black">Bulk & Corporate Orders</button></li>
                             <li><button onClick={() => setIsTrackingModalOpen(true)} className="hover:text-black font-semibold text-[#161616]">Track Your Order</button></li>
-                            <li><button onClick={() => navigateTo('login')} className="hover:text-[#C69722] font-semibold text-[#161616]">Sign In / My Account</button></li>
+                            <li><button onClick={() => navigateTo(currentUser ? 'profile' : 'login')} className="hover:text-[#C69722] font-semibold text-[#161616]">{currentUser ? 'My Sacred Profile & Orders' : 'Sign In / Register'}</button></li>
                             <li><button onClick={() => setInfoModalKey('privacy')} className="hover:text-black">Your Privacy Choices</button></li>
-                            <li><button onClick={() => navigateTo('admin')} className="text-stone-400 hover:text-[#C69722] flex items-center gap-1 text-[11px] pt-1">🔒 Staff / Admin Portal</button></li>
                         </ul>
                     </div>
 
@@ -2796,11 +3249,8 @@ export default function App() {
                 <div className="max-w-[1320px] mx-auto px-4 sm:px-8 pt-6 border-t border-[#E6D6B8] flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
                     <p className="text-[11px] text-stone-500">© 2026 अमोल मार्बल मूर्ती भंडार (Amol Marble Murti Bhandar). All rights reserved. Sanctified Marble Idols.</p>
                     <div className="flex items-center gap-4">
-                        <button onClick={() => navigateTo('login')} className="text-[10.5px] text-stone-500 hover:text-[#C69722] underline underline-offset-2 transition">
-                            Customer Login (/login)
-                        </button>
-                        <button onClick={() => navigateTo('admin')} className="text-[10.5px] text-stone-400 hover:text-stone-700 underline underline-offset-2 transition">
-                            Staff / Admin Login (/admin)
+                        <button onClick={() => navigateTo(currentUser ? 'profile' : 'login')} className="text-[10.5px] text-stone-500 hover:text-[#C69722] underline underline-offset-2 transition">
+                            {currentUser ? 'Devotee Profile (/profile)' : 'Devotee Login (/login)'}
                         </button>
                     </div>
                 </div>
@@ -2867,15 +3317,6 @@ export default function App() {
                                 <span>I agree to Amol Marble Murti Bhandar & GoKwik using my data for login & offers. <u className="text-stone-700">Read details</u></span>
                             </label>
                             <p className="text-[10px] text-center text-stone-400 pt-1">Powered by <strong className="text-black">Kwik⚡Pass</strong></p>
-                            <div className="pt-2 text-center border-t border-stone-200">
-                                <button
-                                    type="button"
-                                    onClick={() => { closeKwikPass(); navigateTo('admin'); }}
-                                    className="text-[11px] text-[#8E5B00] hover:underline font-semibold"
-                                >
-                                    🔒 Staff / Store Admin Portal →
-                                </button>
-                            </div>
                         </form>
                     </div>
                 </div>
@@ -2949,24 +3390,25 @@ export default function App() {
                                                      <button
                                                          type="button"
                                                          onClick={() => updateCartQty(item.id, -1)}
-                                                         className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-lg border border-stone-300 text-sm flex items-center justify-center hover:bg-stone-100 font-bold active:scale-95 transition"
-                                                         aria-label="Decrease quantity"
+                                                         className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-lg border border-stone-300 text-sm flex items-center justify-center hover:bg-stone-100 font-bold active:scale-95 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C69722]"
+                                                         aria-label={`Decrease quantity of ${item.title}`}
                                                      >
                                                          -
                                                      </button>
-                                                     <span className="text-xs font-semibold px-2 min-w-[20px] text-center">{item.qty}</span>
+                                                     <span className="text-xs font-semibold px-2 min-w-[24px] text-center">{item.qty}</span>
                                                      <button
                                                          type="button"
                                                          onClick={() => updateCartQty(item.id, 1)}
-                                                         className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-lg border border-stone-300 text-sm flex items-center justify-center hover:bg-stone-100 font-bold active:scale-95 transition"
-                                                         aria-label="Increase quantity"
+                                                         className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-lg border border-stone-300 text-sm flex items-center justify-center hover:bg-stone-100 font-bold active:scale-95 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C69722]"
+                                                         aria-label={`Increase quantity of ${item.title}`}
                                                      >
                                                          +
                                                      </button>
                                                      <button
                                                          type="button"
                                                          onClick={() => updateCartQty(item.id, -item.qty)}
-                                                         className="text-[11px] text-stone-400 hover:text-red-500 ml-auto min-h-[40px] flex items-center px-2"
+                                                         className="text-[11px] text-stone-500 hover:text-red-600 ml-auto min-h-[44px] min-w-[44px] inline-flex items-center justify-center px-2 font-semibold transition"
+                                                         aria-label={`Remove ${item.title} from cart`}
                                                      >
                                                          Remove
                                                      </button>

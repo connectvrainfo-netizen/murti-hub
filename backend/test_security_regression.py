@@ -5,6 +5,7 @@ PII masking, and security headers.
 """
 
 import time
+import datetime
 import jwt
 from fastapi.testclient import TestClient
 from app.main import app
@@ -192,6 +193,134 @@ def test_security_headers_and_root_leakage():
         
     print("  [PASS] Response includes X-Content-Type-Options, X-Frame-Options, and Referrer-Policy")
 
+def test_password_reset_flow_and_anti_enumeration():
+    """Verify SEC-06: Password reset flow, rate limiting, and anti-enumeration."""
+    print("\n--- TEST: Password Reset Flow & Anti-Enumeration ---")
+    
+    # 1. Anti-enumeration: request reset for nonexistent email
+    res1 = client.post("/api/auth/forgot-password", json={"email": "nonexistent_devotee_9999@example.com"})
+    assert res1.status_code == 200, f"Expected 200, got {res1.status_code}"
+    body1 = res1.json()
+    assert body1["success"] is True
+    assert "If an account is associated" in body1["message"]
+
+    # 2. Request for existing email - same message
+    res2 = client.post("/api/auth/forgot-password", json={"email": "devotee@example.com"})
+    assert res2.status_code == 200
+    body2 = res2.json()
+    assert body2["message"] == body1["message"], "Anti-enumeration violation: Different responses for existing vs non-existing emails"
+    print("  [PASS] Anti-enumeration confirmed: Identical generic response for existing and non-existing accounts")
+
+    # 3. Rate limiting: 4th attempt from same IP is blocked with 429
+    unique_ip = "198.51.100.77"
+    headers = {"X-Forwarded-For": unique_ip}
+    for _ in range(3):
+        client.post("/api/auth/forgot-password", json={"email": "devotee@example.com"}, headers=headers)
+    blocked_reset = client.post("/api/auth/forgot-password", json={"email": "devotee@example.com"}, headers=headers)
+    assert blocked_reset.status_code == 429, f"Expected 429 on 4th password reset attempt, got {blocked_reset.status_code}"
+    assert "Retry-After" in blocked_reset.headers
+    print("  [PASS] Password reset request rate-limiting (429 Too Many Requests) confirmed")
+
+    # 4. Valid token reset
+    now = datetime.datetime.now(datetime.timezone.utc)
+    token = jwt.encode(
+        {"sub": "devotee@example.com", "type": "password_reset", "iat": now, "exp": now + datetime.timedelta(minutes=15)},
+        settings.JWT_SECRET,
+        algorithm=settings.JWT_ALGORITHM
+    )
+    reset_res = client.post("/api/auth/reset-password", json={"token": token, "new_password": "NewStrongDevoteePass#2026"})
+    assert reset_res.status_code == 200
+    assert reset_res.json()["data"]["updated"] is True
+    print("  [PASS] Password reset successfully verified with cryptographic token and bcrypt hashing")
+
+def test_admin_credentials_update_and_reauthentication():
+    """Verify SEC-09: Administrator credentials (email & password) can be securely updated with re-authentication."""
+    print("\n--- TEST: Admin Credentials Update & Re-Authentication ---")
+
+    # 1. Unauthenticated request rejected
+    unauth_res = client.put("/api/auth/admin-credentials", json={"current_password": "any", "new_password": "NewAdminPass123!"})
+    assert unauth_res.status_code == 401
+    print("  [PASS] Unauthenticated credentials update rejected with 401")
+
+    # 2. Non-admin user rejected
+    devotee_token = jwt.encode(
+        {"sub": "devotee@example.com", "role": "devotee", "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)},
+        settings.JWT_SECRET,
+        algorithm=settings.JWT_ALGORITHM
+    )
+    forbidden_res = client.put(
+        "/api/auth/admin-credentials",
+        json={"current_password": "any", "new_password": "NewAdminPass123!"},
+        headers={"Authorization": f"Bearer {devotee_token}"}
+    )
+    assert forbidden_res.status_code == 403
+    print("  [PASS] Non-admin account rejected with 403 Forbidden")
+
+    # 3. Authenticate as admin
+    login_res = client.post("/api/auth/login", json={"email": "admin@amolmurtibhandar.com", "password": "admin123"})
+    assert login_res.status_code == 200
+    admin_token = login_res.json()["data"]["access_token"]
+
+    # 4. Wrong current password rejected (protecting against session hijacking)
+    wrong_pw_res = client.put(
+        "/api/auth/admin-credentials",
+        json={"current_password": "IncorrectPassword123!", "new_password": "NewAdminPass123!"},
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert wrong_pw_res.status_code == 401
+    print("  [PASS] Credential update with invalid current password rejected with 401")
+
+    # 5. Short new password rejected (< 8 chars)
+    short_pw_res = client.put(
+        "/api/auth/admin-credentials",
+        json={"current_password": "admin123", "new_password": "short"},
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert short_pw_res.status_code in [400, 422]
+    print("  [PASS] Password below 8-character minimum policy rejected with 422/400")
+
+    # 6. Valid credential update (new Admin ID & new Password)
+    update_res = client.put(
+        "/api/auth/admin-credentials",
+        json={
+            "current_password": "admin123",
+            "new_email": "master_admin@amolmurtibhandar.com",
+            "new_password": "SuperSecureAdmin2026!"
+        },
+        headers={"Authorization": f"Bearer {admin_token}"}
+    )
+    assert update_res.status_code == 200, f"Expected 200, got {update_res.status_code}: {update_res.text}"
+    update_body = update_res.json()
+    assert update_body["success"] is True
+    assert update_body["data"]["admin"]["email"] == "master_admin@amolmurtibhandar.com"
+    new_token = update_body["data"]["access_token"]
+    assert new_token is not None
+    print("  [PASS] Admin ID and password successfully updated with fresh JWT issued")
+
+    # 7. Old password no longer works
+    old_login = client.post("/api/auth/login", json={"email": "admin@amolmurtibhandar.com", "password": "admin123"})
+    assert old_login.status_code == 401
+    print("  [PASS] Old admin password immediately invalidated")
+
+    # 8. New credentials work for login
+    new_login = client.post("/api/auth/login", json={"email": "master_admin@amolmurtibhandar.com", "password": "SuperSecureAdmin2026!"})
+    assert new_login.status_code == 200
+    print("  [PASS] Subsequent login with updated Admin ID and new password succeeds with 200 OK")
+
+    # 9. Cleanly restore to original dev credentials for test repeatability
+    restore_token = new_login.json()["data"]["access_token"]
+    restore_res = client.put(
+        "/api/auth/admin-credentials",
+        json={
+            "current_password": "SuperSecureAdmin2026!",
+            "new_email": "admin@amolmurtibhandar.com",
+            "new_password": "admin123"
+        },
+        headers={"Authorization": f"Bearer {restore_token}"}
+    )
+    assert restore_res.status_code == 200
+    print("  [PASS] Clean rollback to original test credentials confirmed")
+
 if __name__ == "__main__":
     print("======================================================================")
     print("RUNNING SECURITY HARDENING REGRESSION TEST SUITE")
@@ -199,6 +328,8 @@ if __name__ == "__main__":
     test_unauthenticated_admin_endpoints()
     test_jwt_tampering_and_revocation()
     test_login_brute_force_rate_limiting()
+    test_password_reset_flow_and_anti_enumeration()
+    test_admin_credentials_update_and_reauthentication()
     test_order_pii_masking()
     test_security_headers_and_root_leakage()
     print("\n======================================================================")

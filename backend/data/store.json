@@ -8,7 +8,7 @@
     "support_email": "support@amolmurtibhandar.com",
     "showroom_address": "Khazane Walon Ka Rasta, Jaipur, Rajasthan 302001",
     "banner_announcement": "Zero-Breakage Crating Guarantee across all 19,000+ PIN codes across India",
-    "updated_at": "2026-10-23T14:06:39.852368+00:00",
+    "updated_at": "2026-10-24T03:21:24.050636+00:00",
     "collection_badge": "HAND-CARVED BY NATIONAL AWARD ARTISANS",
     "collection_title": "DIVINE MAKRANA SACRED COLLECTION 2026",
     "collection_subtitle": "Consecrated Heritage Masterpieces",
@@ -2900,7 +2900,7 @@
       "id": "66666666-6666-6666-6666-666666660001",
       "email": "admin@amolmurtibhandar.com",
       "full_name": "Master Sculptor Admin",
-      "password_hash": "$2b$12$8S1EN29QkuUKjDYUOeRS4uAcbUYxvGQSnWEZj9KfbFFkdF0tx7FbK",
+      "password_hash": "$2b$12$dYbz9craDpGeg5j00Uj4Hup6zPAw/WjjHNSvW.1F0ihxe1FEA/LY.",
       "role": "super_admin",
       "is_active": true
     },
@@ -2930,6 +2930,51 @@
       "role": "editor",
       "is_active": true,
       "created_at": "2026-10-23T14:06:40.209862+00:00"
+    },
+    {
+      "id": "e867906a-37a4-47e8-b306-61d483feba94",
+      "email": "test.devotee.1792807069@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$/JCqrvkYZDj6zFY542/Ywe7EE3eZr1vyowmXKaRbfsKeGZtfTsRQy",
+      "role": "editor",
+      "is_active": true,
+      "created_at": "2026-10-24T01:57:50.028792+00:00"
+    },
+    {
+      "id": "b4765243-8d36-4868-b301-e83d4ebad203",
+      "email": "test.devotee.1792807293@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$8VolRIgJb1wPnK/UApGCzOVskx86ba3s1vV04.HqPzOpcIyv9OwIa",
+      "role": "devotee",
+      "is_active": true,
+      "created_at": "2026-10-24T02:01:33.954800+00:00"
+    },
+    {
+      "id": "b24616ed-abde-44ba-b82c-d87c75a3184b",
+      "email": "test.devotee.1792807358@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$jN/N6fL3.ZeUxJZ8EIkhbOEc/KquhaX8HVQN7Tk590roqMEPPwcKy",
+      "role": "devotee",
+      "is_active": true,
+      "created_at": "2026-10-24T02:02:38.592808+00:00"
+    },
+    {
+      "id": "ecba6776-b51f-4b21-889b-fa48d0337c2f",
+      "email": "test.devotee.1792807865@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$31Qnod3.MvHREqjIGGN8xO4d3IH6RVJEPKKqaAwcB6sWYh4WLW0K6",
+      "role": "devotee",
+      "is_active": true,
+      "created_at": "2026-10-24T02:11:05.589660+00:00"
+    },
+    {
+      "id": "209b6913-937d-4aac-95a5-0831fff346cb",
+      "email": "test.devotee.1792812084@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$USioaTYIeTzR3Ddbgzz0VOswpJKOA3vvAG9oFaLg9vW.pj4FRuS3i",
+      "role": "devotee",
+      "is_active": true,
+      "created_at": "2026-10-24T03:21:24.402243+00:00"
     }
   ]
 }

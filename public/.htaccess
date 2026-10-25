@@ -1,0 +1,138 @@
+# ==============================================================================
+# Hostinger Production Apache Configuration (.htaccess)
+# Project: Amol Marble Murti Bhandar (Murti Hub)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. MIME Types
+# ------------------------------------------------------------------------------
+<IfModule mod_mime.c>
+    AddType image/webp                      .webp
+    AddType image/avif                      .avif
+    AddType image/svg+xml                   .svg .svgz
+    AddType video/mp4                       .mp4
+    AddType font/woff                       .woff
+    AddType font/woff2                      .woff2
+    AddType application/json                .json
+    AddType application/manifest+json       .webmanifest
+    AddType application/javascript          .js .mjs
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 2. SPA URL Rewriting & HTTPS Redirection
+# ------------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Enforce HTTPS (compatible with Hostinger SSL and reverse proxies)
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Don't rewrite real files or directories
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # SPA Fallback: send all other requests to index.html
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 3. Gzip Compression (mod_deflate)
+# ------------------------------------------------------------------------------
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/plain
+    AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
+    AddOutputFilterByType DEFLATE text/css
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
+    AddOutputFilterByType DEFLATE application/javascript
+    AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE image/svg+xml
+    AddOutputFilterByType DEFLATE font/woff
+    AddOutputFilterByType DEFLATE font/woff2
+    AddOutputFilterByType DEFLATE application/font-woff2
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 4. Browser Caching (mod_expires & mod_headers)
+# ------------------------------------------------------------------------------
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+
+    # HTML: Never cache (always revalidate with server)
+    ExpiresByType text/html "access plus 0 seconds"
+
+    # Service Worker: Never cache
+    ExpiresByType application/javascript "access plus 1 month"
+
+    # Static CSS and JS
+    ExpiresByType text/css "access plus 1 year"
+
+    # Images & Media
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/avif "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType video/mp4 "access plus 1 month"
+
+    # Web Fonts
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Enable byte-range streaming for MP4 videos
+    <FilesMatch "\.(mp4|webm|ogg)$">
+        Header set Accept-Ranges bytes
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+
+    # Vite compiled hashed assets in /assets/ (Immutable 1 year cache)
+    <FilesMatch "\.(js|css)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # Service Worker: Do NOT cache, always serve latest version
+    <FilesMatch "service-worker\.js$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+        Header set Service-Worker-Allowed "/"
+    </FilesMatch>
+
+    # HTML: Do not cache index.html so updates are immediately visible
+    <FilesMatch "\.(html|htm)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </FilesMatch>
+
+    # Security Headers
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(self)"
+
+    # Content Security Policy:
+    # - Allows Google Maps iframes (frame-src)
+    # - Connects to Render backend and Supabase
+    # - Supports Google Fonts & inline styles
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; frame-src 'self' https://www.google.com https://maps.google.com; connect-src 'self' https://*.onrender.com https://murti-hub-5.onrender.com https://murti-hub-backend.onrender.com https://*.supabase.co wss://*.supabase.co http://localhost:8000 http://127.0.0.1:8000 http://localhost:3000 http://localhost:5173 https://*.vercel.app; base-uri 'self'; form-action 'self';"
+</IfModule>
+
+# ------------------------------------------------------------------------------
+# 5. Disable Directory Browsing
+# ------------------------------------------------------------------------------
+Options -Indexes

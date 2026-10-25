@@ -11,14 +11,28 @@ export default function InquiryModal({ product, onClose, onSubmit }) {
         address: '',
         pincode: ''
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [inquiryError, setInquiryError] = useState('');
 
     const priceNum = typeof product.price === 'string'
         ? parseInt(product.price.replace(/[^\d]/g, ''), 10) || 999
         : product.price;
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onSubmit(form);
+        setInquiryError('');
+        if (form.phone.length !== 10) {
+            setInquiryError('Please enter a valid 10-digit mobile number.');
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            await onSubmit(form);
+        } catch (err) {
+            setInquiryError(err?.message || 'Failed to process inquiry.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -106,13 +120,20 @@ export default function InquiryModal({ product, onClose, onSubmit }) {
                         </div>
                     </div>
 
+                    {inquiryError && (
+                        <div className="mx-4 sm:mx-5 mb-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                            {inquiryError}
+                        </div>
+                    )}
+
                     <div className="p-4 sm:p-5 pt-3 border-t border-[#E6D6B8] bg-[#FAF5E8] rounded-b-3xl">
                         <button
                             type="submit"
-                            className="w-full py-3.5 rounded-xl bg-[#25D366] hover:bg-[#1DA851] text-white text-xs font-bold tracking-wider uppercase transition shadow-lg tap-target-48 active:scale-98 flex items-center justify-center gap-2"
+                            disabled={isSubmitting}
+                            className="w-full py-3.5 rounded-xl bg-[#25D366] hover:bg-[#1DA851] disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold tracking-wider uppercase transition shadow-lg tap-target-48 active:scale-98 flex items-center justify-center gap-2"
                         >
                             <MessageCircle className="w-4 h-4" />
-                            SEND INQUIRY ON WHATSAPP
+                            <span>{isSubmitting ? 'PROCESSING INQUIRY...' : 'SEND INQUIRY ON WHATSAPP'}</span>
                         </button>
                     </div>
                 </form>

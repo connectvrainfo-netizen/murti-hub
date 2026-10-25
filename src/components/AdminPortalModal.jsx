@@ -485,10 +485,8 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                                 />
                             </div>
 
-                            <div className="p-2.5 rounded-xl bg-stone-100 border border-stone-200 text-[11px] text-stone-600 space-y-0.5">
-                                <div className="text-stone-800 font-bold">Default Credentials:</div>
-                                <div>Email: <code className="text-[#C69722] font-semibold">admin@amolmurtibhandar.com</code></div>
-                                <div>Password: <code className="text-[#C69722] font-semibold">admin123</code></div>
+                            <div className="p-2.5 rounded-xl bg-stone-100 border border-stone-200 text-[11px] text-stone-600">
+                                <div>Authorized administrator credentials required for console access.</div>
                             </div>
 
                             <button
