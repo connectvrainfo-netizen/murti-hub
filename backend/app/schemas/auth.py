@@ -41,6 +41,7 @@ class DashboardStats(BaseModel):
     festival_is_active: bool = False
     whatsapp_number: str
     global_rating_mode: str
+    total_users: int = 0
 
 class ForgotPasswordRequest(BaseModel):
     email: str = Field(..., description="Registered account email address")
@@ -62,5 +63,37 @@ class AdminSecurityPinRequest(BaseModel):
 class AdminSecurityPinStatusResponse(BaseModel):
     pin_configured: bool
     mfa_enabled: bool = False
+
+class UserAccountItem(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    role: str
+    is_active: bool = True
+    created_at: Optional[str] = None
+    phone: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    pincode: Optional[str] = None
+
+class UserListResponse(BaseModel):
+    users: list[UserAccountItem]
+    total_count: int = 0
+    admin_count: int = 0
+    customer_count: int = 0
+    active_count: int = 0
+
+class AdminCreateUserRequest(BaseModel):
+    email: str = Field(..., description="Email address for the new account")
+    password: str = Field(..., min_length=8, description="Initial password (minimum 8 characters)")
+    full_name: str = Field(..., description="Full name of account holder")
+    role: str = Field("customer", description="Role: customer, editor, admin, or super_admin")
+    phone: Optional[str] = Field(None, description="Optional phone number")
+
+class AdminUpdateUserStatusRequest(BaseModel):
+    is_active: bool = Field(..., description="Active or suspended status")
+
+class AdminUpdateUserRoleRequest(BaseModel):
+    role: str = Field(..., description="New role: customer, editor, admin, super_admin")
 
 

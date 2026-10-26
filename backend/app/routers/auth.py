@@ -7,7 +7,9 @@ from fastapi.security import HTTPAuthorizationCredentials
 from app.schemas.auth import (
     AdminLoginRequest, UserRegisterRequest, TokenResponse,
     AdminProfile, UserProfileUpdateRequest, ForgotPasswordRequest, ResetPasswordRequest,
-    AdminUpdateCredentialsRequest, AdminSecurityPinRequest, AdminSecurityPinStatusResponse
+    AdminUpdateCredentialsRequest, AdminSecurityPinRequest, AdminSecurityPinStatusResponse,
+    UserAccountItem, UserListResponse, AdminCreateUserRequest,
+    AdminUpdateUserStatusRequest, AdminUpdateUserRoleRequest
 )
 from app.schemas.common import ApiResponse
 from app.auth import verify_password, get_password_hash, create_access_token, decode_access_token, revoke_token, get_current_admin, get_current_user, security_bearer
@@ -847,5 +849,374 @@ def admin_logout(
         response.delete_cookie(key="murti_auth_token", path="/")
 
     return ApiResponse(success=True, message="Logged out successfully and session token revoked.")
+
+
+# =============================================================================
+# ADMIN USER & ACCOUNT MANAGEMENT ENDPOINTS
+# =============================================================================
+
+@router.get("/users", response_model=ApiResponse[UserListResponse], summary="List all registered devotees and admin accounts (Admin only)")
+def list_users(
+    role: Optional[str] = None,
+    q: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
+):
+    """
+    Returns registered users and administrator accounts with strict stripping of password hashes and PIN hashes.
+    Supports filtering by role and keyword search across email, name, phone, and ID.
+    """
+    raw_accounts = []
+    seen_ids = set()
+    seen_emails = set()
+
+    # 1. Fetch from Supabase if connected
+    if is_supabase_connected():
+        try:
+            client = get_supabase()
+            res = client.table("admin_users").select("id, email, full_name, role, is_active, created_at, phone, city, state, pincode").order("created_at", desc=True).execute()
+            if res.data:
+                for row in res.data:
+                    uid = str(row.get("id"))
+                    email = (row.get("email") or "").strip().lower()
+                    seen_ids.add(uid)
+                    if email:
+                        seen_emails.add(email)
+                    raw_accounts.append(row)
+        except Exception as e:
+            logger.warning(f"[Supabase] User list fetch error: {e}")
+
+    # 2. Merge local_store accounts
+    if hasattr(local_store, "admin_users"):
+        for u in getattr(local_store, "admin_users", []):
+            uid = str(u.get("id"))
+            email = (u.get("email") or "").strip().lower()
+            if uid not in seen_ids and email not in seen_emails:
+                seen_ids.add(uid)
+                if email:
+                    seen_emails.add(email)
+                raw_accounts.append({
+                    "id": uid,
+                    "email": email,
+                    "full_name": u.get("full_name", "Customer Member"),
+                    "role": u.get("role", "customer"),
+                    "is_active": u.get("is_active", True),
+                    "created_at": u.get("created_at") or "",
+                    "phone": u.get("phone"),
+                    "city": u.get("city"),
+                    "state": u.get("state"),
+                    "pincode": u.get("pincode")
+                })
+
+    # 3. Ensure default super admin is visible if list is sparse
+    default_admin_email = (settings.ADMIN_EMAIL or "admin@amolmurtibhandar.com").strip().lower()
+    if default_admin_email not in seen_emails:
+        raw_accounts.insert(0, {
+            "id": "66666666-6666-6666-6666-666666660001",
+            "email": default_admin_email,
+            "full_name": "Master Sculptor Admin",
+            "role": "super_admin",
+            "is_active": True,
+            "created_at": "2026-01-01T00:00:00Z"
+        })
+
+    # Standardize roles: format 'devotee' display or normalize
+    cleaned_items = []
+    for acc in raw_accounts:
+        # Never expose hashes under any circumstances
+        r = (acc.get("role") or "customer").lower()
+        cleaned_items.append(UserAccountItem(
+            id=str(acc.get("id")),
+            email=acc.get("email", "").lower(),
+            full_name=acc.get("full_name") or "Customer Member",
+            role=r,
+            is_active=bool(acc.get("is_active", True)),
+            created_at=str(acc.get("created_at") or ""),
+            phone=acc.get("phone"),
+            city=acc.get("city"),
+            state=acc.get("state"),
+            pincode=acc.get("pincode")
+        ))
+
+    # Metrics
+    total_count = len(cleaned_items)
+    admin_count = sum(1 for u in cleaned_items if u.role in ["super_admin", "admin", "editor"])
+    customer_count = sum(1 for u in cleaned_items if u.role in ["customer", "devotee"])
+    active_count = sum(1 for u in cleaned_items if u.is_active)
+
+    # Filter by role
+    filtered = cleaned_items
+    if role and role.strip() and role.lower() != "all":
+        r_filter = role.strip().lower()
+        if r_filter in ["admin", "admins"]:
+            filtered = [u for u in filtered if u.role in ["super_admin", "admin", "editor"]]
+        elif r_filter in ["customer", "customers", "devotee", "devotees"]:
+            filtered = [u for u in filtered if u.role in ["customer", "devotee"]]
+        else:
+            filtered = [u for u in filtered if u.role.lower() == r_filter]
+
+    # Filter by search keyword
+    if q and q.strip():
+        search_term = q.strip().lower()
+        filtered = [
+            u for u in filtered
+            if search_term in u.email.lower()
+            or search_term in u.full_name.lower()
+            or search_term in (u.phone or "").lower()
+            or search_term in u.id.lower()
+            or search_term in u.role.lower()
+        ]
+
+    return ApiResponse(
+        success=True,
+        message=f"Retrieved {len(filtered)} user accounts",
+        data=UserListResponse(
+            users=filtered,
+            total_count=total_count,
+            admin_count=admin_count,
+            customer_count=customer_count,
+            active_count=active_count
+        )
+    )
+
+@router.post("/users", response_model=ApiResponse[UserAccountItem], status_code=status.HTTP_201_CREATED, summary="Create a new user or administrator account (Admin only)")
+def create_user_by_admin(
+    payload: AdminCreateUserRequest,
+    admin: dict = Depends(get_current_admin)
+):
+    """
+    Enables authorized administrators to provision new accounts with assigned roles (super_admin, admin, editor, customer).
+    """
+    email = payload.email.strip().lower()
+    if "@" not in email or "." not in email:
+        raise HTTPException(status_code=400, detail="Please enter a valid email address.")
+    if len(payload.password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long.")
+
+    # Check uniqueness
+    if is_supabase_connected():
+        try:
+            client = get_supabase()
+            existing = client.table("admin_users").select("id").eq("email", email).execute()
+            if existing.data and len(existing.data) > 0:
+                raise HTTPException(status_code=409, detail="An account with this email address already exists.")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"[Supabase] User uniqueness check error: {e}")
+
+    if hasattr(local_store, "admin_users"):
+        for u in getattr(local_store, "admin_users", []):
+            if u.get("email", "").lower() == email:
+                raise HTTPException(status_code=409, detail="An account with this email address already exists.")
+
+    import uuid
+    new_id = str(uuid.uuid4())
+    pw_hash = get_password_hash(payload.password)
+    assigned_role = payload.role.strip().lower()
+    if assigned_role not in ["customer", "devotee", "editor", "admin", "super_admin"]:
+        assigned_role = "customer"
+
+    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    new_record = {
+        "id": new_id,
+        "email": email,
+        "full_name": payload.full_name.strip(),
+        "password_hash": pw_hash,
+        "role": assigned_role,
+        "phone": payload.phone.strip() if payload.phone else None,
+        "is_active": True,
+        "created_at": now_iso
+    }
+
+    if is_supabase_connected():
+        try:
+            client = get_supabase()
+            client.table("admin_users").insert(new_record).execute()
+        except Exception as e:
+            logger.warning(f"[Supabase] User insert error: {e}")
+
+    if not hasattr(local_store, "admin_users") or not isinstance(local_store.admin_users, list):
+        local_store.admin_users = []
+    local_store.admin_users.append(new_record)
+    local_store.save()
+
+    logger.info(f"[AUDIT] Admin '{admin.get('email')}' created new account: '{email}' with role: '{assigned_role}'")
+
+    return ApiResponse(
+        success=True,
+        message=f"Account created successfully for {email}",
+        data=UserAccountItem(
+            id=new_id,
+            email=email,
+            full_name=payload.full_name.strip(),
+            role=assigned_role,
+            is_active=True,
+            created_at=now_iso,
+            phone=payload.phone.strip() if payload.phone else None
+        )
+    )
+
+@router.patch("/users/{user_id}/status", response_model=ApiResponse[UserAccountItem], summary="Toggle active/suspended status of an account (Admin only)")
+def update_user_status(
+    user_id: str,
+    payload: AdminUpdateUserStatusRequest,
+    admin: dict = Depends(get_current_admin)
+):
+    admin_id = str(admin.get("id") or admin.get("sub") or "")
+    admin_email = (admin.get("email") or "").strip().lower()
+
+    target_user = None
+    if hasattr(local_store, "admin_users"):
+        for u in getattr(local_store, "admin_users", []):
+            if str(u.get("id")) == str(user_id):
+                target_user = u
+                break
+
+    if not target_user and is_supabase_connected():
+        try:
+            client = get_supabase()
+            res = client.table("admin_users").select("*").eq("id", user_id).execute()
+            if res.data and len(res.data) > 0:
+                target_user = res.data[0]
+        except Exception as e:
+            logger.warning(f"[Supabase] User lookup error: {e}")
+
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Account not found.")
+
+    # Guard against self-deactivation
+    if (str(target_user.get("id")) == admin_id or target_user.get("email", "").lower() == admin_email) and not payload.is_active:
+        raise HTTPException(status_code=400, detail="You cannot deactivate your own active administrator account.")
+
+    target_user["is_active"] = payload.is_active
+
+    if hasattr(local_store, "admin_users"):
+        local_store.save()
+
+    if is_supabase_connected():
+        try:
+            client = get_supabase()
+            client.table("admin_users").update({"is_active": payload.is_active}).eq("id", user_id).execute()
+        except Exception as e:
+            logger.warning(f"[Supabase] Status update error: {e}")
+
+    action_label = "activated" if payload.is_active else "suspended"
+    logger.info(f"[AUDIT] Admin '{admin_email}' {action_label} account: '{target_user.get('email')}'")
+
+    return ApiResponse(
+        success=True,
+        message=f"Account status has been updated to {'Active' if payload.is_active else 'Suspended'}",
+        data=UserAccountItem(
+            id=str(target_user.get("id")),
+            email=target_user.get("email", ""),
+            full_name=target_user.get("full_name", ""),
+            role=target_user.get("role", "customer"),
+            is_active=payload.is_active,
+            created_at=str(target_user.get("created_at") or ""),
+            phone=target_user.get("phone"),
+            city=target_user.get("city"),
+            state=target_user.get("state"),
+            pincode=target_user.get("pincode")
+        )
+    )
+
+@router.patch("/users/{user_id}/role", response_model=ApiResponse[UserAccountItem], summary="Change role of an account (Admin only)")
+def update_user_role(
+    user_id: str,
+    payload: AdminUpdateUserRoleRequest,
+    admin: dict = Depends(get_current_admin)
+):
+    new_role = payload.role.strip().lower()
+    if new_role not in ["customer", "devotee", "editor", "admin", "super_admin"]:
+        raise HTTPException(status_code=400, detail="Invalid role specified.")
+
+    target_user = None
+    if hasattr(local_store, "admin_users"):
+        for u in getattr(local_store, "admin_users", []):
+            if str(u.get("id")) == str(user_id):
+                target_user = u
+                break
+
+    if not target_user and is_supabase_connected():
+        try:
+            client = get_supabase()
+            res = client.table("admin_users").select("*").eq("id", user_id).execute()
+            if res.data and len(res.data) > 0:
+                target_user = res.data[0]
+        except Exception as e:
+            logger.warning(f"[Supabase] User lookup error: {e}")
+
+    if not target_user:
+        raise HTTPException(status_code=404, detail="Account not found.")
+
+    target_user["role"] = new_role
+
+    if hasattr(local_store, "admin_users"):
+        local_store.save()
+
+    if is_supabase_connected():
+        try:
+            client = get_supabase()
+            client.table("admin_users").update({"role": new_role}).eq("id", user_id).execute()
+        except Exception as e:
+            logger.warning(f"[Supabase] Role update error: {e}")
+
+    logger.info(f"[AUDIT] Admin '{admin.get('email')}' updated role for '{target_user.get('email')}' to '{new_role}'")
+
+    return ApiResponse(
+        success=True,
+        message=f"Account role updated to {new_role}",
+        data=UserAccountItem(
+            id=str(target_user.get("id")),
+            email=target_user.get("email", ""),
+            full_name=target_user.get("full_name", ""),
+            role=new_role,
+            is_active=bool(target_user.get("is_active", True)),
+            created_at=str(target_user.get("created_at") or ""),
+            phone=target_user.get("phone"),
+            city=target_user.get("city"),
+            state=target_user.get("state"),
+            pincode=target_user.get("pincode")
+        )
+    )
+
+@router.delete("/users/{user_id}", response_model=ApiResponse[dict], summary="Delete an account (Admin only)")
+def delete_user(
+    user_id: str,
+    admin: dict = Depends(get_current_admin)
+):
+    admin_id = str(admin.get("id") or admin.get("sub") or "")
+    admin_email = (admin.get("email") or "").strip().lower()
+
+    if str(user_id) == admin_id or user_id == "66666666-6666-6666-6666-666666660001":
+        raise HTTPException(status_code=400, detail="You cannot delete your own active administrator account or the root master admin.")
+
+    deleted = False
+    if hasattr(local_store, "admin_users"):
+        orig_len = len(local_store.admin_users)
+        local_store.admin_users = [u for u in local_store.admin_users if str(u.get("id")) != str(user_id)]
+        if len(local_store.admin_users) < orig_len:
+            deleted = True
+            local_store.save()
+
+    if is_supabase_connected():
+        try:
+            client = get_supabase()
+            res = client.table("admin_users").delete().eq("id", user_id).execute()
+            if res.data:
+                deleted = True
+        except Exception as e:
+            logger.warning(f"[Supabase] Delete user error: {e}")
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Account not found.")
+
+    logger.info(f"[AUDIT] Admin '{admin_email}' deleted account ID: {user_id}")
+
+    return ApiResponse(
+        success=True,
+        message="Account has been permanently deleted.",
+        data={"deleted_id": user_id}
+    )
 
 

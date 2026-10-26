@@ -528,6 +528,44 @@ class ApiService {
         });
     }
 
+    // =========================================================================
+    // ADMIN DEVOTEES & SYSTEM ACCOUNTS MANAGEMENT
+    // =========================================================================
+    async getUsers(params = {}) {
+        const query = new URLSearchParams();
+        if (params.role && params.role !== 'all') query.append('role', params.role);
+        if (params.q) query.append('q', params.q);
+        const qs = query.toString() ? `?${query.toString()}` : '';
+        return this.request(`/auth/users${qs}`);
+    }
+
+    async createUser(userData) {
+        return this.request('/auth/users', {
+            method: 'POST',
+            body: JSON.stringify(userData)
+        });
+    }
+
+    async updateUserStatus(userId, isActive) {
+        return this.request(`/auth/users/${userId}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ is_active: Boolean(isActive) })
+        });
+    }
+
+    async updateUserRole(userId, role) {
+        return this.request(`/auth/users/${userId}/role`, {
+            method: 'PATCH',
+            body: JSON.stringify({ role })
+        });
+    }
+
+    async deleteUser(userId) {
+        return this.request(`/auth/users/${userId}`, {
+            method: 'DELETE'
+        });
+    }
+
     async getProfile() {
         try {
             const res = await this.request('/auth/profile');

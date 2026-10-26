@@ -6,7 +6,8 @@ import {
     LogOut, Database, Layers, MessageSquare, CheckSquare, Search,
     Upload, Loader2, Eye, EyeOff, Filter, Send, Link as LinkIcon,
     AlertTriangle, X, CheckCheck, ChevronRight, ChevronDown, Sliders,
-    User, Info, ArrowUpRight, Key, ShieldCheck
+    User, Info, ArrowUpRight, Key, ShieldCheck,
+    Users, UserPlus, UserCheck, UserX, ShieldAlert, Mail, Calendar, KeyRound
 } from 'lucide-react';
 import api from '../services/api';
 import SafeImage from './SafeImage';
@@ -339,6 +340,28 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [replyReviewId, setReplyReviewId] = useState(null);
     const [replyText, setReplyText] = useState('');
 
+    // User & Account Management States
+    const [usersList, setUsersList] = useState([]);
+    const [userStats, setUserStats] = useState({ total_count: 0, admin_count: 0, customer_count: 0, active_count: 0 });
+    const [usersLoading, setUsersLoading] = useState(false);
+    const [userSearch, setUserSearch] = useState('');
+    const [userRoleFilter, setUserRoleFilter] = useState('all');
+    const [userStatusFilter, setUserStatusFilter] = useState('all');
+    const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
+    const [newUserForm, setNewUserForm] = useState({
+        email: '',
+        password: '',
+        full_name: '',
+        role: 'customer',
+        phone: ''
+    });
+    const [createUserLoading, setCreateUserLoading] = useState(false);
+    const [createUserError, setCreateUserError] = useState('');
+    const [editingUserRole, setEditingUserRole] = useState(null);
+    const [roleChangeLoading, setRoleChangeLoading] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null);
+    const [deleteUserLoading, setDeleteUserLoading] = useState(false);
+
     // File Upload Progress Flags
     const [uploadingPrimary, setUploadingPrimary] = useState(false);
     const [uploadingCatalogAngle, setUploadingCatalogAngle] = useState(false);
@@ -361,7 +384,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
     // Lock body scroll when any modal dialog is open
     useEffect(() => {
-        const isAnyModalOpen = Boolean(editingProduct || editingCategory || editingSize || isEditingCredentials);
+        const isAnyModalOpen = Boolean(editingProduct || editingCategory || editingSize || isEditingCredentials || isCreateUserModalOpen || editingUserRole || userToDelete);
         if (isAnyModalOpen) {
             document.body.style.overflow = 'hidden';
         } else {
@@ -370,7 +393,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         return () => {
             document.body.style.overflow = '';
         };
-    }, [editingProduct, editingCategory, editingSize, isEditingCredentials]);
+    }, [editingProduct, editingCategory, editingSize, isEditingCredentials, isCreateUserModalOpen, editingUserRole, userToDelete]);
 
     // Reusable file upload handler to backend /api/upload
     const handleFileUpload = async (file, folder = 'catalog') => {
@@ -388,6 +411,98 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const showToast = (msg) => {
         setToastMessage(msg);
         setTimeout(() => setToastMessage(''), 3500);
+    };
+
+    // Fetch users and administrators
+    const refreshUsers = async (role = userRoleFilter, q = userSearch) => {
+        setUsersLoading(true);
+        try {
+            const res = await api.getUsers({
+                role: role !== 'all' ? role : undefined,
+                q: q || undefined
+            });
+            const data = res?.data || res;
+            if (data?.users) {
+                setUsersList(data.users);
+                setUserStats({
+                    total_count: data.total_count ?? data.users.length,
+                    admin_count: data.admin_count ?? 0,
+                    customer_count: data.customer_count ?? 0,
+                    active_count: data.active_count ?? 0
+                });
+            } else if (Array.isArray(data)) {
+                setUsersList(data);
+                setUserStats({
+                    total_count: data.length,
+                    admin_count: data.filter(u => ['super_admin', 'admin', 'editor'].includes(u.role)).length,
+                    customer_count: data.filter(u => ['customer', 'devotee'].includes(u.role)).length,
+                    active_count: data.filter(u => u.is_active).length
+                });
+            }
+        } catch (err) {
+            console.error('Failed to load accounts list:', err);
+        } finally {
+            setUsersLoading(false);
+        }
+    };
+
+    const handleCreateUser = async (e) => {
+        e.preventDefault();
+        setCreateUserLoading(true);
+        setCreateUserError('');
+        try {
+            await api.createUser(newUserForm);
+            showToast(`Account successfully created for ${newUserForm.email}`);
+            setIsCreateUserModalOpen(false);
+            setNewUserForm({ email: '', password: '', full_name: '', role: 'customer', phone: '' });
+            refreshUsers();
+        } catch (err) {
+            setCreateUserError(err.message || 'Failed to create user account');
+        } finally {
+            setCreateUserLoading(false);
+        }
+    };
+
+    const handleToggleUserStatus = async (user) => {
+        try {
+            const updated = await api.updateUserStatus(user.id, !user.is_active);
+            const isNowActive = updated?.data?.is_active ?? !user.is_active;
+            showToast(`Account ${user.email} is now ${isNowActive ? 'Active' : 'Suspended'}`);
+            refreshUsers();
+        } catch (err) {
+            showToast(`Status update failed: ${err.message}`);
+        }
+    };
+
+    const handleSaveUserRole = async (e) => {
+        e.preventDefault();
+        if (!editingUserRole) return;
+        setRoleChangeLoading(true);
+        try {
+            await api.updateUserRole(editingUserRole.id, editingUserRole.role);
+            showToast(`Role updated to ${editingUserRole.role} for ${editingUserRole.email}`);
+            setEditingUserRole(null);
+            refreshUsers();
+        } catch (err) {
+            showToast(`Role update failed: ${err.message}`);
+        } finally {
+            setRoleChangeLoading(false);
+        }
+    };
+
+    const handleConfirmDeleteUser = async () => {
+        if (!userToDelete) return;
+        setDeleteUserLoading(true);
+        try {
+            await api.deleteUser(userToDelete.id);
+            showToast(`Account ${userToDelete.email} has been permanently deleted`);
+            setUserToDelete(null);
+            refreshUsers();
+        } catch (err) {
+            showToast(`Delete failed: ${err.message}`);
+        } finally {
+            setDeleteUserLoading(false);
+        }
     };
 
     // Load initial data
@@ -418,6 +533,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             if (festRes.status === 'fulfilled' && festRes.value) setFestival(festRes.value);
             if (revsRes.status === 'fulfilled' && Array.isArray(revsRes.value)) setReviews(revsRes.value);
 
+            await refreshUsers();
+
             if (onDataChanged) onDataChanged();
         } catch (err) {
             console.error('Failed to load admin data:', err);
@@ -425,6 +542,12 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (activeTab === 'users' && isAuthenticated) {
+            refreshUsers(userRoleFilter, userSearch);
+        }
+    }, [activeTab, userRoleFilter, userSearch, isAuthenticated]);
 
     useEffect(() => {
         const token = api.getToken();
@@ -1471,41 +1594,51 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 })}
                             </div>
 
-                            {/* Group 4: Devotees & Engagement */}
+                            {/* Group 4: Devotees & Access */}
                             <div className="space-y-1">
                                 <div className="hidden md:block px-3 text-[10px] font-extrabold uppercase tracking-wider text-stone-400">
-                                    Community
+                                    Devotees & Access
                                 </div>
-                                <button
-                                    onClick={() => setActiveTab('reviews')}
-                                    className={`group relative flex-shrink-0 w-auto md:w-full px-3 py-2.5 rounded-xl text-left transition-all duration-200 flex items-center justify-between gap-3 select-none ${
-                                        activeTab === 'reviews'
-                                            ? 'bg-white text-stone-900 shadow-xs ring-1 ring-stone-900/5 border-l-4 border-l-[#C69722] font-bold'
-                                            : 'text-stone-600 hover:bg-white/80 hover:text-stone-900 hover:shadow-2xs'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-2.5 min-w-0">
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
-                                            activeTab === 'reviews'
-                                                ? 'bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/50 shadow-2xs'
-                                                : 'bg-stone-200/60 text-stone-500 group-hover:bg-[#FAF2DE] group-hover:text-[#8E5B00]'
-                                        }`}>
-                                            <Star className="w-4 h-4 stroke-[2]" />
-                                        </div>
-                                        <span className={`text-[13px] whitespace-nowrap tracking-tight ${activeTab === 'reviews' ? 'font-bold text-stone-900' : 'font-semibold text-stone-700 group-hover:text-stone-900'}`}>
-                                            Customer Reviews
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                                        {reviews?.length > 0 && (
-                                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full font-mono transition-colors ${
-                                                activeTab === 'reviews' ? 'bg-[#FAF2DE] text-[#8E5B00]' : 'bg-stone-200/70 text-stone-600 group-hover:bg-stone-300'
-                                            }`}>
-                                                {reviews.length}
-                                            </span>
-                                        )}
-                                    </div>
-                                </button>
+                                {[
+                                    { id: 'users', label: 'Users & Admins', icon: Users, count: userStats.total_count || usersList?.length },
+                                    { id: 'reviews', label: 'Customer Reviews', icon: Star, count: reviews?.length }
+                                ].map(tab => {
+                                    const Icon = tab.icon;
+                                    const isCur = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`group relative flex-shrink-0 w-auto md:w-full px-3 py-2.5 rounded-xl text-left transition-all duration-200 flex items-center justify-between gap-3 select-none ${
+                                                isCur
+                                                    ? 'bg-white text-stone-900 shadow-xs ring-1 ring-stone-900/5 border-l-4 border-l-[#C69722] font-bold'
+                                                    : 'text-stone-600 hover:bg-white/80 hover:text-stone-900 hover:shadow-2xs'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
+                                                    isCur
+                                                        ? 'bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/50 shadow-2xs'
+                                                        : 'bg-stone-200/60 text-stone-500 group-hover:bg-[#FAF2DE] group-hover:text-[#8E5B00]'
+                                                }`}>
+                                                    <Icon className="w-4 h-4 stroke-[2]" />
+                                                </div>
+                                                <span className={`text-[13px] whitespace-nowrap tracking-tight ${isCur ? 'font-bold text-stone-900' : 'font-semibold text-stone-700 group-hover:text-stone-900'}`}>
+                                                    {tab.label}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                                                {tab.count !== undefined && tab.count > 0 && (
+                                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full font-mono transition-colors ${
+                                                        isCur ? 'bg-[#FAF2DE] text-[#8E5B00]' : 'bg-stone-200/70 text-stone-600 group-hover:bg-stone-300'
+                                                    }`}>
+                                                        {tab.count}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </nav>
                     </div>
@@ -1577,7 +1710,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
 
                             {/* Stat Cards */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                 <div 
                                     onClick={() => setActiveTab('products')}
                                     className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-[#C69722] shadow-2xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-200 group flex flex-col justify-between"
@@ -1653,6 +1786,25 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         <span className="text-stone-400 group-hover:text-emerald-600 font-bold group-hover:translate-x-0.5 transition-all">➔</span>
                                     </div>
                                 </div>
+
+                                <div 
+                                    onClick={() => setActiveTab('users')}
+                                    className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-indigo-600 shadow-2xs hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-200 group flex flex-col justify-between col-span-2 md:col-span-1"
+                                >
+                                    <div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Users & Admins</span>
+                                            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                                <Users className="w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <div className="text-3xl font-serif font-black text-[#161616] mt-2">{userStats.total_count || usersList.length}</div>
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px]">
+                                        <span className="text-indigo-700 font-semibold">{userStats.admin_count} Admins • {userStats.customer_count} Customers</span>
+                                        <span className="text-stone-400 group-hover:text-indigo-600 font-bold group-hover:translate-x-0.5 transition-all">➔</span>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Quick Action Command Center */}
@@ -1681,6 +1833,13 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     >
                                         <ImageIcon className="w-3.5 h-3.5" />
                                         <span>+ Add Category</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('users')}
+                                        className="px-3.5 py-2.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 text-xs font-bold transition flex items-center gap-1.5 border border-indigo-400/30 cursor-pointer"
+                                    >
+                                        <Users className="w-3.5 h-3.5 text-indigo-300" />
+                                        <span>View Accounts ({userStats.total_count || usersList.length})</span>
                                     </button>
                                     <button
                                         onClick={handleTestWhatsApp}
@@ -3337,6 +3496,421 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
                         </div>
                     )}
+
+                    {/* ========================================================================= */}
+                    {/* TAB 8: USERS & DEVOTEES ACCOUNT MANAGEMENT                                */}
+                    {/* ========================================================================= */}
+                    {activeTab === 'users' && (
+                        <div className="space-y-6">
+                            {/* Header */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/60 pb-4">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
+                                            Devotee Accounts & System Admins
+                                        </h2>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            Live Directory
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-stone-500 mt-1">
+                                        Real-time registry of all customer accounts, devotees, staff editors, and master system administrators
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+                                    <button
+                                        type="button"
+                                        onClick={() => refreshUsers()}
+                                        disabled={usersLoading}
+                                        className="px-3.5 py-2 rounded-xl bg-white border border-stone-200 text-stone-700 text-xs font-bold hover:bg-stone-50 transition flex items-center gap-1.5 shadow-2xs cursor-pointer disabled:opacity-50"
+                                        title="Sync users list from database"
+                                    >
+                                        <RefreshCw className={`w-3.5 h-3.5 ${usersLoading ? 'animate-spin text-[#C69722]' : 'text-stone-500'}`} />
+                                        <span>Refresh</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setCreateUserError('');
+                                            setNewUserForm({ email: '', password: '', full_name: '', role: 'customer', phone: '' });
+                                            setIsCreateUserModalOpen(true);
+                                        }}
+                                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] text-xs font-black uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                                    >
+                                        <UserPlus className="w-4 h-4 stroke-[2.5]" />
+                                        <span>+ Add New Account</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Stat KPI Cards */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-[#C69722] shadow-2xs">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Total Accounts</span>
+                                        <div className="w-8 h-8 rounded-xl bg-[#FAF2DE] text-[#8E5B00] flex items-center justify-center">
+                                            <Users className="w-4 h-4" />
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl font-serif font-black text-[#161616] mt-2">
+                                        {userStats.total_count || usersList.length}
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-stone-100 text-[11px] text-stone-500 font-medium flex items-center justify-between">
+                                        <span>All System Records</span>
+                                        <span className="text-stone-400 font-mono text-[10px]">100% Verified</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-emerald-600 shadow-2xs">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Devotees & Shoppers</span>
+                                        <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                                            <User className="w-4 h-4" />
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl font-serif font-black text-[#161616] mt-2">
+                                        {userStats.customer_count}
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-stone-100 text-[11px] text-emerald-700 font-semibold flex items-center justify-between">
+                                        <span>Customer Accounts</span>
+                                        <span className="text-[10px] bg-emerald-100/70 px-1.5 py-0.5 rounded font-mono">Devotee</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-indigo-600 shadow-2xs">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Admins & Staff</span>
+                                        <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                                            <Shield className="w-4 h-4" />
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl font-serif font-black text-[#161616] mt-2">
+                                        {userStats.admin_count}
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-stone-100 text-[11px] text-indigo-700 font-semibold flex items-center justify-between">
+                                        <span>Privileged Access</span>
+                                        <span className="text-[10px] bg-indigo-100/70 px-1.5 py-0.5 rounded font-mono">Console</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-sky-600 shadow-2xs">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Active Status</span>
+                                        <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center">
+                                            <UserCheck className="w-4 h-4" />
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl font-serif font-black text-[#161616] mt-2">
+                                        {userStats.active_count}
+                                    </div>
+                                    <div className="mt-3 pt-3 border-t border-stone-100 text-[11px] text-sky-700 font-semibold flex items-center justify-between">
+                                        <span>Authorized Sign-ins</span>
+                                        <span className="text-[10px] bg-sky-100/70 px-1.5 py-0.5 rounded font-mono">Active</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Search and Filters Bar */}
+                            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-3.5">
+                                <div className="flex flex-col sm:flex-row items-center gap-3">
+                                    {/* Search input */}
+                                    <div className="relative flex-1 w-full">
+                                        <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                                        <input
+                                            type="text"
+                                            value={userSearch}
+                                            onChange={(e) => setUserSearch(e.target.value)}
+                                            placeholder="Search by full name, email, phone number, or ID..."
+                                            className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-stone-200 bg-stone-50/50 text-xs focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                        />
+                                        {userSearch && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setUserSearch('')}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-0.5 cursor-pointer"
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Status selector */}
+                                    <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                                        <span className="text-[11px] font-bold text-stone-500 whitespace-nowrap hidden sm:inline">Status:</span>
+                                        <select
+                                            value={userStatusFilter}
+                                            onChange={(e) => setUserStatusFilter(e.target.value)}
+                                            className="px-3 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-semibold text-stone-800 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition w-full sm:w-auto cursor-pointer"
+                                        >
+                                            <option value="all">All Statuses</option>
+                                            <option value="active">Active Only</option>
+                                            <option value="inactive">Suspended Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Role Filter Pills */}
+                                <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 border-t border-stone-100 text-xs">
+                                    <span className="text-[11px] font-bold text-stone-400 uppercase tracking-wider mr-1 hidden sm:inline">
+                                        Filter Roles:
+                                    </span>
+                                    {[
+                                        { id: 'all', label: 'All Accounts', count: userStats.total_count || usersList.length },
+                                        { id: 'customer', label: 'Customers & Devotees', count: userStats.customer_count },
+                                        { id: 'admin', label: 'All Admins & Staff', count: userStats.admin_count },
+                                        { id: 'super_admin', label: 'Master Admins' },
+                                        { id: 'editor', label: 'Staff Editors' }
+                                    ].map(rf => {
+                                        const isSel = userRoleFilter === rf.id;
+                                        return (
+                                            <button
+                                                key={rf.id}
+                                                type="button"
+                                                onClick={() => setUserRoleFilter(rf.id)}
+                                                className={`px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                                                    isSel
+                                                        ? 'bg-[#161616] text-[#F7C600] shadow-xs'
+                                                        : 'bg-stone-100 text-stone-600 hover:bg-stone-200/70 hover:text-stone-900'
+                                                }`}
+                                            >
+                                                <span>{rf.label}</span>
+                                                {rf.count !== undefined && (
+                                                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                                                        isSel ? 'bg-[#F7C600]/20 text-[#F7C600]' : 'bg-stone-200 text-stone-600'
+                                                    }`}>
+                                                        {rf.count}
+                                                    </span>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Accounts List / Table */}
+                            <div className="bg-white rounded-3xl border border-stone-200 shadow-2xs overflow-hidden">
+                                {usersLoading && usersList.length === 0 ? (
+                                    <div className="p-12 text-center text-xs text-stone-500 space-y-3">
+                                        <Loader2 className="w-8 h-8 animate-spin text-[#C69722] mx-auto" />
+                                        <p className="font-semibold text-stone-700">Loading accounts directory from database...</p>
+                                    </div>
+                                ) : (
+                                    (() => {
+                                        const filteredUsers = usersList.filter(user => {
+                                            if (userRoleFilter !== 'all') {
+                                                const r = (user.role || '').toLowerCase();
+                                                if (userRoleFilter === 'customer' && !['customer', 'devotee'].includes(r)) return false;
+                                                if (userRoleFilter === 'admin' && !['super_admin', 'admin', 'editor'].includes(r)) return false;
+                                                if (userRoleFilter === 'editor' && r !== 'editor') return false;
+                                                if (userRoleFilter === 'super_admin' && r !== 'super_admin') return false;
+                                            }
+                                            if (userStatusFilter === 'active' && !user.is_active) return false;
+                                            if (userStatusFilter === 'inactive' && user.is_active) return false;
+                                            if (userSearch.trim()) {
+                                                const q = userSearch.toLowerCase();
+                                                const emailMatch = (user.email || '').toLowerCase().includes(q);
+                                                const nameMatch = (user.full_name || '').toLowerCase().includes(q);
+                                                const phoneMatch = (user.phone || '').toLowerCase().includes(q);
+                                                const idMatch = (user.id || '').toLowerCase().includes(q);
+                                                const roleMatch = (user.role || '').toLowerCase().includes(q);
+                                                if (!emailMatch && !nameMatch && !phoneMatch && !idMatch && !roleMatch) return false;
+                                            }
+                                            return true;
+                                        });
+
+                                        if (filteredUsers.length === 0) {
+                                            return (
+                                                <div className="p-12 text-center space-y-3">
+                                                    <div className="w-12 h-12 rounded-2xl bg-[#FAF2DE] border border-[#DFC48D] text-[#8E5B00] mx-auto flex items-center justify-center">
+                                                        <Users className="w-6 h-6" />
+                                                    </div>
+                                                    <h3 className="font-serif font-bold text-base text-stone-900">No matching accounts found</h3>
+                                                    <p className="text-xs text-stone-400 max-w-sm mx-auto">
+                                                        No accounts matched the search criteria or selected role filter. Try resetting your query or create a new account.
+                                                    </p>
+                                                    <div className="pt-2 flex items-center justify-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => { setUserSearch(''); setUserRoleFilter('all'); setUserStatusFilter('all'); }}
+                                                            className="px-4 py-2 rounded-xl border border-stone-300 text-stone-700 text-xs font-bold hover:bg-stone-50 transition cursor-pointer"
+                                                        >
+                                                            Reset Filters
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setCreateUserError('');
+                                                                setNewUserForm({ email: '', password: '', full_name: '', role: 'customer', phone: '' });
+                                                                setIsCreateUserModalOpen(true);
+                                                            }}
+                                                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] text-[#161616] text-xs font-black uppercase tracking-wider transition cursor-pointer shadow-sm"
+                                                        >
+                                                            + Add Account
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
+                                        return (
+                                            <div className="divide-y divide-stone-100">
+                                                {/* Table Header (Desktop) */}
+                                                <div className="hidden md:grid md:grid-cols-12 gap-4 px-6 py-3.5 bg-stone-50/80 text-[11px] font-extrabold uppercase tracking-wider text-stone-400 border-b border-stone-100">
+                                                    <div className="col-span-4">User / Account Info</div>
+                                                    <div className="col-span-2">Account ID</div>
+                                                    <div className="col-span-2">Role & Access</div>
+                                                    <div className="col-span-2">Status</div>
+                                                    <div className="col-span-2 text-right">Actions</div>
+                                                </div>
+
+                                                {/* Rows */}
+                                                {filteredUsers.map((user) => {
+                                                    const role = (user.role || 'customer').toLowerCase();
+                                                    const isRootAdmin = user.email === 'admin@amolmurtibhandar.com' || user.id === '66666666-6666-6666-6666-666666660001';
+                                                    const isSelf = adminUser && (adminUser.email === user.email || String(adminUser.id) === String(user.id));
+                                                    
+                                                    // Role badge styling
+                                                    let roleBadge = (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                                            <User className="w-3 h-3 text-emerald-600" />
+                                                            <span>Customer</span>
+                                                        </span>
+                                                    );
+                                                    if (role === 'super_admin') {
+                                                        roleBadge = (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-black bg-gradient-to-r from-[#FAF2DE] to-[#F5E6BE] text-[#8E5B00] border border-[#DFC48D]">
+                                                                <Shield className="w-3 h-3 text-[#8E5B00]" />
+                                                                <span>Master Admin</span>
+                                                            </span>
+                                                        );
+                                                    } else if (role === 'admin') {
+                                                        roleBadge = (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                                                <Key className="w-3 h-3 text-amber-600" />
+                                                                <span>Administrator</span>
+                                                            </span>
+                                                        );
+                                                    } else if (role === 'editor') {
+                                                        roleBadge = (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
+                                                                <Edit3 className="w-3 h-3 text-indigo-600" />
+                                                                <span>Staff Editor</span>
+                                                            </span>
+                                                        );
+                                                    }
+
+                                                    // Avatar styling
+                                                    let avatarBg = 'bg-stone-100 text-stone-700';
+                                                    if (role === 'super_admin') avatarBg = 'bg-[#171512] text-[#F7C600] ring-2 ring-[#DFC48D]';
+                                                    else if (role === 'admin') avatarBg = 'bg-amber-600 text-white';
+                                                    else if (role === 'editor') avatarBg = 'bg-indigo-600 text-white';
+                                                    else avatarBg = 'bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/60';
+
+                                                    const initials = (user.full_name || user.email || 'CU').substring(0, 2).toUpperCase();
+
+                                                    // Prefix ID
+                                                    const displayId = ['super_admin', 'admin', 'editor'].includes(role)
+                                                        ? `ADM-${String(user.id).substring(0, 8).toUpperCase()}`
+                                                        : `CUST-${String(user.id).substring(0, 8).toUpperCase()}`;
+
+                                                    return (
+                                                        <div
+                                                            key={user.id}
+                                                            className="p-4 sm:px-6 sm:py-4 transition-colors hover:bg-stone-50/70 flex flex-col md:grid md:grid-cols-12 md:items-center gap-3 md:gap-4"
+                                                        >
+                                                            {/* User Info */}
+                                                            <div className="md:col-span-4 flex items-center gap-3 min-w-0">
+                                                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-2xs ${avatarBg}`}>
+                                                                    {initials}
+                                                                </div>
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="font-bold text-stone-900 text-xs sm:text-sm truncate">
+                                                                            {user.full_name || 'Customer Member'}
+                                                                        </span>
+                                                                        {isSelf && (
+                                                                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-200 flex-shrink-0">
+                                                                                You
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                    <div className="text-[11px] text-stone-500 font-mono truncate" title={user.email}>
+                                                                        {user.email}
+                                                                    </div>
+                                                                    {user.phone && (
+                                                                        <div className="text-[10px] text-stone-400 flex items-center gap-1 mt-0.5">
+                                                                            <Phone className="w-3 h-3 text-stone-400" />
+                                                                            <span>{user.phone}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Account ID */}
+                                                            <div className="md:col-span-2">
+                                                                <span className="text-[10px] uppercase font-bold text-stone-400 md:hidden block mb-0.5">Account ID:</span>
+                                                                <span className="font-mono text-xs font-bold text-stone-700 bg-stone-100 px-2 py-0.5 rounded-lg border border-stone-200">
+                                                                    {displayId}
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Role & Access */}
+                                                            <div className="md:col-span-2 flex items-center gap-2">
+                                                                <span className="text-[10px] uppercase font-bold text-stone-400 md:hidden block">Role:</span>
+                                                                {roleBadge}
+                                                            </div>
+
+                                                            {/* Status */}
+                                                            <div className="md:col-span-2 flex items-center gap-2">
+                                                                <span className="text-[10px] uppercase font-bold text-stone-400 md:hidden block">Status:</span>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleToggleUserStatus(user)}
+                                                                    disabled={isSelf || isRootAdmin}
+                                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 ${
+                                                                        user.is_active
+                                                                            ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                                                                            : 'bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200'
+                                                                    }`}
+                                                                    title={isSelf ? "You cannot disable your own active session" : (user.is_active ? "Click to suspend account" : "Click to activate account")}
+                                                                >
+                                                                    <span className={`w-1.5 h-1.5 rounded-full ${user.is_active ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                                                                    <span>{user.is_active ? 'Active' : 'Suspended'}</span>
+                                                                </button>
+                                                            </div>
+
+                                                            {/* Actions */}
+                                                            <div className="md:col-span-2 flex items-center justify-end gap-1.5 pt-2 md:pt-0 border-t md:border-t-0 border-stone-100">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setEditingUserRole({ id: user.id, email: user.email, full_name: user.full_name, role: user.role })}
+                                                                    className="p-1.5 text-stone-500 hover:text-[#C69722] hover:bg-[#FAF2DE] rounded-xl transition cursor-pointer"
+                                                                    title="Change Account Role & Access Privileges"
+                                                                >
+                                                                    <Edit3 className="w-4 h-4" />
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setUserToDelete(user)}
+                                                                    disabled={isSelf || isRootAdmin}
+                                                                    className="p-1.5 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                    title={isSelf || isRootAdmin ? "Protected master account cannot be deleted" : "Delete account permanently"}
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        );
+                                    })()
+                                )}
+                            </div>
+                        </div>
+                    )}
                     </div>
                 </main>
             </div>
@@ -4700,6 +5274,309 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                 </div>
             )}
 
+            {/* Hoisted Modal: Create New Account */}
+            {isCreateUserModalOpen && (
+                <div 
+                    className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setIsCreateUserModalOpen(false); }}
+                >
+                    <div 
+                        className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
+                        data-lenis-prevent="true"
+                    >
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-[#FAF8F5]">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-[#FAF2DE] border border-[#DFC48D] flex items-center justify-center text-[#8E5B00]">
+                                    <UserPlus className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <h3 className="font-serif text-lg font-bold text-stone-900">Provision New Account</h3>
+                                    <p className="text-[11px] text-stone-500">Create a registered devotee or privileged administrative team member</p>
+                                </div>
+                            </div>
+                            <button 
+                                type="button" 
+                                onClick={() => setIsCreateUserModalOpen(false)} 
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition cursor-pointer"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {createUserError && (
+                            <div className="mx-6 mt-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                                <span className="font-semibold">{createUserError}</span>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleCreateUser} className="p-6 space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-stone-700 block mb-1">
+                                    FULL NAME / DISPLAY NAME *
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newUserForm.full_name}
+                                    onChange={(e) => setNewUserForm({ ...newUserForm, full_name: e.target.value })}
+                                    placeholder="e.g. Rameshwar Sharma"
+                                    className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-stone-700 block mb-1">
+                                    EMAIL ADDRESS (ACCOUNT ID) *
+                                </label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={newUserForm.email}
+                                    onChange={(e) => setNewUserForm({ ...newUserForm, email: e.target.value })}
+                                    placeholder="e.g. devotee@example.com"
+                                    className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-mono focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">
+                                        INITIAL PASSWORD * (MIN 8 CHARS)
+                                    </label>
+                                    <input
+                                        type="password"
+                                        required
+                                        minLength={8}
+                                        value={newUserForm.password}
+                                        onChange={(e) => setNewUserForm({ ...newUserForm, password: e.target.value })}
+                                        placeholder="••••••••"
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-mono focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">
+                                        PHONE NUMBER (OPTIONAL)
+                                    </label>
+                                    <input
+                                        type="tel"
+                                        value={newUserForm.phone}
+                                        onChange={(e) => setNewUserForm({ ...newUserForm, phone: e.target.value })}
+                                        placeholder="+91 98765 43210"
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-mono focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-stone-700 block mb-1">
+                                    ACCOUNT ROLE & PRIVILEGES *
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                    {[
+                                        { id: 'customer', title: 'Customer', desc: 'Storefront shopper, order tracking, sacred wishlist' },
+                                        { id: 'editor', title: 'Staff Editor', desc: 'Can manage products, reviews, categories & festival' },
+                                        { id: 'admin', title: 'Administrator', desc: 'Full console operations and catalog oversight' }
+                                    ].map(r => (
+                                        <div
+                                            key={r.id}
+                                            onClick={() => setNewUserForm({ ...newUserForm, role: r.id })}
+                                            className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
+                                                newUserForm.role === r.id
+                                                    ? 'border-[#C69722] bg-[#FAF5E8] ring-1 ring-[#C69722]'
+                                                    : 'border-stone-200 bg-stone-50/50 hover:bg-stone-100'
+                                            }`}
+                                        >
+                                            <div className="font-bold text-xs text-stone-900">{r.title}</div>
+                                            <div className="text-[10px] text-stone-500 mt-1 leading-snug">{r.desc}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCreateUserModalOpen(false)}
+                                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100 transition cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={createUserLoading}
+                                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                                >
+                                    {createUserLoading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin text-[#161616]" />
+                                            <span>Provisioning...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Check className="w-4 h-4 stroke-[2.5]" />
+                                            <span>Create Account</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Hoisted Modal: Change Account Role */}
+            {editingUserRole && (
+                <div 
+                    className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setEditingUserRole(null); }}
+                >
+                    <div 
+                        className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
+                        data-lenis-prevent="true"
+                    >
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-[#FAF8F5]">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-700">
+                                    <KeyRound className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <h3 className="font-serif text-lg font-bold text-stone-900">Change Account Role</h3>
+                                    <p className="text-[11px] text-stone-500 truncate max-w-[240px]">{editingUserRole.email}</p>
+                                </div>
+                            </div>
+                            <button 
+                                type="button" 
+                                onClick={() => setEditingUserRole(null)} 
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-black hover:bg-stone-200/60 transition cursor-pointer"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveUserRole} className="p-6 space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-stone-700 block mb-2">
+                                    ASSIGN NEW ROLE
+                                </label>
+                                <div className="space-y-2">
+                                    {[
+                                        { id: 'customer', title: 'Customer (Devotee)', desc: 'Storefront shopper with access to cart, orders, and wishlist' },
+                                        { id: 'editor', title: 'Staff Editor', desc: 'Can manage catalog products, categories, festival drops, and reviews' },
+                                        { id: 'admin', title: 'Administrator', desc: 'Full operations, settings, and user access management' },
+                                        { id: 'super_admin', title: 'Master Admin', desc: 'Root master access across all database and server functions' }
+                                    ].map(r => (
+                                        <label
+                                            key={r.id}
+                                            className={`p-3 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all ${
+                                                editingUserRole.role === r.id
+                                                    ? 'border-[#C69722] bg-[#FAF5E8] ring-1 ring-[#C69722]'
+                                                    : 'border-stone-200 hover:bg-stone-50'
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="user_role"
+                                                checked={editingUserRole.role === r.id}
+                                                onChange={() => setEditingUserRole({ ...editingUserRole, role: r.id })}
+                                                className="mt-1 text-[#C69722] focus:ring-[#C69722]"
+                                            />
+                                            <div>
+                                                <div className="font-bold text-xs text-stone-900">{r.title}</div>
+                                                <div className="text-[10px] text-stone-500 mt-0.5 leading-snug">{r.desc}</div>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-stone-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingUserRole(null)}
+                                    className="px-5 py-2.5 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100 transition cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={roleChangeLoading}
+                                    className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                                >
+                                    {roleChangeLoading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin text-[#161616]" />
+                                            <span>Saving...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Check className="w-4 h-4 stroke-[2.5]" />
+                                            <span>Update Role</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Hoisted Modal: Confirm Account Deletion */}
+            {userToDelete && (
+                <div 
+                    className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-5 overflow-y-auto"
+                    data-lenis-prevent="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) setUserToDelete(null); }}
+                >
+                    <div 
+                        className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-stone-200 overflow-hidden my-auto animate-in zoom-in-95 duration-200"
+                        data-lenis-prevent="true"
+                    >
+                        <div className="p-6 text-center space-y-4">
+                            <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 mx-auto flex items-center justify-center">
+                                <ShieldAlert className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="font-serif text-lg font-bold text-stone-900">Permanently Delete Account?</h3>
+                                <p className="text-xs text-stone-500 mt-1 leading-relaxed">
+                                    Are you sure you want to permanently delete the account for <strong className="text-stone-800">{userToDelete.email}</strong>? This action cannot be undone.
+                                </p>
+                            </div>
+
+                            <div className="flex items-center justify-center gap-2.5 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setUserToDelete(null)}
+                                    className="px-5 py-2.5 rounded-xl border border-stone-200 text-stone-700 text-xs font-bold hover:bg-stone-50 transition cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled={deleteUserLoading}
+                                    onClick={handleConfirmDeleteUser}
+                                    className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold uppercase tracking-wider transition shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                                >
+                                    {deleteUserLoading ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin text-white" />
+                                            <span>Deleting...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Trash2 className="w-4 h-4" />
+                                            <span>Delete Permanently</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

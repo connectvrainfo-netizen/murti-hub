@@ -47,6 +47,14 @@ def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
                 fest_title = local_store.festival_sections[0].get("title")
                 fest_active = local_store.festival_sections[0].get("is_active", True)
                 
+            user_count = 0
+            try:
+                user_count = len(client.table("admin_users").select("id").execute().data or [])
+            except Exception:
+                user_count = len(getattr(local_store, "admin_users", []))
+            if user_count == 0:
+                user_count = len(getattr(local_store, "admin_users", []))
+
             return ApiResponse(
                 success=True,
                 message="Supabase live dashboard statistics",
@@ -59,7 +67,8 @@ def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
                     active_festival_title=fest_title,
                     festival_is_active=fest_active,
                     whatsapp_number=wa_num,
-                    global_rating_mode=rat_mode
+                    global_rating_mode=rat_mode,
+                    total_users=user_count
                 )
             )
         except Exception as e:
@@ -79,7 +88,8 @@ def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
             active_festival_title=active_fest["title"] if active_fest else None,
             festival_is_active=bool(active_fest),
             whatsapp_number=local_store.site_settings.get("whatsapp_number", "+919876543210"),
-            global_rating_mode=local_store.site_settings.get("global_rating_mode", "enabled")
+            global_rating_mode=local_store.site_settings.get("global_rating_mode", "enabled"),
+            total_users=len(getattr(local_store, "admin_users", []))
         )
     )
 

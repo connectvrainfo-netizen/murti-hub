@@ -8,7 +8,7 @@
     "support_email": "support@amolmurtibhandar.com",
     "showroom_address": "Khazane Walon Ka Rasta, Jaipur, Rajasthan 302001",
     "banner_announcement": "Zero-Breakage Crating Guarantee across all 19,000+ PIN codes across India",
-    "updated_at": "2026-10-26T03:40:07.932002+00:00",
+    "updated_at": "2026-10-26T04:07:04.285229+00:00",
     "collection_badge": "HAND-CARVED BY NATIONAL AWARD ARTISANS",
     "collection_title": "DIVINE MAKRANA SACRED COLLECTION 2026",
     "collection_subtitle": "Consecrated Heritage Masterpieces",
@@ -2914,7 +2914,7 @@
       "id": "66666666-6666-6666-6666-666666660001",
       "email": "admin@amolmurtibhandar.com",
       "full_name": "Master Sculptor Admin",
-      "password_hash": "$2b$12$0ObNr/pzIpQY8McCEHcr5OImIym0SM3AgaoxFoHtyQ.qr5vtVyiPe",
+      "password_hash": "$2b$12$qjDyrfX8hsnGv0qhaghvsOcjPt1Vja2SayBoPLTISKI4jHs/bZfCa",
       "role": "super_admin",
       "is_active": true,
       "security_pin_hash": null
@@ -2999,6 +2999,15 @@
       "role": "customer",
       "is_active": true,
       "created_at": "2026-10-26T03:40:08.280286+00:00"
+    },
+    {
+      "id": "666462b3-6d0b-4a86-878b-36399f360af7",
+      "email": "test.devotee.1792987624@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$UP7dsIEIWws9M2OCs093.uFpqyyLD9sfkYbtdEWiaJyKfkygCfxqy",
+      "role": "customer",
+      "is_active": true,
+      "created_at": "2026-10-26T04:07:04.652823+00:00"
     }
   ],
   "revoked_tokens": [
@@ -3051,27 +3060,52 @@
       "jti": "1e9c0e9b-c80f-41fb-ab8f-70440eff4162",
       "revoked_at": "2026-10-26T03:40:23.803265+00:00",
       "expires_at": null
+    },
+    {
+      "jti": "e5c92ede-0468-4a25-a0fa-a2cee3fe49fa",
+      "revoked_at": "2026-10-26T04:08:49.549254+00:00",
+      "expires_at": null
+    },
+    {
+      "jti": "5fc7acd1-9d4d-467a-ad71-1a785997bdf6",
+      "revoked_at": "2026-10-26T04:08:52.347955+00:00",
+      "expires_at": "2026-10-26T12:08:51+00:00"
+    },
+    {
+      "jti": "c4a099d6-1e8f-4934-aa78-81e05e39194a",
+      "revoked_at": "2026-10-26T04:08:53.190689+00:00",
+      "expires_at": "2026-10-26T12:08:52+00:00"
+    },
+    {
+      "jti": "9201dd8c-fa45-4c20-b4a2-0229b427f590",
+      "revoked_at": "2026-10-26T04:08:55.627638+00:00",
+      "expires_at": "2026-10-26T12:08:53+00:00"
+    },
+    {
+      "jti": "facb4ef3-acf5-4cab-9fcc-b2cc84764a23",
+      "revoked_at": "2026-10-26T04:08:55.639503+00:00",
+      "expires_at": null
     }
   ],
   "rate_limits": {
     "login": {
-      "198.51.17.158": [
-        1792986017.931467,
-        1792986018.2050018,
-        1792986018.486712,
-        1792986018.7542102,
-        1792986019.031198
+      "198.51.229.61": [
+        1792987729.8203118,
+        1792987730.093332,
+        1792987730.3684585,
+        1792987730.6356015,
+        1792987730.899729
       ]
     },
     "reset": {
-      "198.53.19.46": [
-        1792986019.05021,
-        1792986019.0569513
+      "198.53.230.168": [
+        1792987730.9228437,
+        1792987730.9340043
       ],
-      "198.52.19.67": [
-        1792986019.0712163,
-        1792986019.0810492,
-        1792986019.0914354
+      "198.52.230.192": [
+        1792987730.9447792,
+        1792987730.9568222,
+        1792987730.9674752
       ]
     },
     "register": {}
