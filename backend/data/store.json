@@ -8,7 +8,7 @@
     "support_email": "support@amolmurtibhandar.com",
     "showroom_address": "Khazane Walon Ka Rasta, Jaipur, Rajasthan 302001",
     "banner_announcement": "Zero-Breakage Crating Guarantee across all 19,000+ PIN codes across India",
-    "updated_at": "2026-10-24T03:21:24.050636+00:00",
+    "updated_at": "2026-10-26T03:40:07.932002+00:00",
     "collection_badge": "HAND-CARVED BY NATIONAL AWARD ARTISANS",
     "collection_title": "DIVINE MAKRANA SACRED COLLECTION 2026",
     "collection_subtitle": "Consecrated Heritage Masterpieces",
@@ -407,8 +407,8 @@
     {
       "name": "anime",
       "slug": "anime",
-      "deity": null,
-      "route": "/anime",
+      "deity": "Anime",
+      "route": "shop-all",
       "img": "/uploads/categories_43572b79185c.png",
       "banner_url": "",
       "description": null,
@@ -417,6 +417,20 @@
       "id": "75eda166-5953-43d4-8222-f79ffb9e5440",
       "created_at": "2026-10-21T16:17:27.094052+00:00",
       "updated_at": "2026-10-22T11:57:02.276455+00:00"
+    },
+    {
+      "name": "Lakshmi",
+      "slug": "lakshmi",
+      "deity": "Lakshmi",
+      "route": "shop-all",
+      "img": "/images/products/parvati-lakshmi.png",
+      "banner_url": "/images/products/parvati-lakshmi.png",
+      "description": "Sacred idols of Mata Lakshmi for prosperity and wealth.",
+      "sort_order": 12,
+      "is_active": true,
+      "id": "22222222-2222-2222-2222-222222220011",
+      "created_at": "2026-10-26T00:00:00.000000+00:00",
+      "updated_at": "2026-10-26T00:00:00.000000+00:00"
     }
   ],
   "murtis": [
@@ -1585,8 +1599,8 @@
       "legacy_id": 7,
       "title": "Maa Lakshmi & Parvati – The Grace of Abundance | 24K Gold Zaree Detailing",
       "slug": "maa-lakshmi-parvati-grace",
-      "category_id": "22222222-2222-2222-2222-222222220002",
-      "deity": "Durga",
+      "category_id": "22222222-2222-2222-2222-222222220011",
+      "deity": "Lakshmi",
       "group_tag": "navratri",
       "price": 1499.0,
       "old_price": 1999.0,
@@ -2900,7 +2914,7 @@
       "id": "66666666-6666-6666-6666-666666660001",
       "email": "admin@amolmurtibhandar.com",
       "full_name": "Master Sculptor Admin",
-      "password_hash": "$2b$12$phdPFGQtW46zlRJz/Unm0Oufvl5haP1RwC6vjtEBhpsdOanSKL5fi",
+      "password_hash": "$2b$12$0ObNr/pzIpQY8McCEHcr5OImIym0SM3AgaoxFoHtyQ.qr5vtVyiPe",
       "role": "super_admin",
       "is_active": true,
       "security_pin_hash": null
@@ -2976,6 +2990,15 @@
       "role": "devotee",
       "is_active": true,
       "created_at": "2026-10-24T03:21:24.402243+00:00"
+    },
+    {
+      "id": "aadf12ee-3437-4ecb-aa2c-39a45fd5f9ee",
+      "email": "test.devotee.1792986008@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$qJmUW/vKPQmHUH66bbqFdOtfC5IEqwk29W1gddONW.2k30ek/7doS",
+      "role": "customer",
+      "is_active": true,
+      "created_at": "2026-10-26T03:40:08.280286+00:00"
     }
   ],
   "revoked_tokens": [
@@ -2983,16 +3006,6 @@
       "jti": "94631045-46fc-47d0-a404-bf01ee0b6e02",
       "revoked_at": "2026-10-25T09:05:25.480110+00:00",
       "expires_at": null
-    },
-    {
-      "jti": "a0d0bc1d-b14d-44d6-a292-cffce5607fa2",
-      "revoked_at": "2026-10-25T09:05:28.294438+00:00",
-      "expires_at": "2026-10-25T17:05:27+00:00"
-    },
-    {
-      "jti": "0165d5a0-6693-42aa-92fc-b4bcd5812614",
-      "revoked_at": "2026-10-25T09:05:29.114243+00:00",
-      "expires_at": "2026-10-25T17:05:28+00:00"
     },
     {
       "jti": "b728c3ba-2e7c-44b6-b212-e323b5d961bf",
@@ -3010,45 +3023,55 @@
       "expires_at": null
     },
     {
-      "jti": "979c752e-910f-47ac-b133-d003c88d1d6b",
-      "revoked_at": "2026-10-25T09:07:39.349752+00:00",
-      "expires_at": "2026-10-25T17:07:38+00:00"
-    },
-    {
-      "jti": "4050c679-329a-4b7f-88d2-393b0aa0a699",
-      "revoked_at": "2026-10-25T09:07:40.171808+00:00",
-      "expires_at": "2026-10-25T17:07:39+00:00"
-    },
-    {
-      "jti": "709eb9b9-5f8a-47a0-9a9f-dc5e415e5c6b",
-      "revoked_at": "2026-10-25T09:07:42.609312+00:00",
-      "expires_at": "2026-10-25T17:07:40+00:00"
-    },
-    {
       "jti": "e750ac51-f417-4932-aae1-8bb5fa635c19",
       "revoked_at": "2026-10-25T09:07:42.622960+00:00",
+      "expires_at": null
+    },
+    {
+      "jti": "356c96c8-cce4-4746-bd82-e695381fc401",
+      "revoked_at": "2026-10-26T03:40:17.642123+00:00",
+      "expires_at": null
+    },
+    {
+      "jti": "a16c9ade-00d5-4a42-9cdf-04e0e52852a5",
+      "revoked_at": "2026-10-26T03:40:20.488555+00:00",
+      "expires_at": "2026-10-26T11:40:19+00:00"
+    },
+    {
+      "jti": "3367e469-a7c4-40f4-a1b3-7211066eda99",
+      "revoked_at": "2026-10-26T03:40:21.320865+00:00",
+      "expires_at": "2026-10-26T11:40:20+00:00"
+    },
+    {
+      "jti": "7ec2fa96-6c0b-4573-a213-ab11cb6d6486",
+      "revoked_at": "2026-10-26T03:40:23.793127+00:00",
+      "expires_at": "2026-10-26T11:40:21+00:00"
+    },
+    {
+      "jti": "1e9c0e9b-c80f-41fb-ab8f-70440eff4162",
+      "revoked_at": "2026-10-26T03:40:23.803265+00:00",
       "expires_at": null
     }
   ],
   "rate_limits": {
     "login": {
-      "198.51.6.52": [
-        1792919256.814244,
-        1792919257.0915167,
-        1792919257.365577,
-        1792919257.6341648,
-        1792919257.901737
+      "198.51.17.158": [
+        1792986017.931467,
+        1792986018.2050018,
+        1792986018.486712,
+        1792986018.7542102,
+        1792986019.031198
       ]
     },
     "reset": {
-      "198.53.7.170": [
-        1792919257.9259853,
-        1792919257.9363945
+      "198.53.19.46": [
+        1792986019.05021,
+        1792986019.0569513
       ],
-      "198.52.7.193": [
-        1792919257.9464078,
-        1792919257.9582796,
-        1792919257.970563
+      "198.52.19.67": [
+        1792986019.0712163,
+        1792986019.0810492,
+        1792986019.0914354
       ]
     },
     "register": {}

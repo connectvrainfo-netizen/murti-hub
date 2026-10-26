@@ -8,8 +8,8 @@ class AdminLoginRequest(BaseModel):
 class UserRegisterRequest(BaseModel):
     email: str = Field(..., description="Valid email address for registration")
     password: str = Field(..., min_length=6, description="Password (minimum 6 characters)")
-    full_name: Optional[str] = Field("Devotee Member", description="Full name or display name")
-    role: Optional[str] = Field("devotee", description="Account role (devotee, editor, admin)")
+    full_name: Optional[str] = Field("Customer Member", description="Full name or display name")
+    role: Optional[str] = Field("customer", description="Account role (customer, editor, admin)")
 
 class TokenResponse(BaseModel):
     access_token: str

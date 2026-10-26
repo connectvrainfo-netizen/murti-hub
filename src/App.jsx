@@ -199,17 +199,24 @@ export default function App() {
                     c.name !== 'Hand Paint' && 
                     c.name !== 'Hand-Paint'
                 );
-                setLiveCategories(activeCats.map(c => ({
-                    ...c,
-                    id: c.slug || c.id,
-                    db_id: c.id,
-                    name: c.name,
-                    route: c.route || (c.slug === 'navratri-drop' ? 'navratri' : 'shop-all'),
-                    deity: c.deity !== undefined ? c.deity : (c.name === 'Ganpati' ? 'Ganesha' : c.name === 'Durga & Shakti' ? 'Durga' : c.slug === 'navratri-drop' ? null : c.name),
-                    img: c.img || c.icon_image_url || '/images/categories/gajanan-maharaj@2x.png',
-                    banner_image_url: c.banner_url || c.banner_image_url || '',
-                    is_active: c.is_active !== false
-                })));
+                setLiveCategories(activeCats.map(c => {
+                    const cleanRoute = String(c.route || '').replace(/^\/+/, '').trim();
+                    const validRoute = ['shop-all', 'navratri', 'sacred', 'baal-roop'].includes(cleanRoute) ? cleanRoute : 'shop-all';
+                    const rawDeity = c.deity && String(c.deity).trim() ? String(c.deity).trim() : null;
+                    const effectiveDeity = rawDeity || (c.name === 'Ganpati' ? 'Ganesha' : c.name === 'Durga & Shakti' ? 'Durga' : c.slug === 'navratri-drop' ? null : String(c.name || '').trim());
+                    return {
+                        ...c,
+                        id: c.slug || c.id,
+                        db_id: c.id,
+                        name: c.name,
+                        slug: c.slug || String(c.name || '').toLowerCase().replace(/\s+/g, '-'),
+                        route: validRoute,
+                        deity: effectiveDeity,
+                        img: c.img || c.icon_image_url || '/images/categories/gajanan-maharaj@2x.png',
+                        banner_image_url: c.banner_url || c.banner_image_url || '',
+                        is_active: c.is_active !== false
+                    };
+                }));
             }
         }).catch(() => {});
     };
@@ -394,14 +401,37 @@ export default function App() {
             const pageParam = searchParams.get('page');
             const categoryParam = searchParams.get('category');
             let targetPage = pageParam || state?.page;
+            let targetDeity = categoryParam || state?.deity || null;
+
             if (!targetPage) {
                 if (path === '/shop-all' || path === '/shop' || path === '/catalog' || path === '/products') targetPage = 'shop-all';
                 else if (path === '/navratri') targetPage = 'navratri';
                 else if (path === '/sacred') targetPage = 'sacred';
                 else if (path === '/baal-roop') targetPage = 'baal-roop';
-                else targetPage = 'home';
+                else {
+                    const cleanPath = path.replace(/^\/+/, '').trim().toLowerCase();
+                    const matchedCat = (liveCategories && liveCategories.length > 0)
+                        ? liveCategories.find(c => (c.slug && c.slug.toLowerCase() === cleanPath) || (c.name && c.name.toLowerCase() === cleanPath))
+                        : deityCategories.find(c => (c.id && c.id.toLowerCase() === cleanPath) || (c.name && c.name.toLowerCase() === cleanPath));
+                    if (matchedCat) {
+                        targetPage = matchedCat.route || 'shop-all';
+                        if (!targetDeity) targetDeity = matchedCat.deity || matchedCat.name;
+                    } else {
+                        targetPage = 'home';
+                    }
+                }
+            } else {
+                const cleanPage = String(targetPage).replace(/^\/+/, '').trim().toLowerCase();
+                if (!['home', 'shop-all', 'navratri', 'sacred', 'baal-roop', 'login', 'admin', 'profile'].includes(cleanPage)) {
+                    const matchedCat = (liveCategories && liveCategories.length > 0)
+                        ? liveCategories.find(c => (c.slug && c.slug.toLowerCase() === cleanPage) || (c.name && c.name.toLowerCase() === cleanPage))
+                        : deityCategories.find(c => (c.id && c.id.toLowerCase() === cleanPage) || (c.name && c.name.toLowerCase() === cleanPage));
+                    if (matchedCat) {
+                        targetPage = matchedCat.route || 'shop-all';
+                        if (!targetDeity) targetDeity = matchedCat.deity || matchedCat.name;
+                    }
+                }
             }
-            const targetDeity = categoryParam || state?.deity || null;
 
             if (path === '/cart') {
                 setIsCartOpen(true);
@@ -427,14 +457,36 @@ export default function App() {
         isKwikPassOpen, isSearchOpen, liveProducts, currentPage
     ]);
 
-    // 4. Wishlist State
-    const [wishlist, setWishlist] = useState([1, 4]); // Pre-loaded with popular idols
+    // 4. Wishlist State - Persistent, initialized empty (never pre-loaded with mock IDs)
+    const [wishlist, setWishlist] = useState(() => {
+        if (typeof localStorage === 'undefined') return [];
+        try {
+            const raw = localStorage.getItem('murti_wishlist');
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                // Strip legacy mock IDs (1, 4) if previously saved in browser
+                return parsed.filter(id => id !== 1 && id !== 4 && id !== '1' && id !== '4');
+            }
+            return [];
+        } catch {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('murti_wishlist', JSON.stringify(wishlist));
+        }
+    }, [wishlist]);
+
     const [isWishlistFilterActive, setIsWishlistFilterActive] = useState(false);
     const toggleWishlist = (productId, e) => {
         e?.stopPropagation();
         setWishlist(prev => {
-            const exists = prev.includes(productId);
-            const updated = exists ? prev.filter(id => id !== productId) : [...prev, productId];
+            const cleanPrev = prev.filter(id => id !== 1 && id !== 4 && id !== '1' && id !== '4');
+            const exists = cleanPrev.some(id => String(id) === String(productId));
+            const updated = exists ? cleanPrev.filter(id => String(id) !== String(productId)) : [...cleanPrev, productId];
             showToast(exists ? 'Removed from Sacred Wishlist' : 'Saved to Sacred Wishlist ❤️');
             return updated;
         });
@@ -672,31 +724,44 @@ export default function App() {
             return;
         }
 
+        let targetPageKey = pageKey;
+        let targetDeity = deity;
+        const cleanKey = String(targetPageKey || '').replace(/^\/+/, '').trim().toLowerCase();
+        if (!['home', 'shop-all', 'navratri', 'sacred', 'baal-roop', 'login', 'admin', 'profile'].includes(cleanKey)) {
+            const matchedCat = (liveCategories && liveCategories.length > 0)
+                ? liveCategories.find(c => (c.slug && c.slug.toLowerCase() === cleanKey) || (c.name && c.name.toLowerCase() === cleanKey))
+                : deityCategories.find(c => (c.id && c.id.toLowerCase() === cleanKey) || (c.name && c.name.toLowerCase() === cleanKey));
+            if (matchedCat) {
+                targetPageKey = matchedCat.route || 'shop-all';
+                if (!targetDeity) targetDeity = matchedCat.deity || matchedCat.name;
+            }
+        }
+
         let targetUrl = '/';
-        if (pageKey !== 'home' || deity) {
+        if (targetPageKey !== 'home' || targetDeity) {
             const params = new URLSearchParams();
-            if (pageKey !== 'home') params.set('page', pageKey);
-            if (deity) params.set('category', deity);
+            if (targetPageKey !== 'home') params.set('page', targetPageKey);
+            if (targetDeity) params.set('category', targetDeity);
             targetUrl = `/?${params.toString()}`;
         }
 
         if (pushToHistory && typeof window !== 'undefined') {
             const curState = window.history.state;
-            const isAlreadyHere = curState?.page === pageKey && curState?.deity === deity;
+            const isAlreadyHere = curState?.page === targetPageKey && curState?.deity === targetDeity;
             if (!isAlreadyHere) {
-                window.history.pushState({ page: pageKey, deity }, '', targetUrl);
+                window.history.pushState({ page: targetPageKey, deity: targetDeity }, '', targetUrl);
             }
         }
 
-        setCurrentPage(pageKey);
-        setActiveDeityFilter(deity);
+        setCurrentPage(targetPageKey);
+        setActiveDeityFilter(targetDeity);
         setFilterPlacement('all');
         setFilterPriceRange('all');
         setFilterAvailability('all');
         setSearchQuery('');
         setIsWishlistFilterActive(false);
-        if (pageKey !== 'product') setSelectedProduct(null);
-        if (pageKey === 'home') setActiveHeroSlide(1);
+        if (targetPageKey !== 'product') setSelectedProduct(null);
+        if (targetPageKey === 'home') setActiveHeroSlide(1);
         setIsMobileMenuOpen(false);
         scrollTo(0);
     };
@@ -877,15 +942,41 @@ export default function App() {
         }
 
         if (isWishlistFilterActive) {
-            items = items.filter(p => p && wishlist.includes(p.id));
+            items = items.filter(p => p && (
+                wishlist.includes(p.id) ||
+                wishlist.includes(String(p.id)) ||
+                (p.legacy_id && (wishlist.includes(p.legacy_id) || wishlist.includes(String(p.legacy_id))))
+            ));
         }
 
         if (activeDeityFilter) {
-            const filterLower = String(activeDeityFilter).toLowerCase();
-            items = items.filter(p =>
-                String(p?.deity || '').toLowerCase().includes(filterLower) ||
-                String(p?.title || '').toLowerCase().includes(filterLower)
+            const filterLower = String(activeDeityFilter).toLowerCase().trim();
+            const matchedCat = (liveCategories || []).find(c =>
+                (c.deity && String(c.deity).toLowerCase() === filterLower) ||
+                (c.name && String(c.name).toLowerCase() === filterLower) ||
+                (c.slug && String(c.slug).toLowerCase() === filterLower)
             );
+
+            items = items.filter(p => {
+                if (!p) return false;
+                // 1. Direct category association (by UUID or slug)
+                if (matchedCat) {
+                    if (p.category_id && (String(p.category_id) === String(matchedCat.id) || String(p.category_id) === String(matchedCat.db_id))) return true;
+                    if (p.category && (String(p.category).toLowerCase() === matchedCat.name.toLowerCase() || String(p.category).toLowerCase() === matchedCat.slug.toLowerCase())) return true;
+                    if (p.category_slug && String(p.category_slug).toLowerCase() === matchedCat.slug.toLowerCase()) return true;
+                }
+                // 2. Exact or substring deity match
+                const pDeity = String(p?.deity || '').toLowerCase().trim();
+                if (pDeity && (pDeity === filterLower || pDeity.includes(filterLower) || filterLower.includes(pDeity))) {
+                    return true;
+                }
+                // 3. Title match (only if title explicitly contains the deity name)
+                const pTitle = String(p?.title || '').toLowerCase();
+                if (pTitle.includes(filterLower)) {
+                    return true;
+                }
+                return false;
+            });
         }
 
         // Helper to extract clean numeric price
@@ -1010,6 +1101,7 @@ export default function App() {
                 <UserProfilePage
                     currentUser={currentUser}
                     wishlist={wishlist}
+                    onToggleWishlist={toggleWishlist}
                     allProducts={liveProducts && liveProducts.length > 0 ? liveProducts : catalog}
                     onReturnToStore={() => {
                         window.history.pushState(null, '', '/');
@@ -2940,14 +3032,19 @@ export default function App() {
                         <span className="text-[10px] font-bold tracking-[0.18em] uppercase text-stone-500 whitespace-nowrap">RELEVANT COLLECTIONS</span>
                         <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar scroll-smooth flex-1 py-1">
                             {liveCategories.filter(c => c.is_active !== false).map(cat => {
+                                const catDeity = cat.deity || cat.name;
                                 const isCatActive = Boolean(
-                                    (cat.deity && activeDeityFilter && cat.deity.toLowerCase() === activeDeityFilter.toLowerCase()) ||
-                                    (!cat.deity && cat.route === currentPage)
+                                    (catDeity && activeDeityFilter && catDeity.toLowerCase() === activeDeityFilter.toLowerCase()) ||
+                                    (!activeDeityFilter && cat.route === currentPage)
                                 );
                                 return (
                                     <button
-                                        key={cat.id}
-                                        onClick={() => navigateTo(cat.route, cat.deity)}
+                                        key={cat.id || cat.slug}
+                                        onClick={() => {
+                                            const route = cat.route || 'shop-all';
+                                            const deity = cat.deity || cat.name;
+                                            navigateTo(route, deity);
+                                        }}
                                         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full border transition whitespace-nowrap text-xs ${
                                             isCatActive
                                                 ? 'border-[#C69722] bg-[#FAF5E8] text-[#161616] font-bold shadow-xs'

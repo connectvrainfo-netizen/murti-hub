@@ -58,6 +58,12 @@ def create_category(payload: CategoryCreate, admin: dict = Depends(get_current_a
     now = datetime.datetime.now(datetime.timezone.utc)
     
     cat_dict = payload.dict()
+    if not cat_dict.get("deity") or not str(cat_dict.get("deity")).strip():
+        cat_dict["deity"] = (cat_dict.get("name") or "").strip()
+    clean_route = (cat_dict.get("route") or "shop-all").replace("/", "").strip()
+    if clean_route not in ["shop-all", "navratri", "sacred", "baal-roop"]:
+        clean_route = "shop-all"
+    cat_dict["route"] = clean_route
     cat_dict["id"] = new_id
     cat_dict["created_at"] = now.isoformat()
     cat_dict["updated_at"] = now.isoformat()
@@ -81,6 +87,13 @@ def update_category(category_id: str, payload: CategoryUpdate, admin: dict = Dep
     Req #1: Edit category images section (icon img, banner_url, name, route, sort order, is_active).
     """
     update_data = {k: v for k, v in payload.dict().items() if v is not None}
+    if "deity" in update_data and (not update_data["deity"] or not str(update_data["deity"]).strip()):
+        update_data["deity"] = (update_data.get("name") or "").strip()
+    if "route" in update_data:
+        clean_route = (update_data.get("route") or "shop-all").replace("/", "").strip()
+        if clean_route not in ["shop-all", "navratri", "sacred", "baal-roop"]:
+            clean_route = "shop-all"
+        update_data["route"] = clean_route
     update_data["updated_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     clean_id = category_id.replace("cat-", "")
     

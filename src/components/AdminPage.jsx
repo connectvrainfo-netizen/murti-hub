@@ -667,11 +667,19 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         e.preventDefault();
         if (!editingCategory) return;
         try {
-            // Auto generate slug/route if missing
+            // Auto generate slug/route/deity if missing
+            const catName = (editingCategory.name || '').trim();
+            const catSlug = (editingCategory.slug || catName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')).trim();
+            const catDeity = (editingCategory.deity || catName).trim();
+            const cleanRoute = (editingCategory.route || '').replace(/^\/+/, '').trim();
+            const catRoute = ['shop-all', 'navratri', 'sacred', 'baal-roop'].includes(cleanRoute) ? cleanRoute : 'shop-all';
+
             const categoryData = {
                 ...editingCategory,
-                slug: editingCategory.slug || editingCategory.name.toLowerCase().replace(/\s+/g, '-'),
-                route: editingCategory.route || `/${editingCategory.name.toLowerCase().replace(/\s+/g, '-')}`
+                name: catName,
+                slug: catSlug,
+                deity: catDeity,
+                route: catRoute
             };
 
             if (editingCategory.id) {
@@ -4417,10 +4425,49 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     type="text"
                                     required
                                     value={editingCategory.name || ''}
-                                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                                    placeholder="e.g. Ram Darbar, Radha Krishna, Lord Shiva"
+                                    onChange={(e) => {
+                                        const name = e.target.value;
+                                        setEditingCategory(prev => ({
+                                            ...prev,
+                                            name,
+                                            deity: prev.deity && prev.deity !== prev.name ? prev.deity : name
+                                        }));
+                                    }}
+                                    placeholder="e.g. Maa Lakshmi, Ram Darbar, Lord Shiva"
                                     className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">
+                                        DEITY / FILTER NAME
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editingCategory.deity ?? (editingCategory.name || '')}
+                                        onChange={(e) => setEditingCategory({ ...editingCategory, deity: e.target.value })}
+                                        placeholder="e.g. Lakshmi"
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#C69722]"
+                                    />
+                                    <span className="text-[10px] text-stone-400 mt-1 block">Used to filter catalog items for this category</span>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-stone-700 block mb-1">
+                                        STOREFRONT ROUTE
+                                    </label>
+                                    <select
+                                        value={editingCategory.route || 'shop-all'}
+                                        onChange={(e) => setEditingCategory({ ...editingCategory, route: e.target.value })}
+                                        className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-semibold bg-white focus:outline-none focus:border-[#C69722]"
+                                    >
+                                        <option value="shop-all">shop-all (Standard All Murtis Storefront)</option>
+                                        <option value="navratri">navratri (Navratri Festive Drop)</option>
+                                        <option value="sacred">sacred (Sacred Collectibles)</option>
+                                        <option value="baal-roop">baal-roop (Baal Roop Collection)</option>
+                                    </select>
+                                    <span className="text-[10px] text-stone-400 mt-1 block">Landing page layout for this category</span>
+                                </div>
                             </div>
 
                             {/* Circle Icon Thumbnail with Drag & Drop */}

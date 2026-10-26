@@ -153,8 +153,8 @@ export default function LoginPage({
             const data = await api.login(cleanEmail, cleanPassword, loginForm.rememberMe);
             const userProfile = data?.admin || data?.user || api.getCurrentUser() || {
                 email: cleanEmail,
-                full_name: 'Devotee Member',
-                role: 'devotee'
+                full_name: 'Customer Member',
+                role: 'customer'
             };
 
             const role = String(userProfile?.role || '').toLowerCase();
@@ -213,11 +213,11 @@ export default function LoginPage({
         const { fullName, email, password } = result.data;
         setIsLoading(true);
         try {
-            const data = await api.register(email, password, fullName, 'devotee');
+            const data = await api.register(email, password, fullName, 'customer');
             const userProfile = data?.admin || data?.user || api.getCurrentUser() || {
                 email,
                 full_name: fullName,
-                role: 'devotee'
+                role: 'customer'
             };
 
             setActiveUser(userProfile);
@@ -338,7 +338,7 @@ export default function LoginPage({
                                                     : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
                                             }`}>
                                                 {isAdmin ? <Award className="w-3 h-3 text-[#C69722]" /> : <User className="w-3 h-3 text-emerald-700" />}
-                                                <span>Role: {activeUser.role || 'Devotee'}</span>
+                                                <span>Role: {activeUser.role === 'super_admin' || activeUser.role === 'admin' ? 'Master Admin' : activeUser.role === 'editor' ? 'Staff Editor' : 'Customer'}</span>
                                             </span>
                                             <span className="text-[10px] font-semibold text-stone-500">Verified Member</span>
                                         </div>

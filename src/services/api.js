@@ -416,7 +416,7 @@ class ApiService {
         });
     }
 
-    async register(email, password, fullName = 'Devotee Member', role = 'devotee') {
+    async register(email, password, fullName = 'Customer Member', role = 'customer') {
         const cleanEmail = (email || '').trim().toLowerCase();
         const res = await this.request('/auth/register', {
             method: 'POST',

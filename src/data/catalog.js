@@ -7,6 +7,7 @@ export const deityCategories = [
     { id: "ganpati", name: "Ganpati", route: "shop-all", deity: "Ganesha", img: "/images/categories/ganpati@2x.png" },
     { id: "ram", name: "Ram", route: "shop-all", deity: "Ram", img: "/images/categories/ram@2x.png" },
     { id: "durga-shakti", name: "Durga & Shakti", route: "shop-all", deity: "Durga", img: "/images/categories/durga-shakti@2x.png" },
+    { id: "lakshmi", name: "Lakshmi", route: "shop-all", deity: "Lakshmi", img: "/images/products/parvati-lakshmi.png" },
     { id: "murugan", name: "Murugan", route: "shop-all", deity: "Murugan", img: "/images/categories/murugan@2x.png" }
 ];
 
@@ -20,7 +21,7 @@ export const catalog = [
     { id: 6, title: "Sherawali Maa Durga on Lion - 8 Armed Sanctified Marble Idol", price: 1299, oldPrice: 1999, off: "35% off", deity: "Durga", group: "baal-roop", img: "/images/products/durga-sherawali.png" },
 
     // Festive Edit Navratri
-    { id: 7, title: "Maa Lakshmi & Parvati – The Grace of Abundance | 24K Gold Zaree Detailing", price: 1499, oldPrice: 1999, off: "25% OFF", deity: "Durga", group: "navratri", img: "/images/products/parvati-lakshmi.png" },
+    { id: 7, title: "Maa Lakshmi & Parvati – The Grace of Abundance | 24K Gold Zaree Detailing", price: 1499, oldPrice: 1999, off: "25% OFF", deity: "Lakshmi", group: "navratri", img: "/images/products/parvati-lakshmi.png" },
     { id: 8, title: "Maa Durga – The Spirit of Celebration | Hand-Finished Lion-Riding Idol", price: 1499, oldPrice: 1999, off: "25% OFF", deity: "Durga", group: "navratri", img: "/images/products/durga-sherawali.png" },
     { id: 9, title: "Bhagwan Dattatreya (Trimurti Brahma, Vishnu & Shiva) with Kamadhenu Cow", price: 1499, oldPrice: 1999, off: "25% OFF", deity: "Murugan", group: "navratri", img: "/images/products/dattatreya-kamadhenu.png" },
     { id: 10, title: "Handcrafted Brass Temple Shikhar Kalash – Golden Temple Finial", price: 1499, oldPrice: 1999, off: "25% OFF", deity: "Shiva", group: "navratri", img: "/images/products/brass-shikhar-kalash.png" },

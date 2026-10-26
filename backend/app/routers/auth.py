@@ -287,7 +287,7 @@ def user_register(payload: UserRegisterRequest, request: Request, response: Resp
     if len(payload.password) < 8:
         raise HTTPException(status_code=400, detail="Password must be at least 8 characters long.")
 
-    full_name = (payload.full_name or "Devotee Member").strip()
+    full_name = (payload.full_name or "Customer Member").strip()
 
     # 1. Check if email already exists in Supabase
     if is_supabase_connected():
@@ -313,9 +313,9 @@ def user_register(payload: UserRegisterRequest, request: Request, response: Resp
     import uuid
     user_uuid = str(uuid.uuid4())
 
-    user_role = (getattr(payload, "role", None) or "devotee").strip().lower()
+    user_role = (getattr(payload, "role", None) or "customer").strip().lower()
     if user_role not in ["devotee", "customer", "editor", "admin", "super_admin"]:
-        user_role = "devotee"
+        user_role = "customer"
 
     new_user = {
         "id": user_uuid,

@@ -12,6 +12,7 @@ import brandLogo from '../assets/logo.png';
 export default function UserProfilePage({
     currentUser,
     wishlist = [],
+    onToggleWishlist,
     allProducts = [],
     onReturnToStore,
     onNavigateToAdmin,
@@ -22,6 +23,20 @@ export default function UserProfilePage({
     onLogout,
     onRedirectToLogin
 }) {
+    const getRoleDisplay = (role) => {
+        const r = String(role || '').toLowerCase();
+        if (r === 'super_admin' || r === 'admin') return 'Master Admin';
+        if (r === 'editor' || r === 'staff') return 'Staff Editor';
+        return 'Customer';
+    };
+
+    const getAccountIdPrefix = (role) => {
+        const r = String(role || '').toLowerCase();
+        if (r === 'super_admin' || r === 'admin') return 'ADM';
+        if (r === 'editor' || r === 'staff') return 'EDT';
+        return 'CUST';
+    };
+
     const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'profile' | 'address' | 'orders' | 'wishlist' | 'security'
     const [orders, setOrders] = useState([]);
     const [isLoadingOrders, setIsLoadingOrders] = useState(false);
@@ -147,10 +162,13 @@ export default function UserProfilePage({
         }
     };
 
-    // Wishlist items resolution from ID list
-    const wishlistProducts = wishlist.map(item => {
+    // Wishlist items resolution from ID list (robust against string/number IDs & legacy IDs)
+    const wishlistProducts = (wishlist || []).map(item => {
         if (typeof item === 'object' && item?.id) return item;
-        return allProducts.find(p => String(p.id) === String(item) || String(p.legacy_id) === String(item)) || null;
+        return allProducts.find(p => 
+            String(p.id) === String(item) || 
+            (p.legacy_id && String(p.legacy_id) === String(item))
+        ) || null;
     }).filter(Boolean);
 
     // Color mapper for order status badge
@@ -280,10 +298,10 @@ export default function UserProfilePage({
                                 </p>
                                 <div className="flex items-center gap-2 mt-2">
                                     <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-md bg-white/10 text-[#F7C600] border border-white/15">
-                                        Role: {currentUser.role || 'devotee'}
+                                        Role: {getRoleDisplay(currentUser.role)}
                                     </span>
                                     <span className="text-[11px] text-stone-400">
-                                        Sacred Account ID: <code className="font-mono text-stone-300">DEV-{(currentUser.id || '0001').slice(0, 8)}</code>
+                                        Account ID: <code className="font-mono text-stone-300">{getAccountIdPrefix(currentUser.role)}-{(currentUser.id || '0001').slice(0, 8)}</code>
                                     </span>
                                 </div>
                             </div>
@@ -302,7 +320,7 @@ export default function UserProfilePage({
 
                             <div className="bg-white/10 backdrop-blur-xs p-3 rounded-2xl border border-white/10 text-center min-w-[85px]">
                                 <div className="text-lg sm:text-xl font-serif font-black text-rose-400">
-                                    {wishlist.length}
+                                    {wishlistProducts.length}
                                 </div>
                                 <div className="text-[10px] uppercase tracking-wider text-stone-300 font-bold">
                                     Wishlist
@@ -406,9 +424,9 @@ export default function UserProfilePage({
                     >
                         <Heart className="w-3.5 h-3.5 text-rose-500" />
                         <span>Saved Wishlist</span>
-                        {wishlist.length > 0 && (
+                        {wishlistProducts.length > 0 && (
                             <span className="bg-rose-500 text-white text-[10px] font-black px-1.5 py-0.2 rounded-full">
-                                {wishlist.length}
+                                {wishlistProducts.length}
                             </span>
                         )}
                     </button>
@@ -436,7 +454,7 @@ export default function UserProfilePage({
                                 <div className="flex items-center justify-between">
                                     <h2 className="font-serif text-lg font-bold text-[#161616] flex items-center gap-2">
                                         <Sparkles className="w-4 h-4 text-[#C69722]" />
-                                        <span>Devotee Account Status</span>
+                                        <span>Customer Account Status</span>
                                     </h2>
                                     <span className="text-xs text-stone-500 font-mono">
                                         Pan-India White-Glove Handover
@@ -600,7 +618,7 @@ export default function UserProfilePage({
                     <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#E6D6B8] shadow-sm max-w-2xl space-y-6">
                         <div>
                             <h2 className="font-serif text-xl font-bold text-[#161616]">
-                                Personal Information & Devotee Details
+                                Personal Information & Customer Details
                             </h2>
                             <p className="text-xs text-stone-500 mt-1">
                                 Update your contact info for order communication, invoices, and consecration certificates.
@@ -610,7 +628,7 @@ export default function UserProfilePage({
                         <form onSubmit={handleSaveProfile} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1.5">
-                                    Full Devotee Name
+                                    Full Name
                                 </label>
                                 <div className="relative">
                                     <input
@@ -974,6 +992,19 @@ export default function UserProfilePage({
                                             >
                                                 <Eye className="w-3.5 h-3.5" />
                                             </button>
+                                            {onToggleWishlist && (
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onToggleWishlist(prod.id, e);
+                                                    }}
+                                                    className="py-2 px-2.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-[11px] font-bold transition cursor-pointer"
+                                                    title="Remove from Wishlist"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
