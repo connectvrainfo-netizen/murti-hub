@@ -27,6 +27,7 @@ class SiteSettingsBase(BaseModel):
     collection_discount_text: Optional[str] = "Save 42%"
     collection_tag: Optional[str] = "✦ Hand-Carved Makrana Marble"
     collection_image_url: Optional[str] = "/images/products/ram-darbar.png"
+    collection_images: Optional[list[str]] = Field(default_factory=lambda: ["/images/products/ram-darbar.png"])
 
 class SiteSettingsUpdate(BaseModel):
     whatsapp_number: Optional[str] = None
@@ -45,6 +46,7 @@ class SiteSettingsUpdate(BaseModel):
     collection_discount_text: Optional[str] = None
     collection_tag: Optional[str] = None
     collection_image_url: Optional[str] = None
+    collection_images: Optional[list[str]] = None
 
 class SiteSettingsOut(SiteSettingsBase):
     id: int = 1

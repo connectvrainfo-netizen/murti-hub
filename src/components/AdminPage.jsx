@@ -5,7 +5,7 @@ import {
     ExternalLink, ArrowLeft, CheckCircle2, AlertCircle, Lock,
     LogOut, Database, Layers, MessageSquare, CheckSquare, Search,
     Upload, Loader2, Eye, EyeOff, Filter, Send, Link as LinkIcon,
-    AlertTriangle, X, CheckCheck, ChevronRight, ChevronDown, Sliders,
+    AlertTriangle, X, CheckCheck, ChevronRight, ChevronLeft, ChevronDown, Sliders,
     User, Info, ArrowUpRight, Key, ShieldCheck, Layout,
     Users, UserPlus, UserCheck, UserX, ShieldAlert, Mail, Calendar, KeyRound
 } from 'lucide-react';
@@ -314,7 +314,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             collection_old_price: '2,499',
             collection_discount_text: '40% OFF',
             collection_tag: 'CONSECRATED',
-            collection_image_url: '/images/products/ram-darbar.png'
+            collection_image_url: '/images/products/ram-darbar.png',
+            collection_images: ['/images/products/ram-darbar.png']
         };
     });
     const [categories, setCategories] = useState(initialCategories);
@@ -379,6 +380,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [uploadingCatBanner, setUploadingCatBanner] = useState(false);
     const [uploadingFestBanner, setUploadingFestBanner] = useState(false);
     const [uploadingCollectionBanner, setUploadingCollectionBanner] = useState(false);
+    const [heroCustomUrlInput, setHeroCustomUrlInput] = useState('');
+    const [activeHeroPreviewImage, setActiveHeroPreviewImage] = useState(null);
 
     // Disable Lenis smooth scrolling while inside Admin Panel so standard native scrolling operates smoothly
     useEffect(() => {
@@ -2971,58 +2974,96 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     {/* ========================================================================= */}
                     {/* TAB: STOREFRONT HERO SECTION (FEATURED SACRED COLLECTION SHOWCASE)       */}
                     {/* ========================================================================= */}
-                    {activeTab === 'hero' && (
-                        <div className="space-y-6 animate-in fade-in duration-200">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/60 pb-4">
-                                <div>
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="w-10 h-10 rounded-2xl bg-[#FAF2DE] border border-[#DFC48D] flex items-center justify-center text-[#8E5B00] shadow-2xs">
-                                            <Layout className="w-5 h-5 stroke-[2]" />
-                                        </div>
-                                        <div>
-                                            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
-                                                Storefront Hero Section
-                                            </h2>
-                                            <p className="text-xs text-stone-500 mt-0.5">
-                                                Manage the dynamic headline, copy, pricing badges, and artwork for the main Featured Sacred Collection showcase on your homepage.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => window.open('/', '_blank')}
-                                        className="px-4 py-2 rounded-xl bg-white text-stone-800 hover:bg-stone-100 border border-stone-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                                    >
-                                        <ExternalLink className="w-3.5 h-3.5 text-stone-500" />
-                                        <span>View Storefront Live</span>
-                                    </button>
-                                </div>
-                            </div>
+                    {activeTab === 'hero' && (() => {
+                        const heroImagesList = (Array.isArray(settings.collection_images) && settings.collection_images.length > 0)
+                            ? settings.collection_images
+                            : (settings.collection_image_url ? [settings.collection_image_url] : ['/images/products/ram-darbar.png']);
+                        const currentPreviewImg = activeHeroPreviewImage && heroImagesList.includes(activeHeroPreviewImage)
+                            ? activeHeroPreviewImage
+                            : (settings.collection_image_url || heroImagesList[0] || '/images/products/ram-darbar.png');
 
-                            <form onSubmit={handleSaveSettings} className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-2xs space-y-7">
-                                {/* Live Customer Preview Card */}
-                                <div className="rounded-3xl border border-[#DFC48D]/70 bg-gradient-to-br from-[#FAF8F5] via-[#FFFDF9] to-[#F5EEDD] p-5 sm:p-7 shadow-xs space-y-4">
-                                    <div className="flex items-center justify-between border-b border-[#DFC48D]/40 pb-3">
-                                        <div className="flex items-center gap-2 text-xs font-bold text-[#8E5B00] uppercase tracking-wider">
-                                            <Sparkles className="w-4 h-4 text-[#C69722]" />
-                                            <span>Live Customer Preview</span>
+                        return (
+                            <div className="space-y-6 animate-in fade-in duration-200">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/60 pb-4">
+                                    <div>
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="w-10 h-10 rounded-2xl bg-[#FAF2DE] border border-[#DFC48D] flex items-center justify-center text-[#8E5B00] shadow-2xs">
+                                                <Layout className="w-5 h-5 stroke-[2]" />
+                                            </div>
+                                            <div>
+                                                <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
+                                                    Storefront Hero Section
+                                                </h2>
+                                                <p className="text-xs text-stone-500 mt-0.5">
+                                                    Manage the dynamic headline, copy, pricing badges, and multiple showcase images for the main Hero Collection on your storefront.
+                                                </p>
+                                            </div>
                                         </div>
-                                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                            Active on Homepage
-                                        </span>
                                     </div>
-                                    
-                                    <div className="flex flex-col md:flex-row items-center gap-6 pt-1">
-                                        <div className="w-36 h-36 md:w-44 md:h-44 rounded-2xl border border-[#DFC48D]/40 bg-white p-2.5 flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden">
-                                            <SafeImage
-                                                src={api.getImageUrl(settings.collection_image_url || '/images/products/ram-darbar.png')}
-                                                alt="Featured Sacred Collection Artwork"
-                                                className="w-full h-full object-contain"
-                                            />
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => window.open('/', '_blank')}
+                                            className="px-4 py-2 rounded-xl bg-white text-stone-800 hover:bg-stone-100 border border-stone-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5 text-stone-500" />
+                                            <span>View Storefront Live</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <form onSubmit={handleSaveSettings} className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-2xs space-y-7">
+                                    {/* Live Customer Preview Card */}
+                                    <div className="rounded-3xl border border-[#DFC48D]/70 bg-gradient-to-br from-[#FAF8F5] via-[#FFFDF9] to-[#F5EEDD] p-5 sm:p-7 shadow-xs space-y-4">
+                                        <div className="flex items-center justify-between border-b border-[#DFC48D]/40 pb-3">
+                                            <div className="flex items-center gap-2 text-xs font-bold text-[#8E5B00] uppercase tracking-wider">
+                                                <Sparkles className="w-4 h-4 text-[#C69722]" />
+                                                <span>Live Customer Preview</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-bold text-stone-600 bg-white/80 border border-stone-200 px-2 py-0.5 rounded-full">
+                                                    {heroImagesList.length} {heroImagesList.length === 1 ? 'Showcase Image' : 'Showcase Images'}
+                                                </span>
+                                                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                                    Active on Homepage
+                                                </span>
+                                            </div>
                                         </div>
+                                        
+                                        <div className="flex flex-col md:flex-row items-center gap-6 pt-1">
+                                            <div className="flex flex-col items-center gap-2 flex-shrink-0">
+                                                <div className="w-36 h-36 md:w-44 md:h-44 rounded-2xl border border-[#DFC48D]/40 bg-white p-2.5 flex items-center justify-center shadow-sm overflow-hidden relative">
+                                                    <SafeImage
+                                                        src={api.getImageUrl(currentPreviewImg)}
+                                                        alt="Featured Sacred Collection Artwork"
+                                                        className="w-full h-full object-contain"
+                                                    />
+                                                </div>
+                                                {/* Preview Thumbnail Row if multiple images */}
+                                                {heroImagesList.length > 1 && (
+                                                    <div className="flex items-center gap-1.5 max-w-[220px] overflow-x-auto no-scrollbar py-0.5">
+                                                        {heroImagesList.map((thumbUrl, tIdx) => {
+                                                            const isSelected = (currentPreviewImg === thumbUrl);
+                                                            return (
+                                                                <button
+                                                                    key={`prev-thumb-${tIdx}`}
+                                                                    type="button"
+                                                                    onClick={() => setActiveHeroPreviewImage(thumbUrl)}
+                                                                    className={`w-8 h-8 rounded-lg border-2 p-0.5 transition-all overflow-hidden cursor-pointer flex-shrink-0 ${isSelected ? 'border-[#C69722] bg-white scale-105 shadow-2xs' : 'border-stone-200/80 bg-white/70 hover:border-stone-400 opacity-70 hover:opacity-100'}`}
+                                                                    title={`Preview image #${tIdx + 1}`}
+                                                                >
+                                                                    <SafeImage
+                                                                        src={api.getImageUrl(thumbUrl)}
+                                                                        alt={`Preview thumb ${tIdx + 1}`}
+                                                                        className="w-full h-full object-contain"
+                                                                    />
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
 
                                         <div className="flex-1 space-y-2 text-left w-full min-w-0">
                                             <div className="inline-block px-3 py-1 rounded-full bg-[#161616] text-[#F7C600] text-[10px] font-extrabold uppercase tracking-widest shadow-2xs">
@@ -3162,52 +3203,256 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         </div>
                                     </div>
 
-                                    {/* Showcase Image Upload */}
-                                    <div className="sm:col-span-2 space-y-2 pt-3 border-t border-stone-100">
-                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
-                                            Hero Showcase Image
-                                        </label>
-                                        <div className="flex flex-col sm:flex-row items-center gap-4">
-                                            {settings.collection_image_url && (
-                                                <div className="w-28 h-28 rounded-2xl border border-stone-200 bg-white p-2 flex-shrink-0 flex items-center justify-center shadow-xs">
-                                                    <SafeImage
-                                                        src={api.getImageUrl(settings.collection_image_url)}
-                                                        alt="Hero Showcase Visual"
-                                                        className="w-full h-full object-contain"
-                                                    />
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                                Collection Tag (Bottom Badge)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.collection_tag || ''}
+                                                onChange={(e) => setSettings({ ...settings, collection_tag: e.target.value })}
+                                                placeholder="✦ Hand-Carved Makrana Marble"
+                                                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-bold text-stone-800 focus:bg-white focus:outline-none focus:border-[#C69722]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Multi-Image Hero Showcase Gallery Manager */}
+                                    <div className="space-y-4 pt-5 border-t border-stone-100">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                                        Hero Section Images ({heroImagesList.length})
+                                                    </label>
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40">
+                                                        Multi-Image Enabled
+                                                    </span>
                                                 </div>
-                                            )}
-                                            <div className="flex-1 w-full">
-                                                <ImageDropzone
-                                                    label="Upload Hero Collection Showcase Image"
-                                                    sublabel="Drag & drop new banner image or click to browse (auto-optimized to WebP)"
-                                                    isUploading={uploadingCollectionBanner}
-                                                    onUpload={async (file) => {
-                                                        setUploadingCollectionBanner(true);
+                                                <span className="text-[11px] text-stone-500">
+                                                    Add and manage multiple showcase images as per your need. Shoppers can switch between all perspectives directly on the homepage.
+                                                </span>
+                                            </div>
+                                            <span className="text-xs font-mono text-stone-400">
+                                                ★ Image #1 is Primary Hero Visual
+                                            </span>
+                                        </div>
+
+                                        {/* Gallery Cards Grid */}
+                                        {heroImagesList.length > 0 && (
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 pt-1">
+                                                {heroImagesList.map((imgUrl, idx) => {
+                                                    const isPrimary = (settings.collection_image_url === imgUrl) || (idx === 0 && !settings.collection_image_url);
+                                                    const isPreviewing = (currentPreviewImg === imgUrl);
+                                                    return (
+                                                        <div
+                                                            key={`${imgUrl}-${idx}`}
+                                                            className={`group relative rounded-2xl border-2 transition-all p-2.5 bg-white flex flex-col items-center justify-between gap-2 shadow-2xs hover:shadow-md ${isPreviewing ? 'border-[#C69722] ring-2 ring-[#C69722]/20' : 'border-stone-200 hover:border-stone-300'}`}
+                                                        >
+                                                            {/* Primary / Index Badge */}
+                                                            <div className="w-full flex items-center justify-between">
+                                                                <span className="text-[10px] font-mono font-bold text-stone-400 px-1.5 py-0.5 rounded bg-stone-100">
+                                                                    #{idx + 1}
+                                                                </span>
+                                                                {isPrimary ? (
+                                                                    <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider bg-[#F7C600] text-[#161616] px-1.5 py-0.5 rounded-md shadow-2xs">
+                                                                        <Star className="w-2.5 h-2.5 fill-[#161616]" />
+                                                                        Primary
+                                                                    </span>
+                                                                ) : (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setSettings(prev => {
+                                                                                const curr = (Array.isArray(prev.collection_images) && prev.collection_images.length > 0)
+                                                                                    ? [...prev.collection_images]
+                                                                                    : (prev.collection_image_url ? [prev.collection_image_url] : []);
+                                                                                const selected = curr[idx];
+                                                                                const remaining = curr.filter((_, i) => i !== idx);
+                                                                                const reordered = [selected, ...remaining];
+                                                                                return { ...prev, collection_images: reordered, collection_image_url: selected };
+                                                                            });
+                                                                            setActiveHeroPreviewImage(imgUrl);
+                                                                        }}
+                                                                        className="text-[9.5px] font-bold text-stone-500 hover:text-[#8E5B00] px-1.5 py-0.5 rounded hover:bg-[#FAF2DE] transition cursor-pointer"
+                                                                        title="Set as primary hero image"
+                                                                    >
+                                                                        Set Primary
+                                                                    </button>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Image Preview Clickable */}
+                                                            <div
+                                                                onClick={() => setActiveHeroPreviewImage(imgUrl)}
+                                                                className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-stone-50 flex items-center justify-center p-1.5 cursor-pointer overflow-hidden"
+                                                                title="Click to preview on hero card above"
+                                                            >
+                                                                <SafeImage
+                                                                    src={api.getImageUrl(imgUrl)}
+                                                                    alt={`Hero image ${idx + 1}`}
+                                                                    className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
+                                                                />
+                                                            </div>
+
+                                                            {/* Quick Action Buttons */}
+                                                            <div className="w-full flex items-center justify-between border-t border-stone-100 pt-1.5 text-stone-500 text-xs">
+                                                                <div className="flex items-center gap-1">
+                                                                    {idx > 0 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setSettings(prev => {
+                                                                                    const curr = [...(prev.collection_images || heroImagesList)];
+                                                                                    const temp = curr[idx];
+                                                                                    curr[idx] = curr[idx - 1];
+                                                                                    curr[idx - 1] = temp;
+                                                                                    return { ...prev, collection_images: curr, collection_image_url: curr[0] };
+                                                                                });
+                                                                            }}
+                                                                            className="p-1 rounded-md hover:bg-stone-100 hover:text-stone-800 transition cursor-pointer"
+                                                                            title="Move left"
+                                                                        >
+                                                                            <ChevronLeft className="w-3.5 h-3.5 stroke-[2.5]" />
+                                                                        </button>
+                                                                    )}
+                                                                    {idx < heroImagesList.length - 1 && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setSettings(prev => {
+                                                                                    const curr = [...(prev.collection_images || heroImagesList)];
+                                                                                    const temp = curr[idx];
+                                                                                    curr[idx] = curr[idx + 1];
+                                                                                    curr[idx + 1] = temp;
+                                                                                    return { ...prev, collection_images: curr, collection_image_url: curr[0] };
+                                                                                });
+                                                                            }}
+                                                                            className="p-1 rounded-md hover:bg-stone-100 hover:text-stone-800 transition cursor-pointer"
+                                                                            title="Move right"
+                                                                        >
+                                                                            <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setSettings(prev => {
+                                                                            const curr = (Array.isArray(prev.collection_images) && prev.collection_images.length > 0)
+                                                                                ? [...prev.collection_images]
+                                                                                : (prev.collection_image_url ? [prev.collection_image_url] : []);
+                                                                            const filtered = curr.filter((_, i) => i !== idx);
+                                                                            const newPrimary = filtered[0] || '';
+                                                                            return { ...prev, collection_images: filtered, collection_image_url: newPrimary };
+                                                                        });
+                                                                        if (activeHeroPreviewImage === imgUrl) {
+                                                                            setActiveHeroPreviewImage(null);
+                                                                        }
+                                                                    }}
+                                                                    className="p-1 rounded-md text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                                                    title="Remove image from hero showcase"
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5 stroke-[2]" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {/* Upload & Add Controls */}
+                                        <div className="space-y-3 pt-2">
+                                            <ImageDropzone
+                                                multiple={true}
+                                                label="+ Drop or Browse More Hero Images (Multiple Supported)"
+                                                sublabel="Drag & drop new angles or browse files (auto-optimized to WebP format)"
+                                                isUploading={uploadingCollectionBanner}
+                                                onUpload={async (file) => {
+                                                    setUploadingCollectionBanner(true);
+                                                    try {
                                                         const url = await handleFileUpload(file, 'banners');
                                                         if (url) {
-                                                            setSettings(prev => ({ ...prev, collection_image_url: url }));
+                                                            setSettings(prev => {
+                                                                const currentList = (Array.isArray(prev.collection_images) && prev.collection_images.length > 0)
+                                                                    ? [...prev.collection_images]
+                                                                    : (prev.collection_image_url ? [prev.collection_image_url] : []);
+                                                                if (!currentList.includes(url)) {
+                                                                    currentList.push(url);
+                                                                }
+                                                                return {
+                                                                    ...prev,
+                                                                    collection_images: currentList,
+                                                                    collection_image_url: prev.collection_image_url || currentList[0] || url
+                                                                };
+                                                            });
+                                                            setActiveHeroPreviewImage(url);
                                                         }
+                                                    } finally {
                                                         setUploadingCollectionBanner(false);
+                                                    }
+                                                }}
+                                            />
+
+                                            {/* Add via direct Image URL */}
+                                            <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+                                                <div className="relative flex-1 w-full">
+                                                    <input
+                                                        type="text"
+                                                        value={heroCustomUrlInput}
+                                                        onChange={(e) => setHeroCustomUrlInput(e.target.value)}
+                                                        placeholder="Or paste direct image URL (e.g. /images/products/ram-darbar.png or https://...)"
+                                                        className="w-full px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50/50 text-xs text-stone-800 placeholder-stone-400 focus:bg-white focus:outline-none focus:border-[#C69722]"
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    disabled={!heroCustomUrlInput.trim()}
+                                                    onClick={() => {
+                                                        const url = heroCustomUrlInput.trim();
+                                                        if (url) {
+                                                            setSettings(prev => {
+                                                                const currentList = (Array.isArray(prev.collection_images) && prev.collection_images.length > 0)
+                                                                    ? [...prev.collection_images]
+                                                                    : (prev.collection_image_url ? [prev.collection_image_url] : []);
+                                                                if (!currentList.includes(url)) {
+                                                                    currentList.push(url);
+                                                                }
+                                                                return {
+                                                                    ...prev,
+                                                                    collection_images: currentList,
+                                                                    collection_image_url: prev.collection_image_url || currentList[0] || url
+                                                                };
+                                                            });
+                                                            setActiveHeroPreviewImage(url);
+                                                            setHeroCustomUrlInput('');
+                                                            showToast('Hero image URL added');
+                                                        }
                                                     }}
-                                                />
+                                                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-black disabled:bg-stone-200 text-white disabled:text-stone-400 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer disabled:cursor-not-allowed shadow-2xs"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                                                    <span>Add Image URL</span>
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="flex items-center justify-end pt-3 border-t border-stone-100">
-                                    <button
-                                        type="submit"
-                                        className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 flex items-center gap-2 active:scale-95 cursor-pointer"
-                                    >
-                                        <Check className="w-4 h-4 stroke-[2.5]" />
-                                        <span>Save Hero Section Changes</span>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    )}
+                                    <div className="flex items-center justify-end pt-3 border-t border-stone-100">
+                                        <button
+                                            type="submit"
+                                            className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 flex items-center gap-2 active:scale-95 cursor-pointer"
+                                        >
+                                            <Check className="w-4 h-4 stroke-[2.5]" />
+                                            <span>Save Hero Section Changes</span>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        );
+                    })()}
 
                     {/* ========================================================================= */}
                     {/* TAB 7: WHATSAPP CONCIERGE & SITE SETTINGS (With Test WhatsApp Link) */}

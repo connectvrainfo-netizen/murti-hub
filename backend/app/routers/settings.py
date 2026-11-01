@@ -47,15 +47,29 @@ def update_site_settings(payload: SiteSettingsUpdate, admin: dict = Depends(get_
             update_data["whatsapp_number"] = f"+91 {digits[:5]} {digits[5:]}"
         elif len(digits) == 12 and digits.startswith("91"):
             update_data["whatsapp_number"] = f"+91 {digits[2:7]} {digits[7:]}"
+
+    # Keep collection_image_url synced with collection_images[0]
+    if "collection_images" in update_data and isinstance(update_data["collection_images"], list) and len(update_data["collection_images"]) > 0:
+        if not update_data.get("collection_image_url"):
+            update_data["collection_image_url"] = update_data["collection_images"][0]
     
     if is_supabase_connected():
         try:
             client = get_supabase()
             res = client.table("site_settings").update(update_data).eq("id", 1).execute()
             if res.data and len(res.data) > 0:
+                for k, v in update_data.items():
+                    local_store.site_settings[k] = v
+                local_store.save()
                 return ApiResponse(success=True, message="Site settings updated successfully in Supabase", data=res.data[0])
         except Exception as e:
-            logger.warning(f"[Supabase Warning: update_site_settings failed ({e}). Updating local in-memory store]")
+            logger.warning(f"[Supabase Warning: update_site_settings failed ({e}). Attempting fallback without collection_images]")
+            try:
+                client = get_supabase()
+                sub_payload = {k: v for k, v in update_data.items() if k != "collection_images"}
+                client.table("site_settings").update(sub_payload).eq("id", 1).execute()
+            except Exception:
+                pass
             
     # Update local store
     for k, v in update_data.items():

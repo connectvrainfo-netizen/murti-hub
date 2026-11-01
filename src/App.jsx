@@ -537,6 +537,7 @@ export default function App() {
     const [isVideoPlaying, setIsVideoPlaying] = useState(true);
     const [isVideoMuted, setIsVideoMuted] = useState(true);
     const [activeHeroSlide, setActiveHeroSlide] = useState(1); // Default to Showroom Walkthrough Video slide
+    const [activeHeroCollectionImageIdx, setActiveHeroCollectionImageIdx] = useState(0);
 
     // Auto-play hero showroom video when active
     useEffect(() => {
@@ -1741,27 +1742,89 @@ export default function App() {
                                 <div className="max-w-[1440px] mx-auto h-full px-4 sm:px-12 lg:px-16 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 sm:gap-10 py-3 sm:py-10">
                                     
                                     {/* Product Visual on Left / Top */}
-                                    <div className="w-full sm:w-1/2 flex items-center justify-center relative order-1 sm:order-1 pt-1 sm:pt-0">
-                                        <div className="relative w-40 h-40 min-[360px]:w-48 min-[360px]:h-48 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
-                                            <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#F7C600]/30 via-[#E8DEC8]/50 to-transparent blur-2xl transform scale-100"></div>
-                                            <SafeImage
-                                                src={api.getImageUrl(siteSettings?.collection_image_url || "/images/products/ram-darbar.png")}
-                                                fallbackSrc="/images/products/ram-darbar.png"
-                                                alt={`Handcrafted White Marble ${siteSettings?.collection_title || 'Ram Darbar'} at Amol Marble Murti Bhandar Shegaon`}
-                                                width="384"
-                                                height="384"
-                                                fetchpriority="high"
-                                                className="relative max-h-full max-w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:scale-105 transition duration-500 cursor-pointer"
-                                                onClick={() => {
-                                                    const ramItem = liveProducts.find(i => i.id === 1 || i.legacy_id === 1 || String(i.id).includes('1')) || liveProducts[0];
-                                                    if (ramItem) openProductPage(ramItem);
-                                                }}
-                                            />
-                                            <span className="absolute -bottom-1 sm:bottom-2 right-1 sm:right-4 bg-white/95 backdrop-blur-xs text-[#8E5B00] border border-[#E6D6B8] text-[9.5px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-xs">
-                                                {siteSettings?.collection_tag || '✦ Hand-Carved Makrana Marble'}
-                                            </span>
-                                        </div>
-                                    </div>
+                                    {(() => {
+                                        const heroCollectionImages = (Array.isArray(siteSettings?.collection_images) && siteSettings.collection_images.length > 0)
+                                            ? siteSettings.collection_images
+                                            : [siteSettings?.collection_image_url || "/images/products/ram-darbar.png"];
+                                        const activeHeroImg = heroCollectionImages[activeHeroCollectionImageIdx] || heroCollectionImages[0] || siteSettings?.collection_image_url || "/images/products/ram-darbar.png";
+
+                                        return (
+                                            <div className="w-full sm:w-1/2 flex flex-col items-center justify-center relative order-1 sm:order-1 pt-1 sm:pt-0">
+                                                <div className="relative w-40 h-40 min-[360px]:w-48 min-[360px]:h-48 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center group/heroimg">
+                                                    <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#F7C600]/30 via-[#E8DEC8]/50 to-transparent blur-2xl transform scale-100 pointer-events-none"></div>
+                                                    <SafeImage
+                                                        src={api.getImageUrl(activeHeroImg)}
+                                                        fallbackSrc="/images/products/ram-darbar.png"
+                                                        alt={`Handcrafted White Marble ${siteSettings?.collection_title || 'Ram Darbar'} at Amol Marble Murti Bhandar Shegaon`}
+                                                        width="384"
+                                                        height="384"
+                                                        fetchpriority="high"
+                                                        className="relative max-h-full max-w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.18)] hover:scale-105 transition duration-500 cursor-pointer"
+                                                        onClick={() => {
+                                                            const ramItem = liveProducts.find(i => i.id === 1 || i.legacy_id === 1 || String(i.id).includes('1')) || liveProducts[0];
+                                                            if (ramItem) openProductPage(ramItem);
+                                                        }}
+                                                    />
+                                                    <span className="absolute -bottom-1 sm:bottom-2 right-1 sm:right-4 bg-white/95 backdrop-blur-xs text-[#8E5B00] border border-[#E6D6B8] text-[9.5px] sm:text-xs font-bold px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full shadow-xs">
+                                                        {siteSettings?.collection_tag || '✦ Hand-Carved Makrana Marble'}
+                                                    </span>
+
+                                                    {/* Subtle Prev/Next Navigation for Multiple Images */}
+                                                    {heroCollectionImages.length > 1 && (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setActiveHeroCollectionImageIdx(prev => (prev === 0 ? heroCollectionImages.length - 1 : prev - 1));
+                                                                }}
+                                                                className="absolute left-0 sm:-left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-md border border-[#E6D6B8] flex items-center justify-center opacity-85 sm:opacity-0 sm:group-hover/heroimg:opacity-100 transition cursor-pointer z-10"
+                                                                aria-label="Previous Hero Perspective"
+                                                            >
+                                                                <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setActiveHeroCollectionImageIdx(prev => (prev === heroCollectionImages.length - 1 ? 0 : prev + 1));
+                                                                }}
+                                                                className="absolute right-0 sm:-right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-md border border-[#E6D6B8] flex items-center justify-center opacity-85 sm:opacity-0 sm:group-hover/heroimg:opacity-100 transition cursor-pointer z-10"
+                                                                aria-label="Next Hero Perspective"
+                                                            >
+                                                                <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+
+                                                {/* Hero Perspective Thumbnails */}
+                                                {heroCollectionImages.length > 1 && (
+                                                    <div className="flex items-center justify-center gap-1.5 pt-2 max-w-full overflow-x-auto no-scrollbar py-0.5">
+                                                        {heroCollectionImages.map((thumbUrl, tIdx) => {
+                                                            const isSelected = (activeHeroCollectionImageIdx === tIdx);
+                                                            return (
+                                                                <button
+                                                                    key={`hero-col-thumb-${tIdx}`}
+                                                                    type="button"
+                                                                    onClick={() => setActiveHeroCollectionImageIdx(tIdx)}
+                                                                    className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl border-2 p-0.5 transition-all overflow-hidden cursor-pointer flex-shrink-0 ${isSelected ? 'border-[#8E5B00] ring-2 ring-[#F7C600]/40 bg-white scale-105 shadow-2xs' : 'border-[#E6D6B8] bg-white/70 hover:border-stone-400 opacity-70 hover:opacity-100'}`}
+                                                                    aria-label={`Show hero perspective ${tIdx + 1}`}
+                                                                    title={`Perspective ${tIdx + 1}`}
+                                                                >
+                                                                    <SafeImage
+                                                                        src={api.getImageUrl(thumbUrl)}
+                                                                        alt={`Perspective ${tIdx + 1}`}
+                                                                        className="w-full h-full object-contain"
+                                                                    />
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
 
                                     {/* Product Details, Price & CTA on Right / Bottom */}
                                     <div className="w-full sm:w-1/2 text-center sm:text-left space-y-1.5 sm:space-y-3.5 order-2 sm:order-2 pb-6 sm:pb-0">

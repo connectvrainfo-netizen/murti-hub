@@ -17,7 +17,10 @@
     "collection_old_price": "₹65,000",
     "collection_discount_text": "30% CONSECRATION DISCOUNT",
     "collection_tag": "LIMITED EDITION 2026",
-    "collection_image_url": "/images/products/ram-darbar.png"
+    "collection_image_url": "/images/products/ram-darbar.png",
+    "collection_images": [
+      "/images/products/ram-darbar.png"
+    ]
   },
   "master_sizes": [
     {
