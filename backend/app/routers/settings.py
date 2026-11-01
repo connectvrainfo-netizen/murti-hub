@@ -37,6 +37,17 @@ def update_site_settings(payload: SiteSettingsUpdate, admin: dict = Depends(get_
     update_data = {k: v for k, v in payload.dict().items() if v is not None}
     update_data["updated_at"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     
+    if "whatsapp_number" in update_data and update_data["whatsapp_number"]:
+        import re
+        raw = str(update_data["whatsapp_number"])
+        digits = re.sub(r"[^\d]", "", raw)
+        if digits.startswith("0") and len(digits) == 11:
+            digits = digits[1:]
+        if len(digits) == 10:
+            update_data["whatsapp_number"] = f"+91 {digits[:5]} {digits[5:]}"
+        elif len(digits) == 12 and digits.startswith("91"):
+            update_data["whatsapp_number"] = f"+91 {digits[2:7]} {digits[7:]}"
+    
     if is_supabase_connected():
         try:
             client = get_supabase()

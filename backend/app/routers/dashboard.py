@@ -32,7 +32,7 @@ def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
             if len(reviews) == 0:
                 reviews = local_store.reviews
 
-            wa_num = "+919876543210"
+            wa_num = "+91 70206 76423"
             rat_mode = "enabled"
             if settings_res.data and len(settings_res.data) > 0:
                 wa_num = settings_res.data[0].get("whatsapp_number", wa_num)
@@ -87,7 +87,7 @@ def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
             pending_reviews=len([r for r in local_store.reviews if not r.get("is_approved")]),
             active_festival_title=active_fest["title"] if active_fest else None,
             festival_is_active=bool(active_fest),
-            whatsapp_number=local_store.site_settings.get("whatsapp_number", "+919876543210"),
+            whatsapp_number=local_store.site_settings.get("whatsapp_number", "+91 70206 76423"),
             global_rating_mode=local_store.site_settings.get("global_rating_mode", "enabled"),
             total_users=len(getattr(local_store, "admin_users", []))
         )

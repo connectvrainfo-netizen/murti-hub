@@ -127,7 +127,7 @@ class LocalStore:
         self.site_settings = {
             "id": 1,
             "site_title": "Amol Marble Murti Bhandar - Sacred Jaipur Murtis",
-            "whatsapp_number": "+919876543210",
+            "whatsapp_number": "+91 70206 76423",
             "whatsapp_default_message": "Namaste! I want to inquire about a Murti on Murti Hub.",
             "global_rating_mode": "enabled",
             "support_email": "support@amolmurtibhandar.com",

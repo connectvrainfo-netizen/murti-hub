@@ -12,7 +12,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 const ProductDetailPage = React.lazy(() => import('./components/ProductDetailPage'));
 import ProductDetailModal from './components/ProductDetailModal';
 import CheckoutModal from './components/CheckoutModal';
-import OrderTrackingModal from './components/OrderTrackingModal';
 import BulkQuoteModal from './components/BulkQuoteModal';
 import InquiryModal from './components/InquiryModal';
 import InfoModal from './components/InfoModal';
@@ -32,6 +31,7 @@ import { useContinuousScroll } from './hooks/useContinuousScroll';
 import StructuredData from './components/StructuredData';
 import { seoConfig } from './config/seoConfig';
 import brandLogo from './assets/logo.png';
+import { formatWhatsAppNumberForLink, formatWhatsAppNumberForDisplay, buildWhatsAppLink, DEFAULT_WHATSAPP_NUMBER } from './utils/whatsapp';
 
 // Helper to determine if current URL is the dedicated admin page
 const checkIsAdminPath = () => {
@@ -124,11 +124,28 @@ export default function App() {
     // 0. Starting Animation State
     const [showIntro, setShowIntro] = useState(true);
 
-    // Live backend settings & active festival data
-    const [siteSettings, setSiteSettings] = useState({
-        whatsapp_number: '+919876543210',
-        whatsapp_default_message: 'Namaste! I want to inquire about a Murti on Murti Hub.',
-        global_rating_mode: 'enabled'
+    // Live backend settings & active festival data (with localStorage caching for instant availability)
+    const [siteSettings, setSiteSettings] = useState(() => {
+        if (typeof localStorage !== 'undefined') {
+            try {
+                const cached = localStorage.getItem('murti_site_settings_cache');
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (parsed && typeof parsed === 'object' && parsed.whatsapp_number) {
+                        const digits = String(parsed.whatsapp_number).replace(/[^\d]/g, '');
+                        if (digits.includes('9876543210')) {
+                            parsed.whatsapp_number = DEFAULT_WHATSAPP_NUMBER;
+                        }
+                        return parsed;
+                    }
+                }
+            } catch {}
+        }
+        return {
+            whatsapp_number: DEFAULT_WHATSAPP_NUMBER,
+            whatsapp_default_message: 'Namaste! I want to inquire about a Murti on Murti Hub.',
+            global_rating_mode: 'enabled'
+        };
     });
     const [activeFestivalSection, setActiveFestivalSection] = useState(null);
     const [masterSizes, setMasterSizes] = useState([]);
@@ -137,7 +154,22 @@ export default function App() {
 
     // Fetch live backend settings, festival, products & categories on mount
     const loadBackendData = () => {
-        api.getSettings().then(setSiteSettings).catch(() => {});
+        api.getSettings().then(res => {
+            const data = res?.data || res;
+            if (data && typeof data === 'object' && data.whatsapp_number) {
+                const digits = String(data.whatsapp_number).replace(/[^\d]/g, '');
+                if (digits.includes('9876543210')) {
+                    data.whatsapp_number = DEFAULT_WHATSAPP_NUMBER;
+                }
+                setSiteSettings(prev => {
+                    const updated = { ...prev, ...data };
+                    try {
+                        localStorage.setItem('murti_site_settings_cache', JSON.stringify(updated));
+                    } catch {}
+                    return updated;
+                });
+            }
+        }).catch(() => {});
         api.getActiveFestival().then(setActiveFestivalSection).catch(() => {});
         api.getSizes().then(setMasterSizes).catch(() => {});
         api.getProducts({ include_inactive: false }).then(res => {
@@ -199,7 +231,8 @@ export default function App() {
                     c.name !== 'Hand Paint' && 
                     c.name !== 'Hand-Paint'
                 );
-                setLiveCategories(activeCats.map(c => {
+                const sortedCats = [...activeCats].sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+                setLiveCategories(sortedCats.map(c => {
                     const cleanRoute = String(c.route || '').replace(/^\/+/, '').trim();
                     const validRoute = ['shop-all', 'navratri', 'sacred', 'baal-roop'].includes(cleanRoute) ? cleanRoute : 'shop-all';
                     const rawDeity = c.deity && String(c.deity).trim() ? String(c.deity).trim() : null;
@@ -240,11 +273,20 @@ export default function App() {
         }
     }, []);
 
+    // Synchronize settings instantly across components when updated from Admin
+    useEffect(() => {
+        const handleSettingsSync = (e) => {
+            if (e.detail && typeof e.detail === 'object') {
+                setSiteSettings(prev => ({ ...prev, ...e.detail }));
+            }
+        };
+        window.addEventListener('murti-settings-updated', handleSettingsSync);
+        return () => window.removeEventListener('murti-settings-updated', handleSettingsSync);
+    }, []);
+
     // 2. Modals State
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [placedOrder, setPlacedOrder] = useState(null);
-    const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
-    const [trackingOrderId, setTrackingOrderId] = useState('');
     const [isBulkQuoteOpen, setIsBulkQuoteOpen] = useState(false);
     const [infoModalKey, setInfoModalKey] = useState(null);
     const [inquiryProduct, setInquiryProduct] = useState(null);
@@ -304,10 +346,6 @@ export default function App() {
             // 1. If any modal or drawer is open, closing it on back press keeps the user on the page
             if (isCheckoutOpen) {
                 setIsCheckoutOpen(false);
-                return;
-            }
-            if (isTrackingModalOpen) {
-                setIsTrackingModalOpen(false);
                 return;
             }
             if (isBulkQuoteOpen) {
@@ -452,7 +490,7 @@ export default function App() {
             window.removeEventListener('hashchange', handleLocationChange);
         };
     }, [
-        isCheckoutOpen, isTrackingModalOpen, isBulkQuoteOpen, inquiryProduct,
+        isCheckoutOpen, isBulkQuoteOpen, inquiryProduct,
         infoModalKey, isCartOpen, isFilterDrawerOpen, isMobileMenuOpen,
         isKwikPassOpen, isSearchOpen, liveProducts, currentPage
     ]);
@@ -569,8 +607,15 @@ export default function App() {
             ? parseInt(product.price.replace(/[^\d]/g, ''), 10) || 999
             : product.price;
         const message = `Hi, I'm interested in this idol:\n\n*${product.title}*\nPrice: ₹${priceNum.toLocaleString('en-IN')}\n\n*My Details:*\nName: ${customer.name}\nPhone: ${customer.phone}\nAddress: ${customer.address}\nPincode: ${customer.pincode}\n\nPlease share more details and availability.`;
-        const targetNumber = (siteSettings?.whatsapp_number || '+917020676423').replace(/[^\d]/g, '');
-        window.open(`https://wa.me/${targetNumber}?text=${encodeURIComponent(message)}`, '_blank');
+        const url = buildWhatsAppLink(siteSettings?.whatsapp_number, message);
+        try {
+            const w = window.open(url, '_blank');
+            if (!w || w.closed || typeof w.closed === 'undefined') {
+                window.location.href = url;
+            }
+        } catch {
+            window.location.href = url;
+        }
         closeWhatsAppInquiry();
     };
 
@@ -646,7 +691,6 @@ export default function App() {
     // Check if any modal is active (pauses smooth momentum background scroll)
     const isAnyModalOpen = Boolean(
         isCheckoutOpen ||
-        isTrackingModalOpen ||
         isBulkQuoteOpen ||
         infoModalKey ||
         isFilterDrawerOpen ||
@@ -832,20 +876,14 @@ export default function App() {
     };
 
     const openTrackingModal = (orderId = '') => {
-        if (orderId) setTrackingOrderId(orderId);
-        if (typeof window !== 'undefined') {
-            window.history.pushState({ ...window.history.state, modal: 'tracking' }, '', window.location.href);
-        }
-        setIsTrackingModalOpen(true);
+        const text = orderId
+            ? `Namaste Amol Marble Murti Bhandar! 🙏\nI would like to track my order:\n*Order ID:* ${orderId}\n\nPlease share the latest status and dispatch details.`
+            : `Namaste Amol Marble Murti Bhandar! 🙏\nI would like to track my order. Please share my dispatch and delivery status.`;
+        const url = buildWhatsAppLink(siteSettings?.whatsapp_number, text);
+        window.open(url, '_blank');
     };
 
-    const closeTrackingModal = () => {
-        if (typeof window !== 'undefined' && window.history.state?.modal === 'tracking') {
-            window.history.back();
-        } else {
-            setIsTrackingModalOpen(false);
-        }
-    };
+    const closeTrackingModal = () => {};
 
     const openFilterDrawer = () => {
         if (typeof window !== 'undefined') {
@@ -1122,6 +1160,7 @@ export default function App() {
                         navigateTo('home');
                     }}
                     onRedirectToLogin={() => navigateTo('login')}
+                    whatsappNumber={siteSettings?.whatsapp_number}
                 />
             </React.Suspense>
         );
@@ -1158,6 +1197,7 @@ export default function App() {
                             navigateTo('profile');
                         }
                     }}
+                    whatsappNumber={siteSettings?.whatsapp_number}
                 />
             </React.Suspense>
         );
@@ -1329,15 +1369,6 @@ export default function App() {
                                                     {wishlist.length}
                                                 </span>
                                             )}
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => { setIsUserMenuOpen(false); setIsTrackingModalOpen(true); }}
-                                            className="w-full px-4 py-2 text-left flex items-center gap-2.5 text-stone-700 hover:bg-stone-50 transition font-semibold cursor-pointer"
-                                        >
-                                            <Truck className="w-4 h-4 text-stone-400" />
-                                            <span>Track My Order</span>
                                         </button>
 
                                         <div className="border-t border-stone-100 my-1" />
@@ -1545,7 +1576,7 @@ export default function App() {
                             </button>
                             <button
                                 type="button"
-                                onClick={() => { setIsMobileMenuOpen(false); setIsTrackingModalOpen(true); }}
+                                onClick={() => { setIsMobileMenuOpen(false); openTrackingModal(); }}
                                 className="w-full min-h-[48px] py-3 px-4 rounded-xl bg-white border border-stone-200 text-stone-700 font-semibold text-center flex items-center justify-center active:scale-98 transition shadow-xs"
                             >
                                 Track My Order
@@ -3277,7 +3308,15 @@ export default function App() {
                         <address className="not-italic text-xs text-stone-600 space-y-1.5 pt-1">
                             <p className="font-bold text-stone-900 text-sm">Amol Marble Murti Bhandar</p>
                             <p className="leading-relaxed">Bus Stand Road, Near Murarka High School, Shegaon, Buldhana District, Maharashtra - 444203</p>
-                            <p className="font-medium text-stone-800">Phone / WhatsApp: <a href="tel:+919422880000" className="text-[#8E5B00] hover:underline font-bold">+91 94228 80000</a></p>
+                            <p className="font-medium text-stone-800">
+                                Phone / WhatsApp:{' '}
+                                <a
+                                    href={`tel:${formatWhatsAppNumberForLink(siteSettings?.whatsapp_number)}`}
+                                    className="text-[#8E5B00] hover:underline font-bold"
+                                >
+                                    {formatWhatsAppNumberForDisplay(siteSettings?.whatsapp_number)}
+                                </a>
+                            </p>
                             <div className="flex items-center gap-2 pt-1 flex-wrap">
                                 <a 
                                     href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6" 
@@ -3314,7 +3353,7 @@ export default function App() {
                                 }
                             }} className="hover:text-black">Our Showroom Story</button></li>
                             <li><button onClick={() => setIsBulkQuoteOpen(true)} className="hover:text-black">Bulk & Corporate Orders</button></li>
-                            <li><button onClick={() => setIsTrackingModalOpen(true)} className="hover:text-black font-semibold text-[#161616]">Track Your Order</button></li>
+                            <li><button onClick={() => openTrackingModal()} className="hover:text-black font-semibold text-[#161616]">Track Your Order</button></li>
                             <li><button onClick={() => navigateTo(currentUser ? 'profile' : 'login')} className="hover:text-[#C69722] font-semibold text-[#161616]">{currentUser ? 'My Sacred Profile & Orders' : 'Sign In / Register'}</button></li>
                             <li><button onClick={() => setInfoModalKey('privacy')} className="hover:text-black">Your Privacy Choices</button></li>
                         </ul>
@@ -3615,19 +3654,10 @@ export default function App() {
                  onOrderPlaced={(order) => {
                      setCart([]);
                      setPlacedOrder(order);
-                     setTrackingOrderId(order.orderId);
                  }}
                  appliedCoupon={appliedCoupon}
                  onApplyCoupon={applyCoupon}
                  onRemoveCoupon={removeCoupon}
-                 onOpenTracking={(id) => openTrackingModal(id)}
-             />
-
-             {/* ================= 21. REAL-TIME ORDER TRACKING MODAL ================= */}
-             <OrderTrackingModal
-                 isOpen={isTrackingModalOpen}
-                 onClose={closeTrackingModal}
-                 initialOrderId={trackingOrderId}
                  whatsappNumber={siteSettings?.whatsapp_number}
              />
 
@@ -3651,6 +3681,7 @@ export default function App() {
              <InfoModal
                  contentKey={infoModalKey}
                  onClose={closeInfoModal}
+                 whatsappNumber={siteSettings?.whatsapp_number}
              />
 
              {/* ================= 25. MULTI-ATTRIBUTE FILTER DRAWER ================= */}

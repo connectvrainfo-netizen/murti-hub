@@ -939,7 +939,9 @@ def list_users(
 
     # Metrics
     total_count = len(cleaned_items)
-    admin_count = sum(1 for u in cleaned_items if u.role in ["super_admin", "admin", "editor"])
+    staff_count = sum(1 for u in cleaned_items if u.role in ["admin", "editor"])
+    super_admin_count = sum(1 for u in cleaned_items if u.role == "super_admin")
+    admin_count = staff_count
     customer_count = sum(1 for u in cleaned_items if u.role in ["customer", "devotee"])
     active_count = sum(1 for u in cleaned_items if u.is_active)
 
@@ -947,8 +949,10 @@ def list_users(
     filtered = cleaned_items
     if role and role.strip() and role.lower() != "all":
         r_filter = role.strip().lower()
-        if r_filter in ["admin", "admins"]:
-            filtered = [u for u in filtered if u.role in ["super_admin", "admin", "editor"]]
+        if r_filter in ["staff", "editor", "editors", "admin", "admins"]:
+            filtered = [u for u in filtered if u.role in ["admin", "editor"]]
+        elif r_filter in ["super_admin", "master_admin", "master_admins"]:
+            filtered = [u for u in filtered if u.role == "super_admin"]
         elif r_filter in ["customer", "customers", "devotee", "devotees"]:
             filtered = [u for u in filtered if u.role in ["customer", "devotee"]]
         else:
@@ -973,6 +977,8 @@ def list_users(
             users=filtered,
             total_count=total_count,
             admin_count=admin_count,
+            staff_count=staff_count,
+            super_admin_count=super_admin_count,
             customer_count=customer_count,
             active_count=active_count
         )

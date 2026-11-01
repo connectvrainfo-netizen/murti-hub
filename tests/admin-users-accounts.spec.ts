@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
  * 2. Executive Dashboard overview includes "Users & Admins" metric KPI card.
  * 3. Dedicated Tab 8 ("Devotee Accounts & System Admins") displays correctly.
  * 4. User accounts list displays registered users and admin accounts with roles and statuses.
- * 5. Interactive role filters (All Accounts, Customers & Devotees, All Admins & Staff, Master Admins, Staff Editors).
+ * 5. Interactive role filters (All Accounts, Customers, Staff, Master Admins, Staff Editors).
  * 6. Search bar filters accounts by name/email/role.
  * 7. "Provision New Account" modal dialog opens and renders properly.
  * 8. "Change Account Role" modal dialog opens and operates correctly.
@@ -196,17 +196,26 @@ test.describe('Admin Panel: Users and Admins Account Visibility & Management', (
 
     const mainContent = page.locator('main');
 
-    // Test filter pills: All Admins & Staff
-    const adminFilterPill = page.getByRole('button', { name: /All Admins & Staff/i }).first();
+    // Test filter pills: Staff
+    const adminFilterPill = page.getByRole('button', { name: /^Staff\b(?!\s*Editors)/i }).first();
     await adminFilterPill.click();
     await page.waitForTimeout(300);
 
-    // Admin should be visible in main, Devotee customer should be filtered out
-    await expect(mainContent.getByText('admin@amolmurtibhandar.com').first()).toBeVisible();
+    // Staff member should be visible in main, Master Admin and Customer should be filtered out
+    await expect(mainContent.getByText('manager@amolmurtibhandar.com').first()).toBeVisible();
+    await expect(mainContent.getByText('admin@amolmurtibhandar.com')).not.toBeVisible();
     await expect(mainContent.getByText('devotee.ramesh@example.com')).not.toBeVisible();
 
-    // Test Customers & Devotees pill
-    const devoteeFilterPill = page.getByRole('button', { name: /Customers & Devotees/i }).first();
+    // Test Master Admins pill
+    const masterAdminPill = page.getByRole('button', { name: /^Master Admins\b/i }).first();
+    await masterAdminPill.click();
+    await page.waitForTimeout(300);
+
+    await expect(mainContent.getByText('admin@amolmurtibhandar.com').first()).toBeVisible();
+    await expect(mainContent.getByText('manager@amolmurtibhandar.com')).not.toBeVisible();
+
+    // Test Customers pill
+    const devoteeFilterPill = page.getByRole('button', { name: /^Customers\b/i }).first();
     await devoteeFilterPill.click();
     await page.waitForTimeout(300);
 

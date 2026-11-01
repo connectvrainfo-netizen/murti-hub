@@ -76,10 +76,16 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
     const [loading, setLoading] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [stats, setStats] = useState(null);
-    const [settings, setSettings] = useState({
-        whatsapp_number: '+919876543210',
-        whatsapp_default_message: 'Namaste! I want to inquire about a Murti on Murti Hub.',
-        global_rating_mode: 'enabled'
+    const [settings, setSettings] = useState(() => {
+        try {
+            const cached = localStorage.getItem('murti_site_settings_cache');
+            if (cached) return JSON.parse(cached);
+        } catch (e) {}
+        return {
+            whatsapp_number: '+91 70206 76423',
+            whatsapp_default_message: 'Namaste! I want to inquire about a Murti on Murti Hub.',
+            global_rating_mode: 'enabled'
+        };
     });
     const [categories, setCategories] = useState(initialCategories);
     const [products, setProducts] = useState(initialProducts);
@@ -205,12 +211,15 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
     };
 
     // =========================================================================
-    // REQ #4 & REQ #5: UPDATE SETTINGS (WhatsApp & Global Rating Mode)
-    // =========================================================================
     const handleSaveSettings = async (e) => {
         e.preventDefault();
         try {
-            await api.updateSettings(settings);
+            const res = await api.updateSettings(settings);
+            const savedSettings = res?.data || res || settings;
+            try {
+                localStorage.setItem('murti_site_settings_cache', JSON.stringify(savedSettings));
+                window.dispatchEvent(new CustomEvent('murti-settings-updated', { detail: savedSettings }));
+            } catch {}
             showToast('Settings saved successfully!');
             refreshAllData();
         } catch (err) {
@@ -598,7 +607,7 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                                             <span className="text-[10px] text-emerald-600 font-semibold">Active in Catalog</span>
                                         </div>
                                         <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-2xs">
-                                            <span className="text-[10px] uppercase font-bold text-stone-400">Deity Categories</span>
+                                            <span className="text-[10px] uppercase font-bold text-stone-400">Categories</span>
                                             <div className="text-2xl font-serif font-black text-[#161616] mt-1">{categories.length}</div>
                                             <span className="text-[10px] text-stone-500 font-medium">With Banner Images</span>
                                         </div>
@@ -712,7 +721,7 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                                                 required
                                                 value={settings.whatsapp_number}
                                                 onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
-                                                placeholder="e.g. +919876543210 or 917020676423"
+                                                placeholder="e.g. +91 70206 76423 or 917020676423"
                                                 className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 bg-stone-50/50 text-xs text-stone-900 font-mono focus:bg-white"
                                             />
                                             <p className="text-[11px] text-stone-500">

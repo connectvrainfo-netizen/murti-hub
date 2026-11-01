@@ -16,6 +16,7 @@ def list_categories(include_inactive: bool = False):
     """
     Returns deity categories with thumbnail images and hero banners (Req #1).
     """
+    cats = []
     if is_supabase_connected():
         try:
             client = get_supabase()
@@ -24,14 +25,24 @@ def list_categories(include_inactive: bool = False):
                 query = query.eq("is_active", True)
             res = query.execute()
             if res.data and len(res.data) > 0:
-                return res.data
+                cats = res.data
         except Exception as e:
             logger.warning(f"[Supabase Warning: list_categories failed ({e}). Falling back to local store]")
         
-    cats = local_store.categories
-    if not include_inactive:
-        cats = [c for c in cats if c.get("is_active", True)]
-    return sorted(cats, key=lambda c: c.get("sort_order", 0))
+    if not cats:
+        cats = local_store.categories
+        if not include_inactive:
+            cats = [c for c in cats if c.get("is_active", True)]
+
+    # Deduplicate categories by slug / ID to guarantee no duplicate copies
+    seen_keys = set()
+    unique_cats = []
+    for c in sorted(cats, key=lambda item: item.get("sort_order", 0)):
+        key = c.get("slug") or c.get("id")
+        if key and key not in seen_keys:
+            seen_keys.add(key)
+            unique_cats.append(c)
+    return unique_cats
 
 @router.get("/{category_id_or_slug}", response_model=CategoryOut, summary="Get single category by ID or slug")
 def get_category(category_id_or_slug: str):
@@ -53,6 +64,7 @@ def get_category(category_id_or_slug: str):
 def create_category(payload: CategoryCreate, admin: dict = Depends(get_current_admin)):
     """
     Req #1: Add new category with icon image and banner image.
+    Guarantees no duplicate categories are created if submitted multiple times.
     """
     new_id = str(uuid.uuid4())
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -64,16 +76,35 @@ def create_category(payload: CategoryCreate, admin: dict = Depends(get_current_a
     if clean_route not in ["shop-all", "navratri", "sacred", "baal-roop"]:
         clean_route = "shop-all"
     cat_dict["route"] = clean_route
-    cat_dict["id"] = new_id
     cat_dict["created_at"] = now.isoformat()
     cat_dict["updated_at"] = now.isoformat()
     
+    target_slug = cat_dict.get("slug")
+    
+    # Check if category with this slug already exists in local_store to prevent extra copy
+    existing_idx = next((i for i, c in enumerate(local_store.categories) if c.get("slug") == target_slug), -1)
+    if existing_idx >= 0:
+        local_store.categories[existing_idx].update({k: v for k, v in cat_dict.items() if v is not None and k != "id"})
+        local_store.categories[existing_idx]["updated_at"] = now.isoformat()
+        local_store.save()
+        return ApiResponse(success=True, message="Category updated successfully", data=local_store.categories[existing_idx])
+
+    cat_dict["id"] = new_id
+
     if is_supabase_connected():
         try:
             client = get_supabase()
-            res = client.table("categories").insert(cat_dict).execute()
-            if res.data and len(res.data) > 0:
-                return ApiResponse(success=True, message="Category created in Supabase", data=res.data[0])
+            # Check if slug exists in Supabase
+            existing_supa = client.table("categories").select("*").eq("slug", target_slug).execute()
+            if existing_supa.data and len(existing_supa.data) > 0:
+                supa_id = existing_supa.data[0]["id"]
+                res = client.table("categories").update(cat_dict).eq("id", supa_id).execute()
+                if res.data and len(res.data) > 0:
+                    return ApiResponse(success=True, message="Category updated in Supabase", data=res.data[0])
+            else:
+                res = client.table("categories").insert(cat_dict).execute()
+                if res.data and len(res.data) > 0:
+                    return ApiResponse(success=True, message="Category created in Supabase", data=res.data[0])
         except Exception as e:
             logger.warning(f"[Supabase Warning: create_category failed ({e}). Saving to local store]")
             

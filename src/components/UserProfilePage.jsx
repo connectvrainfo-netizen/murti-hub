@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '../services/api';
 import brandLogo from '../assets/logo.png';
+import { formatWhatsAppNumberForDisplay, buildWhatsAppLink, DEFAULT_WHATSAPP_NUMBER } from '../utils/whatsapp';
 
 export default function UserProfilePage({
     currentUser,
@@ -21,7 +22,8 @@ export default function UserProfilePage({
     onSelectProduct,
     onUpdateUser,
     onLogout,
-    onRedirectToLogin
+    onRedirectToLogin,
+    whatsappNumber = DEFAULT_WHATSAPP_NUMBER
 }) {
     const getRoleDisplay = (role) => {
         const r = String(role || '').toLowerCase();
@@ -515,12 +517,12 @@ export default function UserProfilePage({
 
                                 <div className="space-y-2">
                                     <a
-                                        href="https://wa.me/919876543210?text=Namaste!%20I%20have%20an%20inquiry%20regarding%20my%20account%20on%20Amol%20Marble%20Murti%20Bhandar."
+                                        href={buildWhatsAppLink(whatsappNumber, 'Namaste! I have an inquiry regarding my account on Amol Marble Murti Bhandar.')}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="w-full py-2.5 px-3 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-xs"
                                     >
-                                        <span>WhatsApp Priest Concierge</span>
+                                        <span>WhatsApp Priest Concierge ({formatWhatsAppNumberForDisplay(whatsappNumber)})</span>
                                         <ExternalLink className="w-3.5 h-3.5" />
                                     </a>
 
@@ -670,7 +672,7 @@ export default function UserProfilePage({
                                         type="tel"
                                         value={profileForm.phone}
                                         onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                                        placeholder="+91 98765 43210"
+                                        placeholder="+91 70206 76423"
                                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-300 text-xs focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/15 bg-white shadow-2xs"
                                     />
                                     <Phone className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />

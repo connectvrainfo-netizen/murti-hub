@@ -80,6 +80,8 @@ class UserListResponse(BaseModel):
     users: list[UserAccountItem]
     total_count: int = 0
     admin_count: int = 0
+    staff_count: int = 0
+    super_admin_count: int = 0
     customer_count: int = 0
     active_count: int = 0
 

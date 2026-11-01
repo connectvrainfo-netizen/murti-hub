@@ -1,8 +1,12 @@
 import React from 'react';
 import { X, ShieldCheck, Truck, RotateCcw, Phone, Mail, MapPin, Award } from 'lucide-react';
+import { formatWhatsAppNumberForDisplay, buildWhatsAppLink, DEFAULT_WHATSAPP_NUMBER } from '../utils/whatsapp';
 
-export default function InfoModal({ contentKey, onClose }) {
+export default function InfoModal({ contentKey, onClose, whatsappNumber = DEFAULT_WHATSAPP_NUMBER }) {
     if (!contentKey) return null;
+
+    const displayPhone = formatWhatsAppNumberForDisplay(whatsappNumber);
+    const chatUrl = buildWhatsAppLink(whatsappNumber, 'Namaste! I would like support from Amol Marble Murti Bhandar.');
 
     const modalData = {
         'shipping': {
@@ -40,7 +44,7 @@ export default function InfoModal({ contentKey, onClose }) {
                     <div className="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-2">
                         <h4 className="font-bold text-[#161616]">Easy Exchange Process:</h4>
                         <ol className="list-decimal pl-4 space-y-1">
-                            <li>Message our concierge on WhatsApp (+91 98765 43210) or email care@amolmurtibhandar.com with a photo of the idol and packaging.</li>
+                            <li>Message our concierge on WhatsApp ({displayPhone}) or email care@amolmurtibhandar.com with a photo of the idol and packaging.</li>
                             <li>Our team will arrange complimentary reverse pickup from your doorstep within 24 hours.</li>
                             <li>A brand new consecrated replacement or instant refund to your original payment method will be issued upon pickup.</li>
                         </ol>
@@ -62,7 +66,9 @@ export default function InfoModal({ contentKey, onClose }) {
                             <Phone className="w-5 h-5 text-[#C69722]" />
                             <div>
                                 <span className="text-[11px] text-stone-500 block">Phone & WhatsApp Support</span>
-                                <strong className="text-black">+91 98765 43210</strong>
+                                <a href={chatUrl} target="_blank" rel="noopener noreferrer" className="text-black font-bold hover:text-[#C69722] hover:underline">
+                                    {displayPhone}
+                                </a>
                             </div>
                         </div>
                         <div className="p-3.5 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] flex items-center gap-3">

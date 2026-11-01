@@ -42,9 +42,9 @@ export const seoConfig = {
 
     // 5. Contact & Social
     contact: {
-        phone: '+91 98765 43210',
-        phoneRaw: '+919876543210',
-        whatsapp: '+919876543210',
+        phone: '+91 70206 76423',
+        phoneRaw: '917020676423',
+        whatsapp: '+91 70206 76423',
         email: 'care@amolmurtibhandar.com',
         social: {
             facebook: 'https://facebook.com/amolmurtibhandar',

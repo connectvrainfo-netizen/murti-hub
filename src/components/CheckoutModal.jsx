@@ -1,7 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, CheckCircle2, ShieldCheck, Truck, CreditCard, Banknote, QrCode, Tag, ArrowRight, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import api from '../services/api';
 import { checkoutSchema } from '../lib/validation';
+import { formatWhatsAppNumberForLink, DEFAULT_WHATSAPP_NUMBER } from '../utils/whatsapp';
+
+export const getWhatsAppOrderUrl = (order, phone) => {
+    const cleanNumber = formatWhatsAppNumberForLink(phone || DEFAULT_WHATSAPP_NUMBER);
+
+    const itemsSummary = (order?.items || [])
+        .map((item, idx) => {
+            const name = item.title || item.name || 'Sacred Murti';
+            const size = item.selectedSize || item.size || 'Standard Size';
+            const qty = item.qty || 1;
+            const price = ((item.price || 0) * qty).toLocaleString('en-IN');
+            return `  ${idx + 1}. *${name}* (${size})\n     Qty: ${qty} | ₹${price}`;
+        })
+        .join('\n\n');
+
+    const addressParts = [
+        order?.shipping?.address,
+        order?.shipping?.city,
+        order?.shipping?.state,
+        order?.shipping?.pincode ? `PIN: ${order.shipping.pincode}` : ''
+    ].filter(Boolean).join(', ');
+
+    const message = 
+`🙏 *NEW SACRED ORDER PLACED* 🙏
+*Amol Marble Murti Bhandar, Jaipur*
+━━━━━━━━━━━━━━━━━━━━━
+📦 *Order ID:* ${order?.orderId}
+📅 *Date:* ${order?.date || new Date().toLocaleDateString('en-IN')}
+💳 *Payment Mode:* ${String(order?.paymentMethod || 'COD').toUpperCase()}
+💰 *Total Amount:* ₹${Number(order?.total || 0).toLocaleString('en-IN')}.00
+━━━━━━━━━━━━━━━━━━━━━
+👤 *CUSTOMER DETAILS:*
+• *Name:* ${order?.shipping?.fullName || 'Customer'}
+• *Mobile:* ${order?.shipping?.phone || 'N/A'}
+${order?.shipping?.email ? `• *Email:* ${order.shipping.email}\n` : ''}• *Delivery Address:* ${addressParts}
+${order?.shipping?.notes ? `• *Mandir / Consecration Notes:* ${order.shipping.notes}\n` : ''}━━━━━━━━━━━━━━━━━━━━━
+🛍️ *ORDERED ITEMS:*
+${itemsSummary || '  1. Sacred Mandir Idols'}
+━━━━━━━━━━━━━━━━━━━━━
+_Namaste! I have placed this order on your website. Please verify my order details, begin the Vedic sanctification prayer, and send me live packing & BlueDart tracking updates on WhatsApp._ 🙏`;
+
+    return `https://wa.me/${cleanNumber}?text=${encodeURIComponent(message)}`;
+};
 
 export default function CheckoutModal({
     isOpen,
@@ -12,7 +55,7 @@ export default function CheckoutModal({
     appliedCoupon,
     onApplyCoupon,
     onRemoveCoupon,
-    onOpenTracking
+    whatsappNumber = DEFAULT_WHATSAPP_NUMBER
 }) {
     if (!isOpen) return null;
 
@@ -37,6 +80,21 @@ export default function CheckoutModal({
 
     const [paymentMethod, setPaymentMethod] = useState('cod'); // 'cod' | 'upi' | 'card'
     const [orderInfo, setOrderInfo] = useState(null);
+
+    // Direct and instant redirect to WhatsApp when order is confirmed
+    useEffect(() => {
+        if (step === 3 && orderInfo) {
+            const waUrl = getWhatsAppOrderUrl(orderInfo, whatsappNumber);
+            const timer = setTimeout(() => {
+                try {
+                    window.location.href = waUrl;
+                } catch (e) {
+                    console.warn('[WhatsApp auto-redirect timer]', e);
+                }
+            }, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [step, orderInfo, whatsappNumber]);
 
     const handleApplyCoupon = (e) => {
         e.preventDefault();
@@ -118,6 +176,20 @@ export default function CheckoutModal({
             api.saveUserOrder(confirmedOrderData);
             onOrderPlaced(confirmedOrderData);
             setStep(3);
+
+            // Automatically and directly redirect to WhatsApp concierge immediately
+            const waUrl = getWhatsAppOrderUrl(confirmedOrderData, whatsappNumber);
+            try {
+                window.location.href = waUrl;
+            } catch (redirectErr) {
+                console.warn('[WhatsApp redirect fallback]', redirectErr);
+                window.open(waUrl, '_blank');
+            }
+
+            // Close checkout modal after dispatching navigation
+            setTimeout(() => {
+                if (onClose) onClose();
+            }, 500);
         } catch (err) {
             console.error('[Checkout Error]', err);
             setOrderErrorMessage(err.message || 'Failed to confirm order with the store server. Please try again.');
@@ -136,7 +208,7 @@ export default function CheckoutModal({
                         <h3 className="font-serif text-xl font-bold text-[#161616]">
                             {step === 1 && 'Delivery Address & Contact'}
                             {step === 2 && 'Payment & Review Order'}
-                            {step === 3 && 'Order Placed Successfully!'}
+                            {step === 3 && 'Redirecting to WhatsApp...'}
                         </h3>
                     </div>
                     {step !== 3 && (
@@ -470,57 +542,30 @@ export default function CheckoutModal({
                     </div>
                 )}
 
-                {/* Step 3: Success Confirmation Screen */}
-                {step === 3 && orderInfo && (
-                    <div className="p-8 text-center space-y-6">
-                        <div className="w-20 h-20 rounded-full bg-green-100 text-green-700 mx-auto flex items-center justify-center shadow-inner animate-in zoom-in duration-300">
-                            <CheckCircle2 className="w-10 h-10" />
+                {/* Step 3: Direct WhatsApp Redirection Indicator */}
+                {step === 3 && (
+                    <div className="p-8 sm:p-12 text-center space-y-5">
+                        <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center animate-pulse shadow-md">
+                            <svg className="w-8 h-8 fill-current text-[#25D366]" viewBox="0 0 24 24">
+                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
+                            </svg>
                         </div>
-
-                        <div className="space-y-2">
-                            <span className="text-[11px] font-bold tracking-[0.25em] uppercase text-[#C69722]">✦ JAI SHREE RAM • HAR HAR MAHADEV ✦</span>
-                            <h2 className="font-serif text-3xl font-bold text-[#161616]">Order Placed with Blessings!</h2>
-                            <p className="text-xs text-stone-600 max-w-md mx-auto leading-relaxed">
-                                Thank you, <strong className="text-black">{orderInfo.shipping.fullName}</strong>. Your sacred idol order is confirmed and scheduled for consecration & insulated wooden-crate packaging.
+                        <div className="space-y-1">
+                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#C69722]">Order Confirmed</span>
+                            <h3 className="font-serif text-xl font-bold text-stone-900">Redirecting to WhatsApp...</h3>
+                            <p className="text-xs text-stone-600 max-w-sm mx-auto">
+                                Connecting you directly to the priest concierge at Amol Marble Murti Bhandar with your order details.
                             </p>
                         </div>
-
-                        <div className="bg-[#FAF5E8] p-5 rounded-2xl border border-[#E6D6B8] max-w-md mx-auto text-left space-y-2 text-xs">
-                            <div className="flex justify-between border-b border-[#E6D6B8]/70 pb-2">
-                                <span className="text-stone-500">Order ID:</span>
-                                <span className="font-mono font-bold text-[#161616]">{orderInfo.orderId}</span>
-                            </div>
-                            <div className="flex justify-between border-b border-[#E6D6B8]/70 pb-2">
-                                <span className="text-stone-500">Estimated Delivery:</span>
-                                <span className="font-semibold text-green-800">3-5 Business Days (Express Insured)</span>
-                            </div>
-                            <div className="flex justify-between border-b border-[#E6D6B8]/70 pb-2">
-                                <span className="text-stone-500">Delivery To:</span>
-                                <span className="font-semibold text-right max-w-[200px] truncate">{orderInfo.shipping.address}, {orderInfo.shipping.city}</span>
-                            </div>
-                            <div className="flex justify-between pt-1">
-                                <span className="text-stone-500">Payment:</span>
-                                <span className="font-bold text-[#C69722]">{orderInfo.paymentMethod.toUpperCase()} (₹{orderInfo.total.toLocaleString('en-IN')})</span>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-md mx-auto pt-2">
-                            <button
-                                onClick={() => {
-                                    onClose();
-                                    onOpenTracking(orderInfo.orderId);
-                                }}
-                                className="min-h-[48px] px-6 py-3.5 rounded-xl bg-[#161616] hover:bg-black text-white text-xs font-bold tracking-wider uppercase transition shadow-md tap-target-48 active:scale-98 flex items-center justify-center"
+                        {orderInfo && (
+                            <a
+                                href={getWhatsAppOrderUrl(orderInfo, whatsappNumber)}
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold uppercase tracking-wider shadow-md transition active:scale-98 tap-target-48 mx-auto"
                             >
-                                TRACK THIS ORDER
-                            </button>
-                            <button
-                                onClick={onClose}
-                                className="min-h-[48px] px-6 py-3.5 rounded-xl border border-stone-300 hover:border-black text-stone-800 text-xs font-bold tracking-wider uppercase transition tap-target-48 active:scale-98 flex items-center justify-center"
-                            >
-                                CONTINUE SHOPPING
-                            </button>
-                        </div>
+                                <span>CLICK IF NOT REDIRECTED</span>
+                                <ArrowRight className="w-4 h-4" />
+                            </a>
+                        )}
                     </div>
                 )}
             </div>

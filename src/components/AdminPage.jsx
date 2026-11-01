@@ -13,6 +13,8 @@ import api from '../services/api';
 import SafeImage from './SafeImage';
 import { deityCategories as defaultCategories, catalog as defaultCatalog } from '../data/catalog';
 import brandLogo from '../assets/logo.png';
+import { optimizeImageBeforeUpload } from '../utils/imageOptimizer';
+import { buildWhatsAppLink, formatWhatsAppNumberForLink, formatWhatsAppNumberForDisplay, DEFAULT_WHATSAPP_NUMBER } from '../utils/whatsapp';
 
 // Guarantee all 20 existing products from the store catalog are immediately available on Admin page
 const initialProducts = defaultCatalog.map((item) => ({
@@ -295,19 +297,25 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [loading, setLoading] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [stats, setStats] = useState(null);
-    const [settings, setSettings] = useState({
-        whatsapp_number: '+919876543210',
-        whatsapp_default_message: 'Namaste! I want to inquire about a Murti on Murti Hub.',
-        global_rating_mode: 'enabled',
-        collection_badge: 'HASTASHILP HERITAGE 2026',
-        collection_title: 'SANCTIFIED SACRED COLLECTION 2026',
-        collection_subtitle: 'DIVINE BLESSINGS FOR YOUR SACRED SANCTUM',
-        collection_description: 'Hand-sculpted in Makrana white marble by fourth-generation Jaipur sthapatis. Adorned with pure 24K gold foil (swarna varakh), suitable for consecrated home mandir installation.',
-        collection_price_from: '1,499',
-        collection_old_price: '2,499',
-        collection_discount_text: '40% OFF',
-        collection_tag: 'CONSECRATED',
-        collection_image_url: '/images/products/ram-darbar.png'
+    const [settings, setSettings] = useState(() => {
+        try {
+            const cached = localStorage.getItem('murti_site_settings_cache');
+            if (cached) return JSON.parse(cached);
+        } catch (e) {}
+        return {
+            whatsapp_number: '+91 70206 76423',
+            whatsapp_default_message: 'Namaste! I want to inquire about a Murti on Murti Hub.',
+            global_rating_mode: 'enabled',
+            collection_badge: 'HASTASHILP HERITAGE 2026',
+            collection_title: 'SANCTIFIED SACRED COLLECTION 2026',
+            collection_subtitle: 'DIVINE BLESSINGS FOR YOUR SACRED SANCTUM',
+            collection_description: 'Hand-sculpted in Makrana white marble by fourth-generation Jaipur sthapatis. Adorned with pure 24K gold foil (swarna varakh), suitable for consecrated home mandir installation.',
+            collection_price_from: '1,499',
+            collection_old_price: '2,499',
+            collection_discount_text: '40% OFF',
+            collection_tag: 'CONSECRATED',
+            collection_image_url: '/images/products/ram-darbar.png'
+        };
     });
     const [categories, setCategories] = useState(initialCategories);
     const [products, setProducts] = useState(initialProducts);
@@ -327,6 +335,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const [editingProduct, setEditingProduct] = useState(null);
     const [isCustomDeity, setIsCustomDeity] = useState(false);
     const [editingCategory, setEditingCategory] = useState(null);
+    const [isSavingCategory, setIsSavingCategory] = useState(false);
+    const [isSavingProduct, setIsSavingProduct] = useState(false);
     const [editingSize, setEditingSize] = useState(null);
     const [customSizeInput, setCustomSizeInput] = useState('');
     const [newSizeForm, setNewSizeForm] = useState({ label: '', height_inches: 12.0, unit: 'in', size_value: 12.0, description: '', sort_order: 1, is_active: true });
@@ -342,7 +352,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
     // User & Account Management States
     const [usersList, setUsersList] = useState([]);
-    const [userStats, setUserStats] = useState({ total_count: 0, admin_count: 0, customer_count: 0, active_count: 0 });
+    const [userStats, setUserStats] = useState({ total_count: 0, admin_count: 0, staff_count: 0, super_admin_count: 0, customer_count: 0, active_count: 0 });
     const [usersLoading, setUsersLoading] = useState(false);
     const [userSearch, setUserSearch] = useState('');
     const [userRoleFilter, setUserRoleFilter] = useState('all');
@@ -395,11 +405,12 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
         };
     }, [editingProduct, editingCategory, editingSize, isEditingCredentials, isCreateUserModalOpen, editingUserRole, userToDelete]);
 
-    // Reusable file upload handler to backend /api/upload
+    // Reusable file upload handler to backend /api/upload with fast client-side image optimization
     const handleFileUpload = async (file, folder = 'catalog') => {
         if (!file) return null;
         try {
-            const res = await api.uploadImage(file, folder);
+            const fileToUpload = await optimizeImageBeforeUpload(file, folder);
+            const res = await api.uploadImage(fileToUpload, folder);
             showToast('Image uploaded successfully!');
             return res?.data?.url || res?.url;
         } catch (err) {
@@ -424,18 +435,26 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             const data = res?.data || res;
             if (data?.users) {
                 setUsersList(data.users);
+                const computedStaff = data.staff_count ?? data.users.filter(u => ['admin', 'editor'].includes((u.role || '').toLowerCase())).length;
+                const computedMasterAdmin = data.super_admin_count ?? data.users.filter(u => (u.role || '').toLowerCase() === 'super_admin').length;
                 setUserStats({
                     total_count: data.total_count ?? data.users.length,
-                    admin_count: data.admin_count ?? 0,
-                    customer_count: data.customer_count ?? 0,
-                    active_count: data.active_count ?? 0
+                    admin_count: computedStaff,
+                    staff_count: computedStaff,
+                    super_admin_count: computedMasterAdmin,
+                    customer_count: data.customer_count ?? data.users.filter(u => ['customer', 'devotee'].includes((u.role || '').toLowerCase())).length,
+                    active_count: data.active_count ?? data.users.filter(u => u.is_active).length
                 });
             } else if (Array.isArray(data)) {
                 setUsersList(data);
+                const computedStaff = data.filter(u => ['admin', 'editor'].includes((u.role || '').toLowerCase())).length;
+                const computedMasterAdmin = data.filter(u => (u.role || '').toLowerCase() === 'super_admin').length;
                 setUserStats({
                     total_count: data.length,
-                    admin_count: data.filter(u => ['super_admin', 'admin', 'editor'].includes(u.role)).length,
-                    customer_count: data.filter(u => ['customer', 'devotee'].includes(u.role)).length,
+                    admin_count: computedStaff,
+                    staff_count: computedStaff,
+                    super_admin_count: computedMasterAdmin,
+                    customer_count: data.filter(u => ['customer', 'devotee'].includes((u.role || '').toLowerCase())).length,
                     active_count: data.filter(u => u.is_active).length
                 });
             }
@@ -521,8 +540,20 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
             if (statsRes.status === 'fulfilled' && statsRes.value?.data) setStats(statsRes.value.data);
             if (settsRes.status === 'fulfilled' && settsRes.value) setSettings(settsRes.value);
-            if (catsRes.status === 'fulfilled' && Array.isArray(catsRes.value)) {
-                setCategories(catsRes.value);
+            if (catsRes.status === 'fulfilled') {
+                const rawCats = Array.isArray(catsRes.value) ? catsRes.value : (Array.isArray(catsRes.value?.data) ? catsRes.value.data : null);
+                if (rawCats) {
+                    const seen = new Set();
+                    const uniqueCats = [];
+                    for (const cat of rawCats) {
+                        const key = cat.slug || cat.id;
+                        if (key && !seen.has(key)) {
+                            seen.add(key);
+                            uniqueCats.push(cat);
+                        }
+                    }
+                    setCategories(uniqueCats);
+                }
             }
             if (prodsRes.status === 'fulfilled' && Array.isArray(prodsRes.value?.items)) {
                 setProducts(prodsRes.value.items);
@@ -619,7 +650,12 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     const handleSaveSettings = async (e) => {
         e.preventDefault();
         try {
-            await api.updateSettings(settings);
+            const res = await api.updateSettings(settings);
+            const savedSettings = res?.data || res || settings;
+            try {
+                localStorage.setItem('murti_site_settings_cache', JSON.stringify(savedSettings));
+                window.dispatchEvent(new CustomEvent('murti-settings-updated', { detail: savedSettings }));
+            } catch {}
             showToast('Settings saved successfully!');
             refreshAllData();
         } catch (err) {
@@ -639,9 +675,8 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     };
 
     const handleTestWhatsApp = () => {
-        const cleanNumber = (settings.whatsapp_number || '').replace(/[^0-9]/g, '');
-        const encoded = encodeURIComponent(settings.whatsapp_default_message || 'Namaste!');
-        window.open(`https://wa.me/${cleanNumber}?text=${encoded}`, '_blank');
+        const url = buildWhatsAppLink(settings.whatsapp_number, settings.whatsapp_default_message || 'Namaste!');
+        window.open(url, '_blank');
     };
 
     // Password strength evaluator for admin credential forms
@@ -787,8 +822,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     };
 
     const handleSaveCategory = async (e) => {
-        e.preventDefault();
-        if (!editingCategory) return;
+        if (e) e.preventDefault();
+        if (!editingCategory || isSavingCategory) return;
+        setIsSavingCategory(true);
         try {
             // Auto generate slug/route/deity if missing
             const catName = (editingCategory.name || '').trim();
@@ -806,38 +842,41 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
             };
 
             if (editingCategory.id) {
-                setCategories(prev => prev.map(c => c.id === editingCategory.id ? { ...c, ...categoryData } : c));
+                setCategories(prev => prev.map(c => (c.id === editingCategory.id || String(c.id) === String(editingCategory.id)) ? { ...c, ...categoryData } : c));
                 await api.updateCategory(editingCategory.id, categoryData);
                 showToast(`Category "${categoryData.name}" updated!`);
             } else {
-                const tempId = 'cat-' + Date.now();
-                const optimisticCat = { ...categoryData, id: tempId };
-                setCategories(prev => [...prev, optimisticCat]);
                 const res = await api.createCategory(categoryData);
-                if (res?.data) {
-                    setCategories(prev => prev.map(c => c.id === tempId ? res.data : c));
-                }
+                const serverCat = res?.data || (res?.id ? res : null);
+                const finalCat = serverCat ? { ...categoryData, ...serverCat } : { ...categoryData, id: 'cat-' + Date.now() };
+                setCategories(prev => {
+                    const filtered = prev.filter(c => c.id !== finalCat.id && c.slug !== finalCat.slug);
+                    return [...filtered, finalCat];
+                });
                 showToast(`Category "${categoryData.name}" created successfully!`);
             }
             setEditingCategory(null);
-            refreshAllData();
+            await refreshAllData();
         } catch (err) {
             showToast(`Note: ${err.message}`);
             setEditingCategory(null);
-            refreshAllData();
+            await refreshAllData();
+        } finally {
+            setIsSavingCategory(false);
         }
     };
 
     const handleDeleteCategory = async (catId, catName) => {
         if (!confirm(`Are you sure you want to delete category "${catName}"? Products in this category will remain in the catalog.`)) return;
-        setCategories(prev => prev.filter(c => c.id !== catId && String(c.id) !== String(catId)));
+        // Cleanly remove any copy with matching ID or name from UI state
+        setCategories(prev => prev.filter(c => c.id !== catId && String(c.id) !== String(catId) && c.name !== catName));
         showToast('Category deleted successfully');
         try {
             await api.deleteCategory(catId);
-            refreshAllData();
+            await refreshAllData();
         } catch (err) {
             console.warn('Category delete warning:', err);
-            refreshAllData();
+            await refreshAllData();
         }
     };
 
@@ -874,8 +913,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
     };
 
     const handleSaveProduct = async (e) => {
-        e.preventDefault();
-        if (!editingProduct) return;
+        if (e) e.preventDefault();
+        if (!editingProduct || isSavingProduct) return;
+        setIsSavingProduct(true);
         try {
             if (editingProduct.id) {
                 // Optimistically update existing product
@@ -883,27 +923,20 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                 await api.updateProduct(editingProduct.id, editingProduct);
                 showToast(`Product "${editingProduct.title}" updated!`);
             } else {
-                // Optimistically prepend newly created product at top
-                const tempId = 'prod-' + Date.now();
-                const optimisticProd = {
-                    ...editingProduct,
-                    id: tempId,
-                    created_at: new Date().toISOString()
-                };
-                setProducts(prev => [optimisticProd, ...prev]);
-
                 const res = await api.createProduct(editingProduct);
-                if (res?.data) {
-                    setProducts(prev => prev.map(p => p.id === tempId ? res.data : p));
-                }
+                const serverProd = res?.data || (res?.id ? res : null);
+                const finalProd = serverProd ? { ...editingProduct, ...serverProd } : { ...editingProduct, id: 'prod-' + Date.now(), created_at: new Date().toISOString() };
+                setProducts(prev => [finalProd, ...prev.filter(p => p.id !== finalProd.id && p.slug !== finalProd.slug)]);
                 showToast(`Product "${editingProduct.title}" created successfully!`);
             }
             setEditingProduct(null);
-            refreshAllData();
+            await refreshAllData();
         } catch (err) {
             showToast(`Note: ${err.message}`);
             setEditingProduct(null);
-            refreshAllData();
+            await refreshAllData();
+        } finally {
+            setIsSavingProduct(false);
         }
     };
 
@@ -1125,6 +1158,17 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
     // Extract unique deity list for filter pills
     const uniqueDeities = ['All', ...new Set(products.map(p => p.deity).filter(Boolean))];
+
+    // Guaranteed deduplicated categories list for display and management (prevents extra copies)
+    const displayCategories = React.useMemo(() => {
+        const seen = new Set();
+        return (categories || []).filter(cat => {
+            const key = cat.slug || cat.id;
+            if (!key || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+    }, [categories]);
 
     // Consolidated Category & Deity options for product management dropdown
     const categoryDropdownOptions = React.useMemo(() => {
@@ -1366,7 +1410,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     <button
                         onClick={onReturnToStore}
                         className="flex items-center gap-3 focus:outline-none hover:opacity-90 transition group text-left"
-                        title="Return to Storefront"
+                        aria-label="Return to Storefront"
                     >
                         <img
                             src={brandLogo}
@@ -1383,7 +1427,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 </span>
                             </div>
                             <p className="text-[11px] text-stone-400">
-                                E-Commerce Management Platform • Jaipur Heritage
+                                E-Commerce Management Platform
                             </p>
                         </div>
                     </button>
@@ -1506,7 +1550,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 </div>
                                 {[
                                     { id: 'products', label: 'Products & Catalog', icon: Package, count: products?.length },
-                                    { id: 'categories', label: 'Deity Categories', icon: ImageIcon, count: categories?.length },
+                                    { id: 'categories', label: 'Categories', icon: ImageIcon, count: categories?.length },
                                     { id: 'sizes', label: 'Master Sizes', icon: Tag, count: sizes?.length }
                                 ].map(tab => {
                                     const Icon = tab.icon;
@@ -1736,7 +1780,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 >
                                     <div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Deity Categories</span>
+                                            <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Categories</span>
                                             <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center group-hover:scale-110 transition-transform">
                                                 <ImageIcon className="w-4 h-4" />
                                             </div>
@@ -2244,10 +2288,10 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
-                                            Deity Categories & Hero Banners
+                                            Categories & Hero Banners
                                         </h2>
                                         <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF2DE] text-[#8E5B00] border border-[#DFC48D]/40 font-mono">
-                                            {categories.length} Categories
+                                            {displayCategories.length} Categories
                                         </span>
                                     </div>
                                     <p className="text-xs text-stone-500 mt-1">
@@ -2264,7 +2308,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                                {categories.map(cat => (
+                                {displayCategories.map(cat => (
                                     <div
                                         key={cat.id}
                                         className="bg-white rounded-3xl border border-stone-200 p-5 shadow-2xs hover:shadow-md hover:border-[#DFC48D] transition-all duration-200 flex flex-col justify-between space-y-4 group"
@@ -2962,7 +3006,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         required
                                         value={settings.whatsapp_number}
                                         onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value })}
-                                        placeholder="e.g. +919876543210 or 917020676423"
+                                        placeholder="e.g. +91 70206 76423 or 917020676423"
                                         className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs text-stone-900 font-mono focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                     />
                                     <p className="text-[11px] text-stone-500">
@@ -3564,7 +3608,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
 
                                 <div className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-emerald-600 shadow-2xs">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Devotees & Shoppers</span>
+                                        <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Customers</span>
                                         <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
                                             <User className="w-4 h-4" />
                                         </div>
@@ -3574,23 +3618,23 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     </div>
                                     <div className="mt-3 pt-3 border-t border-stone-100 text-[11px] text-emerald-700 font-semibold flex items-center justify-between">
                                         <span>Customer Accounts</span>
-                                        <span className="text-[10px] bg-emerald-100/70 px-1.5 py-0.5 rounded font-mono">Devotee</span>
+                                        <span className="text-[10px] bg-emerald-100/70 px-1.5 py-0.5 rounded font-mono">Customer</span>
                                     </div>
                                 </div>
 
                                 <div className="bg-white p-5 rounded-2xl border border-stone-200 border-t-4 border-t-indigo-600 shadow-2xs">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Admins & Staff</span>
+                                        <span className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Staff</span>
                                         <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
                                             <Shield className="w-4 h-4" />
                                         </div>
                                     </div>
                                     <div className="text-3xl font-serif font-black text-[#161616] mt-2">
-                                        {userStats.admin_count}
+                                        {userStats.staff_count ?? userStats.admin_count}
                                     </div>
                                     <div className="mt-3 pt-3 border-t border-stone-100 text-[11px] text-indigo-700 font-semibold flex items-center justify-between">
-                                        <span>Privileged Access</span>
-                                        <span className="text-[10px] bg-indigo-100/70 px-1.5 py-0.5 rounded font-mono">Console</span>
+                                        <span>Staff Access</span>
+                                        <span className="text-[10px] bg-indigo-100/70 px-1.5 py-0.5 rounded font-mono">Staff</span>
                                     </div>
                                 </div>
 
@@ -3657,10 +3701,9 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     </span>
                                     {[
                                         { id: 'all', label: 'All Accounts', count: userStats.total_count || usersList.length },
-                                        { id: 'customer', label: 'Customers & Devotees', count: userStats.customer_count },
-                                        { id: 'admin', label: 'All Admins & Staff', count: userStats.admin_count },
-                                        { id: 'super_admin', label: 'Master Admins' },
-                                        { id: 'editor', label: 'Staff Editors' }
+                                        { id: 'customer', label: 'Customers', count: userStats.customer_count ?? usersList.filter(u => ['customer', 'devotee'].includes((u.role || '').toLowerCase())).length },
+                                        { id: 'admin', label: 'Staff', count: userStats.staff_count ?? userStats.admin_count ?? usersList.filter(u => ['admin', 'editor'].includes((u.role || '').toLowerCase())).length },
+                                        { id: 'super_admin', label: 'Master Admins', count: userStats.super_admin_count ?? usersList.filter(u => (u.role || '').toLowerCase() === 'super_admin').length }
                                     ].map(rf => {
                                         const isSel = userRoleFilter === rf.id;
                                         return (
@@ -3701,7 +3744,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             if (userRoleFilter !== 'all') {
                                                 const r = (user.role || '').toLowerCase();
                                                 if (userRoleFilter === 'customer' && !['customer', 'devotee'].includes(r)) return false;
-                                                if (userRoleFilter === 'admin' && !['super_admin', 'admin', 'editor'].includes(r)) return false;
+                                                if (['admin', 'staff'].includes(userRoleFilter) && !['admin', 'editor'].includes(r)) return false;
                                                 if (userRoleFilter === 'editor' && r !== 'editor') return false;
                                                 if (userRoleFilter === 'super_admin' && r !== 'super_admin') return false;
                                             }
@@ -4767,16 +4810,25 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                                 sublabel="Drag & drop file here or click to browse"
                                                 isUploading={uploadingPrimary}
                                                 onUpload={async (file) => {
+                                                    const localPreview = URL.createObjectURL(file);
+                                                    setEditingProduct(prev => ({
+                                                        ...prev,
+                                                        primary_catalog_image: localPreview,
+                                                        img: localPreview
+                                                    }));
                                                     setUploadingPrimary(true);
-                                                    const url = await handleFileUpload(file, 'catalog');
-                                                    if (url) {
-                                                        setEditingProduct(prev => ({
-                                                            ...prev,
-                                                            primary_catalog_image: url,
-                                                            img: url
-                                                        }));
+                                                    try {
+                                                        const url = await handleFileUpload(file, 'catalog');
+                                                        if (url) {
+                                                            setEditingProduct(prev => ({
+                                                                ...prev,
+                                                                primary_catalog_image: url,
+                                                                img: url
+                                                            }));
+                                                        }
+                                                    } finally {
+                                                        setUploadingPrimary(false);
                                                     }
-                                                    setUploadingPrimary(false);
                                                 }}
                                             />
                                         </div>
@@ -4947,10 +4999,20 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             <button
                                 type="submit"
                                 form="admin-product-edit-form"
-                                className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 active:scale-95 cursor-pointer flex items-center gap-1.5"
+                                disabled={isSavingProduct}
+                                className="px-7 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 active:scale-95 cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Check className="w-4 h-4 stroke-[2.5]" />
-                                <span>{editingProduct.id ? 'Save Changes' : 'Create Product'}</span>
+                                {isSavingProduct ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin text-[#161616]" />
+                                        <span>Saving Product...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check className="w-4 h-4 stroke-[2.5]" />
+                                        <span>{editingProduct.id ? 'Save Changes' : 'Create Product'}</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
@@ -4974,7 +5036,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     <ImageIcon className="w-4 h-4" />
                                 </div>
                                 <h3 className="font-serif text-lg font-bold text-stone-900">
-                                    {editingCategory.id ? 'Edit Category Images & Details' : 'Add New Deity Category'}
+                                    {editingCategory.id ? 'Edit Category Images & Details' : 'Add New Category'}
                                 </h3>
                             </div>
                             <button 
@@ -5065,10 +5127,15 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                             sublabel="Square or round icon for deity scroller"
                                             isUploading={uploadingCatIcon}
                                             onUpload={async (file) => {
+                                                const localPreview = URL.createObjectURL(file);
+                                                setEditingCategory(prev => ({ ...prev, img: localPreview }));
                                                 setUploadingCatIcon(true);
-                                                const url = await handleFileUpload(file, 'categories');
-                                                if (url) setEditingCategory(prev => ({ ...prev, img: url }));
-                                                setUploadingCatIcon(false);
+                                                try {
+                                                    const url = await handleFileUpload(file, 'categories');
+                                                    if (url) setEditingCategory(prev => ({ ...prev, img: url }));
+                                                } finally {
+                                                    setUploadingCatIcon(false);
+                                                }
                                             }}
                                         />
                                     </div>
@@ -5095,10 +5162,15 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         sublabel="Wide landscape banner image"
                                         isUploading={uploadingCatBanner}
                                         onUpload={async (file) => {
+                                            const localPreview = URL.createObjectURL(file);
+                                            setEditingCategory(prev => ({ ...prev, banner_url: localPreview }));
                                             setUploadingCatBanner(true);
-                                            const url = await handleFileUpload(file, 'banners');
-                                            if (url) setEditingCategory(prev => ({ ...prev, banner_url: url }));
-                                            setUploadingCatBanner(false);
+                                            try {
+                                                const url = await handleFileUpload(file, 'banners');
+                                                if (url) setEditingCategory(prev => ({ ...prev, banner_url: url }));
+                                            } finally {
+                                                setUploadingCatBanner(false);
+                                            }
                                         }}
                                     />
                                 </div>
@@ -5139,10 +5211,20 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                             <button 
                                 type="submit" 
                                 form="admin-category-edit-form"
-                                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5"
+                                disabled={isSavingCategory}
+                                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md active:scale-95 cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Check className="w-4 h-4 stroke-[2.5]" />
-                                <span>{editingCategory.id ? 'Save Category' : 'Create Category'}</span>
+                                {isSavingCategory ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin text-[#161616]" />
+                                        <span>Saving Category...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check className="w-4 h-4 stroke-[2.5]" />
+                                        <span>{editingCategory.id ? 'Save Category' : 'Create Category'}</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>
@@ -5364,7 +5446,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                         type="tel"
                                         value={newUserForm.phone}
                                         onChange={(e) => setNewUserForm({ ...newUserForm, phone: e.target.value })}
-                                        placeholder="+91 98765 43210"
+                                        placeholder="+91 70206 76423"
                                         className="w-full px-3.5 py-2.5 border border-stone-200 rounded-xl text-xs font-mono focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
                                     />
                                 </div>

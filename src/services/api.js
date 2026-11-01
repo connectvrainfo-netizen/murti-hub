@@ -235,9 +235,10 @@ class ApiService {
         const url = this.getApiEndpoint(endpoint);
         const isMultipart = options.body instanceof FormData;
         
-        // Timeout handling via AbortController (Checklist Section 2 & 3: Configure per-request timeouts)
+        // Timeout handling via AbortController (allows 60s for auth/cold-starts, 45s default)
         const controller = new AbortController();
-        const timeoutMs = options.timeoutMs || 15000;
+        const isAuthOrSlow = endpoint.includes('/auth/') || endpoint.includes('/health');
+        const timeoutMs = options.timeoutMs || (isAuthOrSlow ? 60000 : 45000);
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
         const config = {
@@ -690,7 +691,15 @@ class ApiService {
     // 2. REQ #4: WHATSAPP NUMBER & REQ #5: GLOBAL RATING MODE
     // =========================================================================
     async getSettings() {
-        return this.request('/settings');
+        const res = await this.request('/settings');
+        const data = res?.data || res;
+        if (data && typeof data === 'object' && data.whatsapp_number) {
+            const digits = String(data.whatsapp_number).replace(/[^\d]/g, '');
+            if (digits.includes('9876543210')) {
+                data.whatsapp_number = '+91 70206 76423';
+            }
+        }
+        return res;
     }
 
     async updateSettings(settingsPayload) {
@@ -993,4 +1002,12 @@ class ApiService {
 }
 
 export const api = new ApiService();
+
+// Pre-warm Render backend on page load (eliminates cold start delay before login)
+if (typeof window !== 'undefined') {
+    setTimeout(() => {
+        api.testBackendHealth().catch(() => {});
+    }, 800);
+}
+
 export default api;

@@ -9,12 +9,14 @@ import {
 import api from '../services/api';
 import brandLogo from '../assets/logo.png';
 import { loginSchema, registerSchema } from '../lib/validation';
+import { formatWhatsAppNumberForDisplay, buildWhatsAppLink, DEFAULT_WHATSAPP_NUMBER } from '../utils/whatsapp';
 
 export default function LoginPage({
     onReturnToStore,
     onLoginSuccess,
     onNavigateToProfile,
-    onNavigateToAdmin
+    onNavigateToAdmin,
+    whatsappNumber = DEFAULT_WHATSAPP_NUMBER
 }) {
     const [mode, setMode] = useState('login'); // 'login' | 'register'
     const [loginForm, setLoginForm] = useState({
@@ -802,12 +804,12 @@ export default function LoginPage({
 
                         <div className="space-y-2.5 pt-1">
                             <a
-                                href="https://wa.me/919876543210?text=Namaste!%20I%20need%20assistance%20recovering%20my%20account%20password%20on%20Amol%20Marble%20Murti%20Bhandar."
+                                href={buildWhatsAppLink(whatsappNumber, 'Namaste! I need assistance recovering my account password on Amol Marble Murti Bhandar.')}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="w-full py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#1EBE5D] text-white text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm"
                             >
-                                <span>Recover via WhatsApp Concierge (+91 98765 43210)</span>
+                                <span>Recover via WhatsApp Concierge ({formatWhatsAppNumberForDisplay(whatsappNumber)})</span>
                                 <ExternalLink className="w-3.5 h-3.5" />
                             </a>
 
