@@ -6,7 +6,7 @@ import {
     LogOut, Database, Layers, MessageSquare, CheckSquare, Search,
     Upload, Loader2, Eye, EyeOff, Filter, Send, Link as LinkIcon,
     AlertTriangle, X, CheckCheck, ChevronRight, ChevronDown, Sliders,
-    User, Info, ArrowUpRight, Key, ShieldCheck,
+    User, Info, ArrowUpRight, Key, ShieldCheck, Layout,
     Users, UserPlus, UserCheck, UserX, ShieldAlert, Mail, Calendar, KeyRound
 } from 'lucide-react';
 import api from '../services/api';
@@ -1597,6 +1597,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     Marketing & Channels
                                 </div>
                                 {[
+                                    { id: 'hero', label: 'Hero Section', icon: Layout },
                                     { id: 'festival', label: 'Festival Area', icon: Sparkles, isFestive: true },
                                     { id: 'settings', label: 'WhatsApp & Settings', icon: Phone }
                                 ].map(tab => {
@@ -2968,6 +2969,247 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                     )}
 
                     {/* ========================================================================= */}
+                    {/* TAB: STOREFRONT HERO SECTION (FEATURED SACRED COLLECTION SHOWCASE)       */}
+                    {/* ========================================================================= */}
+                    {activeTab === 'hero' && (
+                        <div className="space-y-6 animate-in fade-in duration-200">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-200/60 pb-4">
+                                <div>
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="w-10 h-10 rounded-2xl bg-[#FAF2DE] border border-[#DFC48D] flex items-center justify-center text-[#8E5B00] shadow-2xs">
+                                            <Layout className="w-5 h-5 stroke-[2]" />
+                                        </div>
+                                        <div>
+                                            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#161616]">
+                                                Storefront Hero Section
+                                            </h2>
+                                            <p className="text-xs text-stone-500 mt-0.5">
+                                                Manage the dynamic headline, copy, pricing badges, and artwork for the main Featured Sacred Collection showcase on your homepage.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => window.open('/', '_blank')}
+                                        className="px-4 py-2 rounded-xl bg-white text-stone-800 hover:bg-stone-100 border border-stone-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                                    >
+                                        <ExternalLink className="w-3.5 h-3.5 text-stone-500" />
+                                        <span>View Storefront Live</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleSaveSettings} className="bg-white p-6 sm:p-8 rounded-3xl border border-stone-200 shadow-2xs space-y-7">
+                                {/* Live Customer Preview Card */}
+                                <div className="rounded-3xl border border-[#DFC48D]/70 bg-gradient-to-br from-[#FAF8F5] via-[#FFFDF9] to-[#F5EEDD] p-5 sm:p-7 shadow-xs space-y-4">
+                                    <div className="flex items-center justify-between border-b border-[#DFC48D]/40 pb-3">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-[#8E5B00] uppercase tracking-wider">
+                                            <Sparkles className="w-4 h-4 text-[#C69722]" />
+                                            <span>Live Customer Preview</span>
+                                        </div>
+                                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            Active on Homepage
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="flex flex-col md:flex-row items-center gap-6 pt-1">
+                                        <div className="w-36 h-36 md:w-44 md:h-44 rounded-2xl border border-[#DFC48D]/40 bg-white p-2.5 flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden">
+                                            <SafeImage
+                                                src={api.getImageUrl(settings.collection_image_url || '/images/products/ram-darbar.png')}
+                                                alt="Featured Sacred Collection Artwork"
+                                                className="w-full h-full object-contain"
+                                            />
+                                        </div>
+
+                                        <div className="flex-1 space-y-2 text-left w-full min-w-0">
+                                            <div className="inline-block px-3 py-1 rounded-full bg-[#161616] text-[#F7C600] text-[10px] font-extrabold uppercase tracking-widest shadow-2xs">
+                                                {settings.collection_badge || 'HASTASHILP HERITAGE 2026'}
+                                            </div>
+                                            <h3 className="font-serif text-xl sm:text-2xl font-bold text-[#161616] leading-snug">
+                                                {settings.collection_title || 'Shri Ram Darbar'}
+                                            </h3>
+                                            <p className="text-xs font-semibold text-[#8E5B00]">
+                                                {settings.collection_subtitle || 'Pure Makrana White Marble'}
+                                            </p>
+                                            <p className="text-xs text-stone-600 line-clamp-3 leading-relaxed">
+                                                {settings.collection_description || 'Hand-sculpted in Makrana white marble by fourth-generation Jaipur sthapatis. Adorned with pure 24K gold foil (swarna varakh), suitable for consecrated home mandir installation.'}
+                                            </p>
+                                            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                                                <span className="font-serif text-lg font-bold text-[#161616]">
+                                                    ₹{settings.collection_price_from || '1,499'}
+                                                </span>
+                                                {settings.collection_old_price && (
+                                                    <span className="text-xs text-stone-400 line-through">
+                                                        ₹{settings.collection_old_price}
+                                                    </span>
+                                                )}
+                                                {settings.collection_discount_text && (
+                                                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                                                        {settings.collection_discount_text}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Form Fields Grid */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="sm:col-span-2 space-y-1.5">
+                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                            Hero Collection Title *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={settings.collection_title || ''}
+                                            onChange={(e) => setSettings({ ...settings, collection_title: e.target.value })}
+                                            placeholder="e.g. SANCTIFIED SACRED COLLECTION 2026"
+                                            className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-bold text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                        />
+                                        <span className="text-[11px] text-stone-500 block">
+                                            Main headline displayed on the homepage sacred showcase
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                            Top Badge Text
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={settings.collection_badge || ''}
+                                            onChange={(e) => setSettings({ ...settings, collection_badge: e.target.value })}
+                                            placeholder="e.g. HAND-CARVED BY NATIONAL AWARD ARTISANS"
+                                            className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-semibold focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                        />
+                                        <span className="text-[11px] text-stone-500 block">
+                                            Pill badge shown directly above the title
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                            Subtitle / Hook
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={settings.collection_subtitle || ''}
+                                            onChange={(e) => setSettings({ ...settings, collection_subtitle: e.target.value })}
+                                            placeholder="e.g. Consecrated Heritage Masterpieces"
+                                            className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-semibold focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                        />
+                                        <span className="text-[11px] text-stone-500 block">
+                                            Secondary spiritual subtitle or craft hallmark
+                                        </span>
+                                    </div>
+
+                                    <div className="sm:col-span-2 space-y-1.5">
+                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                            Collection Story & Description
+                                        </label>
+                                        <textarea
+                                            rows={3}
+                                            value={settings.collection_description || ''}
+                                            onChange={(e) => setSettings({ ...settings, collection_description: e.target.value })}
+                                            placeholder="Exclusive hand-sculpted Makrana marble murtis with 24K real gold leaf work..."
+                                            className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs leading-relaxed focus:bg-white focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
+                                        />
+                                        <span className="text-[11px] text-stone-500 block">
+                                            Spiritual narrative explaining the artisanal sculpting, gold varakh, and mandir installation suitability
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:col-span-2 pt-1">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                                Price From (₹)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.collection_price_from || ''}
+                                                onChange={(e) => setSettings({ ...settings, collection_price_from: e.target.value })}
+                                                placeholder="45,000"
+                                                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-bold text-stone-900 focus:bg-white focus:outline-none focus:border-[#C69722]"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                                Old Price (₹)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.collection_old_price || ''}
+                                                onChange={(e) => setSettings({ ...settings, collection_old_price: e.target.value })}
+                                                placeholder="65,000"
+                                                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs text-stone-500 focus:bg-white focus:outline-none focus:border-[#C69722]"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                                Discount Badge
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={settings.collection_discount_text || ''}
+                                                onChange={(e) => setSettings({ ...settings, collection_discount_text: e.target.value })}
+                                                placeholder="30% CONSECRATION DISCOUNT"
+                                                className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-bold text-emerald-700 focus:bg-white focus:outline-none focus:border-[#C69722]"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Showcase Image Upload */}
+                                    <div className="sm:col-span-2 space-y-2 pt-3 border-t border-stone-100">
+                                        <label className="text-xs font-bold text-stone-800 uppercase tracking-wider block">
+                                            Hero Showcase Image
+                                        </label>
+                                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                                            {settings.collection_image_url && (
+                                                <div className="w-28 h-28 rounded-2xl border border-stone-200 bg-white p-2 flex-shrink-0 flex items-center justify-center shadow-xs">
+                                                    <SafeImage
+                                                        src={api.getImageUrl(settings.collection_image_url)}
+                                                        alt="Hero Showcase Visual"
+                                                        className="w-full h-full object-contain"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="flex-1 w-full">
+                                                <ImageDropzone
+                                                    label="Upload Hero Collection Showcase Image"
+                                                    sublabel="Drag & drop new banner image or click to browse (auto-optimized to WebP)"
+                                                    isUploading={uploadingCollectionBanner}
+                                                    onUpload={async (file) => {
+                                                        setUploadingCollectionBanner(true);
+                                                        const url = await handleFileUpload(file, 'banners');
+                                                        if (url) {
+                                                            setSettings(prev => ({ ...prev, collection_image_url: url }));
+                                                        }
+                                                        setUploadingCollectionBanner(false);
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-end pt-3 border-t border-stone-100">
+                                    <button
+                                        type="submit"
+                                        className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 flex items-center gap-2 active:scale-95 cursor-pointer"
+                                    >
+                                        <Check className="w-4 h-4 stroke-[2.5]" />
+                                        <span>Save Hero Section Changes</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
+                    {/* ========================================================================= */}
                     {/* TAB 7: WHATSAPP CONCIERGE & SITE SETTINGS (With Test WhatsApp Link) */}
                     {/* ========================================================================= */}
                     {activeTab === 'settings' && (
@@ -3070,148 +3312,13 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                                     </div>
                                 </div>
 
-                                {/* Featured Sacred Collection Settings */}
-                                <div className="space-y-4 pt-4 border-t border-stone-200">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <label className="text-xs font-bold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
-                                                <Sparkles className="w-4 h-4 text-[#C69722]" />
-                                                <span>Featured Sacred Collection (Storefront Hero Showcase)</span>
-                                            </label>
-                                            <span className="text-[11px] text-stone-500">
-                                                Manage the dynamic headline, copy, and visual for "SANCTIFIED SACRED COLLECTION 2026"
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-[#FAF8F5] p-5 sm:p-6 rounded-3xl border border-[#DFC48D]/60 space-y-0">
-                                        <div className="sm:col-span-2">
-                                            <label className="text-[11px] font-bold text-stone-700 block mb-1">
-                                                HERO COLLECTION TITLE *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                value={settings.collection_title || ''}
-                                                onChange={(e) => setSettings({ ...settings, collection_title: e.target.value })}
-                                                placeholder="e.g. SANCTIFIED SACRED COLLECTION 2026"
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-bold text-stone-900 focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="text-[11px] font-bold text-stone-700 block mb-1">
-                                                TOP BADGE TEXT
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={settings.collection_badge || ''}
-                                                onChange={(e) => setSettings({ ...settings, collection_badge: e.target.value })}
-                                                placeholder="e.g. HASTASHILP HERITAGE 2026"
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="text-[11px] font-bold text-stone-700 block mb-1">
-                                                SUBTITLE / HOOK
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={settings.collection_subtitle || ''}
-                                                onChange={(e) => setSettings({ ...settings, collection_subtitle: e.target.value })}
-                                                placeholder="e.g. DIVINE BLESSINGS FOR YOUR SACRED SANCTUM"
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-semibold focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
-                                            />
-                                        </div>
-
-                                        <div className="sm:col-span-2">
-                                            <label className="text-[11px] font-bold text-stone-700 block mb-1">
-                                                COLLECTION STORY & DESCRIPTION
-                                            </label>
-                                            <textarea
-                                                rows={2}
-                                                value={settings.collection_description || ''}
-                                                onChange={(e) => setSettings({ ...settings, collection_description: e.target.value })}
-                                                placeholder="Hand-sculpted in Makrana white marble by fourth-generation Jaipur sthapatis..."
-                                                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs leading-relaxed focus:outline-none focus:border-[#C69722] focus:ring-2 focus:ring-[#C69722]/20 transition"
-                                            />
-                                        </div>
-
-                                        <div className="grid grid-cols-3 gap-2 sm:col-span-2">
-                                            <div>
-                                                <label className="text-[10px] font-bold text-stone-600 block mb-0.5">PRICE FROM (₹)</label>
-                                                <input
-                                                    type="text"
-                                                    value={settings.collection_price_from || ''}
-                                                    onChange={(e) => setSettings({ ...settings, collection_price_from: e.target.value })}
-                                                    placeholder="1,499"
-                                                    className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs bg-white font-bold text-stone-900 focus:outline-none focus:border-[#C69722]"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-bold text-stone-600 block mb-0.5">OLD PRICE (₹)</label>
-                                                <input
-                                                    type="text"
-                                                    value={settings.collection_old_price || ''}
-                                                    onChange={(e) => setSettings({ ...settings, collection_old_price: e.target.value })}
-                                                    placeholder="2,499"
-                                                    className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs bg-white text-stone-500 focus:outline-none focus:border-[#C69722]"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-bold text-stone-600 block mb-0.5">DISCOUNT BADGE</label>
-                                                <input
-                                                    type="text"
-                                                    value={settings.collection_discount_text || ''}
-                                                    onChange={(e) => setSettings({ ...settings, collection_discount_text: e.target.value })}
-                                                    placeholder="40% OFF"
-                                                    className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs bg-white font-bold text-emerald-700 focus:outline-none focus:border-[#C69722]"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="sm:col-span-2 space-y-2 pt-2">
-                                            <label className="text-[11px] font-bold text-stone-700 block">
-                                                HERO SHOWCASE IMAGE
-                                            </label>
-                                            <div className="flex flex-col sm:flex-row items-center gap-3.5">
-                                                {settings.collection_image_url ? (
-                                                    <div className="w-24 h-24 rounded-2xl border border-stone-300 bg-white p-1.5 flex-shrink-0 flex items-center justify-center shadow-2xs">
-                                                        <SafeImage
-                                                            src={api.getImageUrl(settings.collection_image_url)}
-                                                            alt="Hero Preview"
-                                                            className="w-full h-full object-contain"
-                                                        />
-                                                    </div>
-                                                ) : null}
-                                                <div className="flex-1 w-full">
-                                                    <ImageDropzone
-                                                        label="Upload Hero Collection Showcase Image"
-                                                        sublabel="Drag & drop new banner image or click to browse"
-                                                        isUploading={uploadingCollectionBanner}
-                                                        onUpload={async (file) => {
-                                                            setUploadingCollectionBanner(true);
-                                                            const url = await handleFileUpload(file, 'banners');
-                                                            if (url) {
-                                                                setSettings(prev => ({ ...prev, collection_image_url: url }));
-                                                            }
-                                                            setUploadingCollectionBanner(false);
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div className="flex items-center justify-end pt-2">
                                     <button
                                         type="submit"
                                         className="px-8 py-3 rounded-xl bg-gradient-to-r from-[#F7C600] to-[#E5B500] hover:from-[#E5B500] hover:to-[#D4A300] text-[#161616] font-black text-xs uppercase tracking-wider transition-all shadow-md hover:shadow-[#F7C600]/25 flex items-center gap-2 active:scale-95 cursor-pointer"
                                     >
                                         <Check className="w-4 h-4 stroke-[2.5]" />
-                                        <span>Save Global Settings</span>
+                                        <span>Save WhatsApp & Rating Settings</span>
                                     </button>
                                 </div>
                             </form>
