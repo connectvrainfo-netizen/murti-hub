@@ -1,0 +1,32 @@
+services:
+  # Amol Marble Murti Bhandar FastAPI Backend
+  - type: web
+    name: murti-hub-backend
+    runtime: python
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "python run.py"
+    healthCheckPath: "/health"
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: PORT
+        value: "8000"
+      - key: ENVIRONMENT
+        value: "production"
+      - key: DEBUG
+        value: "False"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        value: "admin@amolmurtibhandar.com"
+      - key: ADMIN_PASSWORD
+        sync: false

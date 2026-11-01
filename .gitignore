@@ -39,7 +39,10 @@ test-results/
 .agents/
 skills-lock.json
 
-# Backend
+# Backend & Python
+__pycache__/
+*.py[cod]
+*$py.class
 backend/.venv/
 backend/.env
 backend/**/__pycache__/

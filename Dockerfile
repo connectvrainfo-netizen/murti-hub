@@ -12,7 +12,7 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 # Copy project source code and assets
-COPY index.html vite.config.js ./
+COPY index.html vite.config.js tailwind.config.js postcss.config.js tsconfig.json ./
 COPY src/ ./src/
 COPY public/ ./public/
 

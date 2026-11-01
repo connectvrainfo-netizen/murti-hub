@@ -2,13 +2,13 @@
   "site_settings": {
     "id": 1,
     "site_title": "Amol Marble Murti Bhandar - Sacred Jaipur Murtis",
-    "whatsapp_number": "+91 70206 76423",
+    "whatsapp_number": "+91 98765 43210",
     "whatsapp_default_message": "TestMessage",
     "global_rating_mode": "enabled",
     "support_email": "support@amolmurtibhandar.com",
     "showroom_address": "Khazane Walon Ka Rasta, Jaipur, Rajasthan 302001",
     "banner_announcement": "Zero-Breakage Crating Guarantee across all 19,000+ PIN codes across India",
-    "updated_at": "2026-10-26T04:07:04.285229+00:00",
+    "updated_at": "2026-11-01T03:50:19.982310+00:00",
     "collection_badge": "HAND-CARVED BY NATIONAL AWARD ARTISANS",
     "collection_title": "DIVINE MAKRANA SACRED COLLECTION 2026",
     "collection_subtitle": "Consecrated Heritage Masterpieces",
@@ -3011,6 +3011,24 @@
       "role": "customer",
       "is_active": true,
       "created_at": "2026-10-26T04:07:04.652823+00:00"
+    },
+    {
+      "id": "7b1fa985-9a92-44cf-a81e-64a943dd80bb",
+      "email": "test.devotee.1793504756@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$J50t3MCBuJeWDE42Tx4Zd.vFgeDxYqGz2yCtxRBwcctQ6h7nQj67u",
+      "role": "customer",
+      "is_active": true,
+      "created_at": "2026-11-01T03:45:56.556018+00:00"
+    },
+    {
+      "id": "4c8da2c9-6b92-489b-9917-007cb4c0f3ba",
+      "email": "test.devotee.1793505020@example.com",
+      "full_name": "Test Devotee",
+      "password_hash": "$2b$12$Betd4j3H3l8NrQkA6tDLK.s7so5O4lPu8ln3mBPCRmGGe6x9P6lF2",
+      "role": "customer",
+      "is_active": true,
+      "created_at": "2026-11-01T03:50:20.233109+00:00"
     }
   ],
   "revoked_tokens": [
@@ -3111,6 +3129,8 @@
         1792987730.9674752
       ]
     },
-    "register": {}
+    "register": {
+      "testclient": []
+    }
   }
 }
