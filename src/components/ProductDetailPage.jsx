@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Star, ShieldCheck, Gem, Sparkles, Check, Heart, ShoppingBag,
     ArrowRight, ChevronLeft, ChevronRight, CheckCircle2, RotateCcw,
@@ -31,7 +31,7 @@ export default function ProductDetailPage({
     }, [product?.id]);
 
     // Product Variations State
-    const [selectedSize, setSelectedSize] = useState('9 cm (Compact / Small Altar)');
+    const [selectedSizeIndex, setSelectedSizeIndex] = useState(0);
     const [qty, setQty] = useState(1);
     const [activeTab, setActiveTab] = useState('specs'); // 'specs' | 'vaastu' | 'care' | 'shipping'
     const [activeImageIdx, setActiveImageIdx] = useState(0);
@@ -555,47 +555,25 @@ export default function ProductDetailPage({
                             <label className="flex items-center justify-between text-xs font-bold text-stone-800 uppercase tracking-wider">
                                 <span>SELECT IDOL SIZE:</span>
                                 <span className="text-[#C69722] text-[11px] font-medium lowercase">
-                                    {product.measurement_unit ? `unit: ${product.measurement_unit}` : (selectedSize.includes('9 cm') ? 'ideal for travel & office desk' : 'ideal for grand home mandir')}
+                                    {product.measurement_unit ? `unit: ${product.measurement_unit}` : (currentSizeOption.label.includes('9 cm') ? 'ideal for travel & office desk' : currentSizeOption.label.includes('15 cm') ? 'ideal for everyday home mandir' : 'ideal for grand temple room')}
                                 </span>
                             </label>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                                {(Array.isArray(product.available_sizes) && product.available_sizes.length > 0
-                                    ? product.available_sizes.map((sz, idx) => ({
-                                        label: sz,
-                                        desc: idx === 0 ? 'Standard Size' : 'Available Size',
-                                        extra: 0
-                                    }))
-                                    : (product.variants && product.variants.length > 0)
-                                    ? product.variants.map(v => ({
-                                        label: v.variant_name || `${v.size?.label || 'Custom Size'}`,
-                                        desc: v.discount_price ? `₹${v.price}` : `Standard`,
-                                        extra: (v.price - priceNum) > 0 ? (v.price - priceNum) : 0
-                                    }))
-                                    : (masterSizes && masterSizes.length > 0)
-                                    ? masterSizes.slice(0, 3).map((ms, idx) => ({
-                                        label: ms.label,
-                                        desc: ms.description || (idx === 0 ? 'Standard' : `+₹${idx * 600}`),
-                                        extra: idx * 600
-                                    }))
-                                    : [
-                                        { label: '9 cm (Compact)', desc: 'Standard', extra: 0 },
-                                        { label: '15 cm (Home Mandir)', desc: '+₹600', extra: 600 },
-                                        { label: '24 cm (Grand Temple)', desc: '+₹1,500', extra: 1500 }
-                                    ]
-                                ).map(size => {
-                                    const isSelected = selectedSize === size.label || selectedSize.includes(size.label.split(' ')[0]);
+                                {sizeOptions.map((size, idx) => {
+                                    const isSelected = selectedSizeIndex === idx;
                                     return (
                                         <button
-                                            key={size.label}
-                                            onClick={() => setSelectedSize(size.label)}
-                                            className={`p-3 rounded-xl border text-left transition flex flex-col justify-between min-h-[48px] tap-target-48 ${
+                                            key={`${size.label}-${idx}`}
+                                            type="button"
+                                            onClick={() => setSelectedSizeIndex(idx)}
+                                            className={`p-3 rounded-xl border text-left transition flex flex-col justify-between min-h-[52px] tap-target-48 cursor-pointer ${
                                                 isSelected
-                                                    ? 'border-[#161616] bg-[#161616] text-white shadow-sm'
+                                                    ? 'border-[#161616] bg-[#161616] text-white shadow-sm ring-2 ring-[#C69722]/60'
                                                     : 'border-stone-200 bg-white text-stone-700 hover:border-black'
                                             }`}
                                         >
-                                            <span className="text-xs font-bold">{size.label}</span>
-                                            <span className={`text-[10px] mt-1 ${isSelected ? 'text-[#F7C600]' : 'text-stone-500'}`}>{size.desc}</span>
+                                            <span className="text-xs font-bold leading-tight">{size.label}</span>
+                                            <span className={`text-[10px] mt-1 font-semibold ${isSelected ? 'text-[#F7C600]' : 'text-[#8E5B00]'}`}>{size.desc}</span>
                                         </button>
                                     );
                                 })}
@@ -631,7 +609,7 @@ export default function ProductDetailPage({
                                             onAddToCart({
                                                 ...product,
                                                 price: finalPrice,
-                                                title: `${product.title} (${selectedSize.split(' ')[0]} cm)`
+                                                title: `${product.title} (${currentSizeOption.label})`
                                             }, false);
                                         }
                                     }}
@@ -647,7 +625,7 @@ export default function ProductDetailPage({
                                     const itemToBuy = {
                                         ...product,
                                         price: finalPrice,
-                                        title: `${product.title} (${selectedSize.split(' ')[0]} cm)`
+                                        title: `${product.title} (${currentSizeOption.label})`
                                     };
                                     if (onBuyNow) {
                                         onBuyNow(itemToBuy);
@@ -1223,7 +1201,7 @@ export default function ProductDetailPage({
                                 onAddToCart({
                                     ...product,
                                     price: finalPrice,
-                                    title: `${product.title} (${selectedSize.split(' ')[0]} cm)`
+                                    title: `${product.title} (${currentSizeOption.label})`
                                 }, false);
                             }
                         }}
@@ -1240,7 +1218,7 @@ export default function ProductDetailPage({
                             const itemToBuy = {
                                 ...product,
                                 price: finalPrice,
-                                title: `${product.title} (${selectedSize.split(' ')[0]} cm)`
+                                title: `${product.title} (${currentSizeOption.label})`
                             };
                             if (onBuyNow) {
                                 onBuyNow(itemToBuy);

@@ -424,6 +424,7 @@ export default function AdminPortalModal({ isOpen, onClose, onDataChanged }) {
                                 disabled={loading}
                                 className="p-2 text-stone-300 hover:text-white rounded-lg hover:bg-white/10 transition"
                                 title="Refresh data from server"
+                                aria-label="Refresh data from server"
                             >
                                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                             </button>

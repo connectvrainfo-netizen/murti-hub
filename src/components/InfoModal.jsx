@@ -1,8 +1,10 @@
-import React from 'react';
-import { X, ShieldCheck, Truck, RotateCcw, Phone, Mail, MapPin, Award } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, ShieldCheck, Truck, RotateCcw, Phone, Mail, MapPin, Award, ExternalLink } from 'lucide-react';
 import { formatWhatsAppNumberForDisplay, buildWhatsAppLink, DEFAULT_WHATSAPP_NUMBER } from '../utils/whatsapp';
 
 export default function InfoModal({ contentKey, onClose, whatsappNumber = DEFAULT_WHATSAPP_NUMBER }) {
+    const [loadInteractiveMap, setLoadInteractiveMap] = useState(false);
+    const [mapLoading, setMapLoading] = useState(true);
     if (!contentKey) return null;
 
     const displayPhone = formatWhatsAppNumberForDisplay(whatsappNumber);
@@ -78,31 +80,69 @@ export default function InfoModal({ contentKey, onClose, whatsappNumber = DEFAUL
                                 <strong className="text-black">care@amolmurtibhandar.com</strong>
                             </div>
                         </div>
-                        <div className="p-3.5 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8]">
+                        <div className="p-3.5 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] space-y-3">
                             <div className="flex items-start gap-3">
                                 <MapPin className="w-5 h-5 text-[#C69722] flex-shrink-0 mt-0.5" />
-                                <div>
-                                    <span className="text-[11px] text-stone-500 block">Flagship Showroom & Studio</span>
-                                    <strong className="text-black">Amol Marble Murti Bhandar, Bus Stand Road, Near Murarka High School, Shegaon, Buldhana District, Maharashtra 444203</strong>
-                                    <a 
-                                        href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6" 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="block mt-1 text-xs text-[#8E5B00] hover:underline font-bold"
-                                    >
-                                        📍 Open in Google Maps App (4.9★ Rated) →
-                                    </a>
+                                <div className="space-y-1">
+                                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E5B00] block">Flagship Showroom & Studio</span>
+                                    <strong className="text-black text-xs sm:text-sm block leading-snug">
+                                        Amol Marble Murti Bhandar, Bus Stand Road, Near Murarka High School, Shegaon, Buldhana District, Maharashtra 444203
+                                    </strong>
+                                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                                        <a 
+                                            href="https://maps.app.goo.gl/Ekzz1e5eooC5WbEg6" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F7C600] hover:bg-[#E2B400] text-[#161616] text-xs font-bold transition shadow-xs tap-target-44"
+                                        >
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                            <span>Open in Google Maps App (4.9★)</span>
+                                        </a>
+                                        {!loadInteractiveMap && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setLoadInteractiveMap(true)}
+                                                className="inline-flex items-center gap-1 text-xs text-[#8E5B00] hover:text-[#161616] font-semibold underline px-2 py-1 tap-target-44 cursor-pointer"
+                                            >
+                                                Load Interactive Map
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="mt-3 rounded-lg overflow-hidden border border-[#E6D6B8] h-36 w-full">
-                                <iframe
-                                    title="Showroom Location Map"
-                                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1864.5!2d76.694611!3d20.793694!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjDCsDQ3JzM3LjMiTiA3NsKwNDEnNDAuNiJF!5e0!3m2!1sen!2sin!4v1700000000000"
-                                    className="w-full h-full border-0"
-                                    loading="lazy"
-                                    allowFullScreen
-                                    referrerPolicy="no-referrer-when-downgrade"
-                                />
+
+                            {/* Fast-Loading Map Container */}
+                            <div className="rounded-xl overflow-hidden border border-[#E6D6B8] h-44 w-full relative bg-stone-100 flex items-center justify-center">
+                                {loadInteractiveMap ? (
+                                    <>
+                                        {mapLoading && (
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#FAF5E8] gap-2 text-stone-500 z-10">
+                                                <span className="w-5 h-5 border-2 border-[#C69722] border-t-transparent rounded-full animate-spin" />
+                                                <span className="text-[11px] font-semibold">Loading Shegaon Map...</span>
+                                            </div>
+                                        )}
+                                        <iframe
+                                            title="Showroom Location Map"
+                                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1864.5!2d76.694611!3d20.793694!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjDCsDQ3JzM3LjMiTiA3NsKwNDEnNDAuNiJF!5e0!3m2!1sen!2sin!4v1700000000000"
+                                            className="w-full h-full border-0"
+                                            loading="lazy"
+                                            allowFullScreen
+                                            referrerPolicy="no-referrer-when-downgrade"
+                                            onLoad={() => setMapLoading(false)}
+                                        />
+                                    </>
+                                ) : (
+                                    <div 
+                                        onClick={() => setLoadInteractiveMap(true)}
+                                        className="w-full h-full bg-gradient-to-br from-[#FAF5E8] to-[#F3EAD3] p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-[#F3EAD3] transition group"
+                                    >
+                                        <div className="w-10 h-10 rounded-full bg-[#C69722]/15 flex items-center justify-center text-[#8E5B00] mb-2 group-hover:scale-110 transition">
+                                            <MapPin className="w-5 h-5 text-[#8E5B00]" />
+                                        </div>
+                                        <span className="text-xs font-bold text-[#161616]">Shegaon Bus Stand Road • Near Murarka High School</span>
+                                        <span className="text-[11px] text-[#8E5B00] font-semibold mt-0.5">Tap to view live interactive map</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

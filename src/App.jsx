@@ -23,6 +23,7 @@ import SafeImage from './components/SafeImage';
 const AdminPage = React.lazy(() => import('./components/AdminPage'));
 const LoginPage = React.lazy(() => import('./components/LoginPage'));
 const UserProfilePage = React.lazy(() => import('./components/UserProfilePage'));
+const NotFoundPage = React.lazy(() => import('./components/NotFoundPage'));
 import api from './services/api';
 import { supabase } from './utils/supabase';
 import { useLenisSmoothScroll } from './hooks/useLenisSmoothScroll';
@@ -111,9 +112,15 @@ const getInitialNavigation = () => {
         if (path === '/baal-roop') {
             return { page: 'baal-roop', product: null, deity: null };
         }
+        if (path === '' || path === '/' || path === '/home') {
+            return { page: 'home', product: null, deity: null };
+        }
         if (path === '/cart') {
             return { page: 'home', product: null, deity: null };
         }
+
+        // Unknown route -> 404
+        return { page: '404', product: null, deity: null };
     } catch {
         // Fallback to home
     }
@@ -122,7 +129,7 @@ const getInitialNavigation = () => {
 
 export default function App() {
     // 0. Starting Animation State
-    const [showIntro, setShowIntro] = useState(true);
+    const [showIntro, setShowIntro] = useState(false);
 
     // Live backend settings & active festival data (with localStorage caching for instant availability)
     const [siteSettings, setSiteSettings] = useState(() => {
@@ -471,7 +478,10 @@ export default function App() {
                 }
             }
 
-            if (path === '/cart') {
+            if (path === '' || path === '/' || path === '/home') {
+            return { page: 'home', product: null, deity: null };
+        }
+        if (path === '/cart') {
                 setIsCartOpen(true);
             }
 
@@ -534,9 +544,9 @@ export default function App() {
 
     // 6. Hero Video State
     const videoRef = useRef(null);
-    const [isVideoPlaying, setIsVideoPlaying] = useState(true);
+    const [isVideoPlaying, setIsVideoPlaying] = useState(false);
     const [isVideoMuted, setIsVideoMuted] = useState(true);
-    const [activeHeroSlide, setActiveHeroSlide] = useState(1); // Default to Showroom Walkthrough Video slide
+    const [activeHeroSlide, setActiveHeroSlide] = useState(0); // Default to Sacred Ram Darbar collection slide
     const [activeHeroCollectionImageIdx, setActiveHeroCollectionImageIdx] = useState(0);
 
     // Auto-play hero showroom video when active
@@ -571,6 +581,8 @@ export default function App() {
     // 7. Cart State & Safe Normalization
     const [cart, setCart] = useState([]);
     const [appliedCoupon, setAppliedCoupon] = useState(null); // { code: 'DIVINE15', discountPercent: 15 }
+    const [cartCouponInput, setCartCouponInput] = useState('');
+    const [cartCouponError, setCartCouponError] = useState('');
 
     const addToCart = (product, openDrawer = false) => {
         const priceNum = typeof product.price === 'string'
@@ -607,7 +619,7 @@ export default function App() {
         const priceNum = typeof product.price === 'string'
             ? parseInt(product.price.replace(/[^\d]/g, ''), 10) || 999
             : product.price;
-        const message = `Hi, I'm interested in this idol:\n\n*${product.title}*\nPrice: ₹${priceNum.toLocaleString('en-IN')}\n\n*My Details:*\nName: ${customer.name}\nPhone: ${customer.phone}\nAddress: ${customer.address}\nPincode: ${customer.pincode}\n\nPlease share more details and availability.`;
+        const message = `*NEW IDOL ORDER - AMOL MARBLE MURTI BHANDAR*\n\nIdol: *${product.title}*\nPrice: ₹${priceNum.toLocaleString('en-IN')}\n\n*Customer & Delivery Address:*\nName: ${customer.name}\nPhone: ${customer.phone}\nAddress: ${customer.address}\nPincode: ${customer.pincode}\n\nPlease confirm my order and share delivery schedule & payment details. Blessed shopping 🙏`;
         const url = buildWhatsAppLink(siteSettings?.whatsapp_number, message);
         try {
             const w = window.open(url, '_blank');
@@ -635,7 +647,11 @@ export default function App() {
     const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
 
     const applyCoupon = (code) => {
-        const c = code.trim().toUpperCase();
+        if (!code || !String(code).trim()) {
+            showToast('Please enter a coupon code (e.g. DIVINE15)');
+            return;
+        }
+        const c = String(code).trim().toUpperCase();
         if (c === 'DIVINE15') {
             setAppliedCoupon({ code: 'DIVINE15', discountPercent: 15 });
             showToast('Coupon DIVINE15 Applied: 15% OFF!');
@@ -1199,6 +1215,30 @@ export default function App() {
                         }
                     }}
                     whatsappNumber={siteSettings?.whatsapp_number}
+                />
+            </React.Suspense>
+        );
+    }
+
+    // =========================================================================
+    // DEDICATED 404 NOT FOUND ROUTE
+    // =========================================================================
+    if (currentPage === '404') {
+        return (
+            <React.Suspense fallback={
+                <div className="min-h-screen w-full bg-[#FAF5E8] flex items-center justify-center p-6 text-stone-700">
+                    <span className="w-6 h-6 border-2 border-[#C69722] border-t-transparent rounded-full animate-spin" />
+                </div>
+            }>
+                <NotFoundPage
+                    onReturnToStore={() => {
+                        window.history.pushState(null, '', '/');
+                        navigateTo('home');
+                    }}
+                    onNavigateToShop={() => {
+                        window.history.pushState(null, '', '/shop-all');
+                        navigateTo('shop-all');
+                    }}
                 />
             </React.Suspense>
         );
@@ -1894,11 +1934,10 @@ export default function App() {
                                 <video
                                     ref={videoRef}
                                     className="w-full h-full object-cover object-center pointer-events-none select-none"
-                                    autoPlay
                                     loop
                                     muted
                                     playsInline
-                                    preload="auto"
+                                    preload="none"
                                     poster="/images/banners/hero-most-loved.png"
                                     disablePictureInPicture
                                     disableRemotePlayback
@@ -2127,12 +2166,12 @@ export default function App() {
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>
 
-                                <div id="most-loved-track" className="continuous-marquee-track flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar pb-3 sm:pb-4 px-1 sm:px-2">
+                                <div id="most-loved-track" className="continuous-marquee-track flex gap-3 sm:gap-5 overflow-x-auto no-scrollbar pb-3 sm:pb-4 px-4 sm:px-2 snap-x snap-mandatory scroll-smooth">
                                     {(() => {
                                         const mostLoved = liveProducts.filter(p => p.group === 'most-loved' || p.group_tag === 'most-loved');
                                         const itemsToShow = mostLoved.length > 0 ? mostLoved : liveProducts.slice(0, 6);
                                         return [...itemsToShow, ...itemsToShow, ...itemsToShow].map((p, idx) => (
-                                        <article key={`${p.id}-${idx}`} className="w-[230px] sm:w-[272px] flex-shrink-0 flex flex-col justify-between group bg-white p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-sm hover:shadow-md transition">
+                                        <article key={`${p.id}-${idx}`} className="w-[78vw] max-w-[272px] sm:w-[272px] snap-start flex-shrink-0 flex flex-col justify-between group bg-white p-3 sm:p-3.5 rounded-2xl border border-stone-200/90 shadow-sm hover:shadow-md transition">
                                             <div>
                                                 <div 
                                                     onClick={() => openProductPage(p)}
@@ -2331,7 +2370,7 @@ export default function App() {
 
                                     <div
                                         id="festive-track"
-                                        className="continuous-marquee-track flex gap-3 sm:gap-4 lg:gap-5 overflow-x-auto no-scrollbar pb-3 sm:pb-4 px-1"
+                                        className="continuous-marquee-track flex gap-3 sm:gap-4 lg:gap-5 overflow-x-auto no-scrollbar pb-3 sm:pb-4 px-4 sm:px-1 snap-x snap-mandatory scroll-smooth"
                                     >
                                         {(() => {
                                             let festiveItems = [];
@@ -2365,7 +2404,7 @@ export default function App() {
                                             return festiveItems.map((p, idx) => (
                                             <article
                                                 key={`${p.id}-${idx}`}
-                                                className="w-[230px] sm:w-[260px] lg:w-[270px] flex-shrink-0 bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/60 transition-all duration-300 flex flex-col justify-between group p-3 sm:p-4"
+                                                className="w-[78vw] max-w-[270px] sm:w-[260px] lg:w-[270px] snap-start flex-shrink-0 bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 shadow-xs hover:shadow-xl hover:border-[#D4AF37]/60 transition-all duration-300 flex flex-col justify-between group p-3 sm:p-4"
                                             >
                                                 <div>
                                                     {/* Full-Height Portrait Deity Image Container */}
@@ -2508,9 +2547,9 @@ export default function App() {
                                 </div>
                             </div>
 
-                            <div id="dark-overlay-track" className="continuous-marquee-track flex gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar pb-2">
+                            <div id="dark-overlay-track" className="continuous-marquee-track flex gap-2.5 sm:gap-4 overflow-x-auto no-scrollbar pb-2 px-4 sm:px-0 snap-x snap-mandatory scroll-smooth">
                                 {[...overlayCards, ...overlayCards, ...overlayCards].map((c, idx) => (
-                                    <div key={`${c.id}-${idx}`} className="w-[180px] sm:w-[220px] flex-shrink-0 rounded-2xl overflow-hidden relative group shadow-lg flex flex-col justify-end h-[270px] sm:h-[310px] bg-stone-900 border border-stone-800">
+                                    <div key={`${c.id}-${idx}`} className="w-[68vw] max-w-[220px] sm:w-[220px] snap-start flex-shrink-0 rounded-2xl overflow-hidden relative group shadow-lg flex flex-col justify-end h-[270px] sm:h-[310px] bg-stone-900 border border-stone-800">
                                         <div 
                                             onClick={() => openProductPage(c)}
                                             className="absolute inset-0 cursor-pointer"
@@ -3161,9 +3200,9 @@ export default function App() {
                     <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-3 border-b border-stone-200 flex items-center justify-between text-xs text-stone-600 gap-2">
                         <div className="flex items-center gap-3">
                             <div className="hidden sm:flex items-center gap-3">
-                                <button onClick={() => setGridCols(2)} className={`p-1 ${gridCols === 2 ? 'text-black font-bold' : 'hover:text-black'}`} title="2 Columns"><Columns className="w-4 h-4" /></button>
-                                <button onClick={() => setGridCols(3)} className={`p-1 ${gridCols === 3 ? 'text-black font-bold' : 'hover:text-black'}`} title="3 Columns"><LayoutGrid className="w-4 h-4" /></button>
-                                <button onClick={() => setGridCols(4)} className={`p-1 ${gridCols === 4 ? 'text-black font-bold' : 'hover:text-black'}`} title="4 Columns"><Grid className="w-4 h-4" /></button>
+                                <button onClick={() => setGridCols(2)} className={`p-1 ${gridCols === 2 ? 'text-black font-bold' : 'hover:text-black'}`} title="2 Columns" aria-label="View catalog in 2 columns"><Columns className="w-4 h-4" /></button>
+                                <button onClick={() => setGridCols(3)} className={`p-1 ${gridCols === 3 ? 'text-black font-bold' : 'hover:text-black'}`} title="3 Columns" aria-label="View catalog in 3 columns"><LayoutGrid className="w-4 h-4" /></button>
+                                <button onClick={() => setGridCols(4)} className={`p-1 ${gridCols === 4 ? 'text-black font-bold' : 'hover:text-black'}`} title="4 Columns" aria-label="View catalog in 4 columns"><Grid className="w-4 h-4" /></button>
                             </div>
                             <div className="text-xs text-stone-600 font-semibold whitespace-nowrap">
                                 {collectionItems.length} Idols
@@ -3172,7 +3211,10 @@ export default function App() {
 
                         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                             <div className="flex items-center gap-1.5">
+                                <label htmlFor="product-sort-select" className="sr-only">Sort products</label>
                                 <select
+                                    id="product-sort-select"
+                                    aria-label="Sort products by"
                                     value={sortBy}
                                     onChange={(e) => setSortBy(e.target.value)}
                                     className="border border-stone-200 rounded-lg px-2 py-1.5 text-xs bg-stone-50 focus:outline-none font-medium text-stone-800"
@@ -3512,7 +3554,7 @@ export default function App() {
                                 Submit OTP
                             </button>
                             <label className="flex items-start gap-2 text-[10px] text-stone-500 cursor-pointer pt-1">
-                                <input type="checkbox" defaultChecked className="mt-0.5 rounded w-4 h-4 text-[#C69722]" />
+                                <input type="checkbox" defaultChecked aria-label="Agree to terms and data usage" className="mt-0.5 rounded w-4 h-4 text-[#C69722]" />
                                 <span>I agree to Amol Marble Murti Bhandar & GoKwik using my data for login & offers. <u className="text-stone-700">Read details</u></span>
                             </label>
                             <p className="text-[10px] text-center text-stone-400 pt-1">Powered by <strong className="text-black">Kwik⚡Pass</strong></p>
@@ -3653,6 +3695,7 @@ export default function App() {
                                                          inputMode="text"
                                                          autoCapitalize="characters"
                                                          placeholder="Coupon code (e.g. DIVINE15)"
+                                                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); const v = e.currentTarget.value; if (v) applyCoupon(v); } }}
                                                          className="flex-1 px-3 py-2 text-base sm:text-xs rounded-lg border border-stone-300 uppercase bg-white focus:outline-none focus:border-[#C69722]"
                                                      />
                                                      <button
@@ -3661,7 +3704,7 @@ export default function App() {
                                                              const el = document.getElementById('cart-coupon-input');
                                                              if (el?.value) applyCoupon(el.value);
                                                          }}
-                                                         className="px-4 py-2 min-h-[44px] rounded-lg bg-[#161616] text-white text-xs font-bold hover:bg-[#C69722] transition active:scale-98"
+                                                         className="px-4 py-2 min-h-[44px] rounded-lg bg-[#C69722] hover:bg-[#b0851d] text-white text-xs font-bold shadow-sm transition active:scale-98"
                                                      >
                                                          Apply
                                                      </button>

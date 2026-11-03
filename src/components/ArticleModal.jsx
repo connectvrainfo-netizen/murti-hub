@@ -10,6 +10,7 @@ export default function ArticleModal({ article, onClose, onExploreDeity }) {
                 {/* Close Button */}
                 <button
                     onClick={onClose}
+                    aria-label="Close article modal"
                     className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/60 text-white hover:bg-black flex items-center justify-center text-sm transition"
                 >
                     <X className="w-4 h-4" />

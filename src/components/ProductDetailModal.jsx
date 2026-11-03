@@ -11,7 +11,7 @@ export default function ProductDetailModal({
 }) {
     if (!product) return null;
 
-    const [selectedSize, setSelectedSize] = useState('9 cm (Compact / Small Altar)');
+    const [selectedSize, setSelectedSize] = useState('9 cm (Compact Altar)');
     const [selectedFinish, setSelectedFinish] = useState('Pure Makrana White');
     const [qty, setQty] = useState(1);
     const [activeTab, setActiveTab] = useState('specs'); // 'specs' | 'vaastu' | 'care'
@@ -126,19 +126,23 @@ export default function ProductDetailModal({
                                 </label>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     {[
-                                        '9 cm (Compact)',
-                                        '15 cm (Home Mandir)',
-                                        '24 cm (Grand Temple)'
-                                    ].map(sz => (
-                                        <button
-                                            key={sz}
-                                            type="button"
-                                            onClick={() => setSelectedSize(sz)}
-                                            className={`min-h-[44px] p-2.5 text-left rounded-xl border text-xs font-medium transition tap-target-48 active:scale-98 ${selectedSize.startsWith(sz.split(' ')[0]) ? 'border-[#C69722] bg-[#FAF5E8] text-[#161616] font-bold shadow-xs' : 'border-stone-200 text-stone-600 hover:border-stone-400'}`}
-                                        >
-                                            {sz}
-                                        </button>
-                                    ))}
+                                        { label: '9 cm (Compact Altar)', desc: 'Standard', extra: 0 },
+                                        { label: '15 cm (Home Mandir)', desc: '+₹600', extra: 600 },
+                                        { label: '24 cm (Grand Temple)', desc: '+₹1,500', extra: 1500 }
+                                    ].map(sz => {
+                                        const isSelected = selectedSize === sz.label;
+                                        return (
+                                            <button
+                                                key={sz.label}
+                                                type="button"
+                                                onClick={() => setSelectedSize(sz.label)}
+                                                className={`min-h-[48px] p-2.5 text-left rounded-xl border text-xs font-medium transition tap-target-48 active:scale-98 flex flex-col justify-between ${isSelected ? 'border-[#C69722] bg-[#FAF5E8] text-[#161616] font-bold shadow-xs ring-2 ring-[#C69722]/40' : 'border-stone-200 text-stone-600 hover:border-stone-400 bg-white'}`}
+                                            >
+                                                <span className="font-bold">{sz.label}</span>
+                                                <span className="text-[10px] text-[#8E5B00] font-semibold">{sz.desc}</span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 

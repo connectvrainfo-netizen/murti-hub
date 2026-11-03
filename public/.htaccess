@@ -35,9 +35,13 @@
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # SPA Fallback: send all other requests to index.html
-    RewriteRule ^ index.html [L]
+    # SPA Known Routes: send valid frontend routes to index.html
+    RewriteRule ^(cart|login|profile|admin|shop-all|shop|catalog|products|navratri|sacred|baal-roop|product) index.html [L,QSA]
+    RewriteRule ^$ index.html [L]
 </IfModule>
+
+# Custom 404 Error Document (prevents Soft 404s)
+ErrorDocument 404 /404.html
 
 # ------------------------------------------------------------------------------
 # 3. Gzip Compression (mod_deflate)
@@ -129,7 +133,7 @@
     # - Allows Google Maps iframes (frame-src)
     # - Connects to Render backend and Supabase
     # - Supports Google Fonts & inline styles
-    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; frame-src 'self' https://www.google.com https://maps.google.com; connect-src 'self' https://*.onrender.com https://murti-hub-5.onrender.com https://murti-hub-backend.onrender.com https://*.supabase.co wss://*.supabase.co http://localhost:8000 http://127.0.0.1:8000 http://localhost:3000 http://localhost:5173 https://*.vercel.app; base-uri 'self'; form-action 'self';"
+    Header set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; frame-src 'self' https://www.google.com https://maps.google.com; connect-src 'self' https://*.onrender.com https://murti-hub-5.onrender.com https://murti-hub-backend.onrender.com https://*.supabase.co wss://*.supabase.co http://localhost:8000 http://127.0.0.1:8000 http://localhost:3000 http://localhost:5173 https://*.vercel.app; base-uri 'self'; form-action 'self';"
 </IfModule>
 
 # ------------------------------------------------------------------------------

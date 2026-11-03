@@ -164,6 +164,7 @@ export default function BulkQuoteModal({ isOpen, onClose, onQuoteSubmitted }) {
                         <label className="flex items-center gap-2 cursor-pointer pt-1 min-h-[44px]">
                             <input
                                 type="checkbox"
+                                aria-label="Include customized company brass logo engraving & premium gift boxes"
                                 checked={form.customEngraving}
                                 onChange={(e) => setForm({ ...form, customEngraving: e.target.checked })}
                                 className="w-5 h-5 rounded text-[#C69722] focus:ring-[#C69722]"

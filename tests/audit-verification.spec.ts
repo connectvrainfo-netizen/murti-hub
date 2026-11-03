@@ -104,15 +104,15 @@ test.describe('WCAG 2.2 AA Accessibility & Interactive Hit Targets Suite', () =>
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(500);
 
-    // Audit icon/action buttons for accessible naming (text, aria-label, title)
+    // Audit icon/action buttons for accessible naming (text or aria-label)
     const buttonsWithoutAccessibleNames = await page.evaluate(() => {
       const buttons = Array.from(document.querySelectorAll('button:not([aria-hidden="true"])'));
       const failing = [];
       for (const btn of buttons) {
         const text = btn.innerText?.trim() || '';
         const ariaLabel = btn.getAttribute('aria-label') || '';
-        const title = btn.getAttribute('title') || '';
-        if (!text && !ariaLabel && !title) {
+        // Strict WCAG: buttons must have inner text or aria-label (title alone is not accessible text)
+        if (!text && !ariaLabel) {
           failing.push(btn.outerHTML.slice(0, 100));
         }
       }
@@ -123,7 +123,7 @@ test.describe('WCAG 2.2 AA Accessibility & Interactive Hit Targets Suite', () =>
       `Found ${buttonsWithoutAccessibleNames.length} buttons lacking accessible names: ${buttonsWithoutAccessibleNames.slice(0, 3).join(', ')}`
     ).toBe(0);
 
-    // Audit form inputs for accessible labels
+    // Audit form inputs for accessible labels (strict WCAG: placeholder is not a label)
     const unlabeledInputs = await page.evaluate(() => {
       const inputs = Array.from(document.querySelectorAll('input:not([type="hidden"]), select, textarea'));
       const failing = [];
@@ -133,9 +133,8 @@ test.describe('WCAG 2.2 AA Accessibility & Interactive Hit Targets Suite', () =>
         const ariaLabelledBy = input.getAttribute('aria-labelledby');
         const hasAssociatedLabel = id ? !!document.querySelector(`label[for="${id}"]`) : false;
         const hasParentLabel = !!input.closest('label');
-        const placeholder = input.getAttribute('placeholder');
 
-        if (!ariaLabel && !ariaLabelledBy && !hasAssociatedLabel && !hasParentLabel && !placeholder) {
+        if (!ariaLabel && !ariaLabelledBy && !hasAssociatedLabel && !hasParentLabel) {
           failing.push(input.outerHTML.slice(0, 80));
         }
       }
@@ -145,5 +144,48 @@ test.describe('WCAG 2.2 AA Accessibility & Interactive Hit Targets Suite', () =>
     expect(unlabeledInputs.length, 
       `Found ${unlabeledInputs.length} form inputs without labels: ${unlabeledInputs.join(', ')}`
     ).toBe(0);
+  });
+});
+
+test.describe('BeaverCheck Audit Remediation Suite', () => {
+  test('Content Security Policy must not contain unsafe-inline in script-src', async () => {
+    const fs = await import('fs');
+    const vercelConfig = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
+    const cspHeader = vercelConfig.headers
+      .flatMap((h: any) => h.headers)
+      .find((h: any) => h.key === 'Content-Security-Policy')?.value || '';
+
+    const scriptSrcMatch = cspHeader.match(/script-src\s+([^;]+)/);
+    expect(scriptSrcMatch).not.toBeNull();
+    const scriptSrc = scriptSrcMatch ? scriptSrcMatch[1] : '';
+    expect(scriptSrc).not.toContain("'unsafe-inline'");
+
+    // Check .htaccess as well
+    const htaccess = fs.readFileSync('public/.htaccess', 'utf8');
+    const htaccessCsp = htaccess.match(/Header\s+set\s+Content-Security-Policy\s+"([^"]+)"/);
+    if (htaccessCsp) {
+      const htScriptSrc = (htaccessCsp[1].match(/script-src\s+([^;]+)/) || [])[1] || '';
+      expect(htScriptSrc).not.toContain("'unsafe-inline'");
+    }
+  });
+
+  test('404 Route handling: non-existent routes render 404 page with noindex', async ({ page }) => {
+    await page.goto('/non-existent-route-404-test', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(500);
+
+    const heading404 = page.locator('text=404');
+    expect(await heading404.count()).toBeGreaterThan(0);
+
+    const robotsContent = await page.evaluate(() => {
+      const meta = document.querySelector('meta[name="robots"]');
+      return meta ? meta.getAttribute('content') : null;
+    });
+    expect(robotsContent).toContain('noindex');
+  });
+
+  test('Page Weight: Video is not preloaded and autoPlay is disabled on cold visit', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    const videoPreload = await page.locator('video').getAttribute('preload');
+    expect(videoPreload).toBe('none');
   });
 });

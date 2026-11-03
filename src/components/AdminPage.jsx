@@ -1463,6 +1463,7 @@ export default function AdminPage({ onReturnToStore, onDataChanged }) {
                         disabled={loading}
                         className="p-2 text-stone-300 hover:text-white rounded-xl hover:bg-white/10 transition border border-transparent hover:border-white/10 cursor-pointer"
                         title="Refresh data from server"
+                        aria-label="Refresh data from server"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     </button>

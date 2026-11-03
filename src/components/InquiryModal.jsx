@@ -45,7 +45,7 @@ export default function InquiryModal({ product, onClose, onSubmit }) {
                             <SafeImage src={product.img} fallbackSrc="/images/products/ram-darbar.png" alt={product.title} className="w-full h-full object-contain p-1" />
                         </div>
                         <div className="min-w-0">
-                            <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-[#C69722]">WHATSAPP INQUIRY</span>
+                            <span className="text-[9px] font-bold tracking-[0.18em] uppercase text-[#C69722]">PLACE ORDER ON WHATSAPP</span>
                             <h3 className="font-serif text-sm font-bold text-[#161616] truncate">{product.title}</h3>
                             <p className="text-xs font-semibold text-[#8E5B00]">₹{priceNum.toLocaleString('en-IN')}</p>
                         </div>
@@ -53,7 +53,7 @@ export default function InquiryModal({ product, onClose, onSubmit }) {
                     <button
                         onClick={onClose}
                         className="w-10 h-10 rounded-full bg-white border border-stone-200 flex items-center justify-center text-stone-500 hover:text-black transition tap-target-48 flex-shrink-0"
-                        aria-label="Close inquiry form"
+                        aria-label="Close order form"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -62,7 +62,7 @@ export default function InquiryModal({ product, onClose, onSubmit }) {
                 <form onSubmit={handleSubmit}>
                     <div className="p-4 sm:p-5 space-y-3 text-xs">
                         <p className="text-stone-500 leading-relaxed text-[11px]">
-                            Share your details and we'll send this idol's info & delivery availability on WhatsApp.
+                            Share your details below and we'll confirm this idol's order and delivery availability on WhatsApp.
                         </p>
 
                         <div className="flex items-start gap-2 p-2.5 rounded-xl bg-[#FAF5E8] border border-[#E6D6B8] text-[10.5px] text-stone-600 leading-relaxed">
@@ -133,7 +133,7 @@ export default function InquiryModal({ product, onClose, onSubmit }) {
                             className="w-full py-3.5 rounded-xl bg-[#25D366] hover:bg-[#1DA851] disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-bold tracking-wider uppercase transition shadow-lg tap-target-48 active:scale-98 flex items-center justify-center gap-2"
                         >
                             <MessageCircle className="w-4 h-4" />
-                            <span>{isSubmitting ? 'PROCESSING INQUIRY...' : 'SEND INQUIRY ON WHATSAPP'}</span>
+                            <span>{isSubmitting ? 'PLACING ORDER...' : 'PLACE ORDER ON WHATSAPP'}</span>
                         </button>
                     </div>
                 </form>

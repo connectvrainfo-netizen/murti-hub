@@ -37,6 +37,12 @@ export function useContinuousScroll({
             return;
         }
 
+        // Mobile reliability: On mobile screens (< 768px), disable continuous autoscroll.
+        // Prevents cards from moving under touch and stopping in the middle, cutting off cards on both sides.
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+            return;
+        }
+
         const el = document.getElementById(trackId);
         if (!el) return;
 

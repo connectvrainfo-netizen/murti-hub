@@ -92,6 +92,7 @@ export default function FilterDrawer({
                                     <input
                                         type="radio"
                                         name="priceRange"
+                                        aria-label={opt.label}
                                         checked={priceRange === opt.val}
                                         onChange={() => { }}
                                         className="w-4 h-4 text-[#C69722] focus:ring-[#C69722]"

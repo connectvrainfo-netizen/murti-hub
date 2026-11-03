@@ -5,7 +5,7 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
-      "source": "/((?!api/|assets/|images/|robots\\.txt|sitemap\\.xml).*)",
+      "source": "/(cart|login|profile|admin(?:/.*)?|shop-all|shop|catalog|products|navratri|sacred|baal-roop|product(?:/.*)?)",
       "destination": "/index.html"
     }
   ],
@@ -109,7 +109,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; frame-src 'self' https://www.google.com https://maps.google.com; connect-src 'self' https://*.onrender.com https://murti-hub-5.onrender.com https://murti-hub-backend.onrender.com https://*.supabase.co wss://*.supabase.co http://localhost:8000 http://127.0.0.1:8000 http://localhost:3000 http://localhost:5173 https://*.vercel.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src 'self' blob: data: https:; frame-src 'self' https://www.google.com https://maps.google.com; connect-src 'self' https://*.onrender.com https://murti-hub-5.onrender.com https://murti-hub-backend.onrender.com https://*.supabase.co wss://*.supabase.co http://localhost:8000 http://127.0.0.1:8000 http://localhost:3000 http://localhost:5173 https://*.vercel.app; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
         }
       ]
     }
